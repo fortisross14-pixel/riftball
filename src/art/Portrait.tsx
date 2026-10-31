@@ -39,7 +39,7 @@ const SKINS: Record<Race, string[]> = {
   Troll: ['#8d9aa9', '#7c8f86', '#9aa1b6', '#88917a'],
   Lizardkin: ['#5f9c7a', '#4f8a8a', '#7aa35a', '#a07a4a', '#6f7fa8'],
   Revenant: ['#c9cfc4', '#b8c0c7', '#d6d0bc', '#a9b6ad'],
-  Satyr: ['#d9a37c', '#bd865f', '#e5bb94', '#a8714c'],
+  Giantkin: ['#d9a37c', '#bd865f', '#e5bb94', '#a8714c'],
 };
 const HAIRS: Record<Race, string[]> = {
   Human: ['#2b1a12', '#5a3420', '#9a5a2a', '#d4ad5a', '#8d8a86', '#a8341c'],
@@ -50,7 +50,7 @@ const HAIRS: Record<Race, string[]> = {
   Troll: ['#3d4a33', '#5a5f45', '#2c2f38'],
   Lizardkin: ['#c94f3a', '#e0b040', '#4a6fb5', '#8a3a8a'],
   Revenant: ['#e8e6dc', '#9aa0a8', '#2b2a30'],
-  Satyr: ['#3a2416', '#6b4423', '#a46a3a', '#d8c8a0'],
+  Giantkin: ['#3a2416', '#6b4423', '#a46a3a', '#d8c8a0'],
 };
 const IRIS = ['#2f5f8f', '#3f7a3a', '#6b4423', '#7a5a1a', '#4a3a7a', '#2a2a2a'];
 
@@ -417,7 +417,7 @@ function Revenant(c: Ctx) {
   );
 }
 
-function Satyr(c: Ctx) {
+function Giantkin(c: Ctx) {
   const face = 'M90 44 C111 44 121 60 120 82 C119 104 106 120 90 120 C74 120 61 104 60 82 C59 60 69 44 90 44 Z';
   const ram = c.d.chance(0.5);
   const horn = '#d8c8a0';
@@ -452,7 +452,7 @@ function Satyr(c: Ctx) {
   );
 }
 
-const RACE_DRAW: Record<Race, (c: Ctx) => JSX.Element> = { Human, Orc, Elf, Dwarf, Goblin, Troll, Lizardkin, Revenant, Satyr };
+const RACE_DRAW: Record<Race, (c: Ctx) => JSX.Element> = { Human, Orc, Elf, Dwarf, Giantkin, Goblin, Troll, Lizardkin, Revenant };
 
 /* ---------------------------------------------------------------- body and gear */
 
@@ -558,7 +558,7 @@ function PortraitImpl({ player, house = ['#7d2420', '#d4a537'], size = 180, fram
   const skins = SKINS[player.race];
   const skin = d.pick(skins);
   let hair = d.pick(HAIRS[player.race]);
-  if (player.age >= 33 && (player.race === 'Human' || player.race === 'Dwarf' || player.race === 'Satyr') && d.chance(0.6)) hair = '#b9b4aa';
+  if (player.age >= 33 && (player.race === 'Human' || player.race === 'Dwarf' || player.race === 'Giantkin') && d.chance(0.6)) hair = '#b9b4aa';
   const ctx: Ctx = {
     d,
     skin,

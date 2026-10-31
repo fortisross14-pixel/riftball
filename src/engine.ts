@@ -27,7 +27,7 @@ const FIRST:Record<Race,string[]> = {
  Troll:['Grunk','Ugg','Brug','Mogmuk','Thoom','Droll','Grob','Krum','Rog','Thugga','Grumble'],
  Lizardkin:['Sszar','Krizzt','Xak','Tziri','Sskel','Zirrak','Xiss','Skra','Rizzt','Tsaka'],
  Revenant:['Vesper','Morrow','Malach','Mortis','Lazar','Raven','Noctis','Eidolon','Mirth','Vhal'],
- Satyr:['Pip','Faunus','Thistle','Briar','Rill','Fenn','Merrick','Tansy','Dapple','Puck','Glim']
+ Giantkin:['Brakka','Karn','Mira','Ossa','Toren','Vala','Garr','Noma','Brek','Siv','Harkan']
 };
 const LAST:Record<Race,string[]> = {
  Human:['Ashford','Thorn','Blackwell','Dawnhart','Vale','Ironwood','Merrick','Graves','Brighton','Stone'],
@@ -38,12 +38,12 @@ const LAST:Record<Race,string[]> = {
  Troll:['Boulderbelly','Bridgecrack','Bigbones','Craghead','Mossback','Smashrock'],
  Lizardkin:['Scaleblade','Tailstrike','Emberfang','Sunscale','Shellback','Marshclaw'],
  Revenant:['the Unsettled','Grimveil','Ashbones','the Late','Dreadmourne','Neverrest'],
- Satyr:['Whistlehorn','Meadowkick','Quickhoof','Bramblehorn','Fleetstep','Wildstep']
+ Giantkin:['Stonefist','Highstride','Cloudbreaker','Boulderborn','Longstep','Thunderhand']
 };
 const MOD:Record<Race,Partial<Attributes>>={
  Human:{awareness:3,composure:2},Orc:{strength:9,tackling:5,speed:-4,passing:-6},Elf:{speed:6,agility:7,passing:5,strength:-6},Dwarf:{endurance:8,blocking:7,strength:4,speed:-9},
  Goblin:{agility:12,speed:8,handling:4,strength:-14,blocking:-12},Troll:{strength:16,blocking:10,endurance:7,speed:-15,passing:-12,awareness:-8},
- Lizardkin:{speed:5,strength:5,endurance:4,passing:-7},Revenant:{endurance:12,tackling:4,agility:-7},Satyr:{agility:8,speed:6,handling:6,strength:-5,composure:-4}
+ Lizardkin:{speed:5,strength:5,endurance:4,passing:-7},Revenant:{endurance:12,tackling:4,agility:-7},Giantkin:{strength:13,endurance:7,blocking:7,speed:-6,agility:-4}
 };
 const ROLE_WEIGHT:Record<Role,Partial<Record<StatKey,number>>>= {
  Bastion:{strength:3,blocking:3,endurance:2,positioning:1,composure:1},
@@ -112,12 +112,16 @@ const grade=(r:number):Rarity => r<.003?'Generational':r<.02?'Legendary':r<.09?'
 const boost:Record<Rarity,number>={Ordinary:-5,Professional:0,Elite:5,Extraordinary:9,Legendary:13,Generational:17};
 // Country-specific demographics. Every one of the nine races remains eligible in all four realms.
 const RACE_WEIGHTS=[[4,2,2,4,1,2,1,1,2],[3,3,1,2,1,2,3,1,1],[3,1,5,1,2,1,1,1,4],[4,1,2,1,3,2,3,1,2]];
+// Authored asset allocation: elite portraits are unique within a founding roster; regular portraits may recur.
+const PORTRAIT_COUNTS:Record<Race,number>={Human:40,Elf:36,Dwarf:33,Giantkin:19,Orc:33,Goblin:30,Troll:19,Lizardkin:20,Revenant:27};
+const ELITE_PORTRAIT_COUNTS:Record<Race,number>={Human:20,Elf:18,Dwarf:16,Giantkin:8,Orc:16,Goblin:15,Troll:8,Lizardkin:7,Revenant:12};
+const REGULAR_PORTRAIT_COUNTS:Record<Race,number>={Human:6,Elf:6,Dwarf:5,Giantkin:4,Orc:5,Goblin:5,Troll:4,Lizardkin:6,Revenant:6};
 function drawRace(w:World, region:number):Race { const arr=RACE_WEIGHTS[region]; const total=arr.reduce((a,b)=>a+b,0); let p=random(w)*total; for(let i=0;i<arr.length;i++){p-=arr[i];if(p<0)return RACES[i];}return 'Human'; }
 export function positionRating(attrs:Attributes,role:Role):number { const weights=ROLE_WEIGHT[role]; let total=0,weight=0; Object.entries(weights).forEach(([key,v])=>{ total+=attrs[key as StatKey]*v;weight+=v;});return Math.round(total/weight); }
 // Age curve: everyone grows until PEAK_AGE (or earlier if their race declines sooner),
 // plateaus, then declines from declineAge. Long-lived races keep their edge.
 const PEAK_AGE=27, GROWTH_PER_YEAR=1.7;
-const RETIRE_AGE:Record<Race,number>={Human:35,Orc:35,Elf:40,Dwarf:38,Goblin:30,Troll:35,Lizardkin:35,Revenant:44,Satyr:35};
+const RETIRE_AGE:Record<Race,number>={Human:35,Orc:35,Elf:40,Dwarf:38,Giantkin:37,Goblin:30,Troll:35,Lizardkin:35,Revenant:44};
 export const retireAge=(race:Race)=>RETIRE_AGE[race];
 export const declineAge=(race:Race)=>RETIRE_AGE[race]-4;
 const growthEnd=(race:Race)=>Math.min(PEAK_AGE,declineAge(race));
@@ -147,7 +151,14 @@ function createPlayer(w:World,team:Team,role:Role,newProspect=false):Player {
  const attrs={} as Attributes;
  for(const key of ATTR_KEYS)attrs[key]=clamp(Math.round(base+int(w,-15,15)+(MOD[race][key]||0)+(ROLE_WEIGHT[role][key]?int(w,3,13):0)),13,99);
  const rating=positionRating(attrs,role); const potential=clamp(Math.round(rating+ageGap(race,age)),rating,99);
- return {id:rid(w,'p'),name:`${pick(w,FIRST[race])} ${pick(w,LAST[race])}`,race,role,teamId:team.id,age,level:newProspect?1:int(w,1,7),xp:0,rating,rarity,potential,attrs,trait:pick(w,TRAITS),ability:pick(w,ABILITIES),injury:0,careerWear:0,stats:EMPTY_STATS(),career:EMPTY_STATS(),titles:0,championships:0,fame:0,portrait:int(w,1,6),seasons:0};
+ return {id:rid(w,'p'),name:`${pick(w,FIRST[race])} ${pick(w,LAST[race])}`,race,role,teamId:team.id,age,level:newProspect?1:int(w,1,7),xp:0,rating,rarity,potential,attrs,trait:pick(w,TRAITS),ability:pick(w,ABILITIES),injury:0,careerWear:0,stats:EMPTY_STATS(),career:EMPTY_STATS(),titles:0,championships:0,fame:0,portrait:int(w,ELITE_PORTRAIT_COUNTS[race]+1,ELITE_PORTRAIT_COUNTS[race]+REGULAR_PORTRAIT_COUNTS[race]),seasons:0};
+}
+function assignFoundingPortraits(w:World){
+ for(const race of RACES){
+  const pool=w.players.filter(p=>p.race===race).sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id));
+  const elite=ELITE_PORTRAIT_COUNTS[race];
+  pool.slice(0,elite).forEach((p,i)=>p.portrait=i+1);
+ }
 }
 // One offseason of the age curve. Academy quality speeds up young players' growth.
 function ageCurve(w:World,p:Player){
@@ -193,6 +204,7 @@ export function createWorld(seed=2026):World {
   for(let i=pool.length-1;i>0;i--){const j=int(w,0,i);[pool[i],pool[j]]=[pool[j],pool[i]];}
   for(let i=0;i+1<pool.length;i+=2){const a=pool[i],b=pool[i+1],heat=int(w,20,50);a.rival=b.id;b.rival=a.id;a.rivalHeat=heat;b.rivalHeat=heat;}
  }
+ assignFoundingPortraits(w);
  seedSchedule(w);
  addStory(w,'roundup','A NEW ERA OF ABSOLUTE MAYHEM',`Welcome to Year One. Forty-eight clubs across the four elemental countries begin the first recorded Riftball season. The medical guild advises everyone to remain extremely calm.`,undefined,undefined,undefined,5);
  addStory(w,'scandal','REFEREES REQUEST HAZARD PAY',`The Riftball Authority has confirmed that all match officials will receive protective armor, a whistle, and exactly one emergency teleportation voucher.`,undefined,undefined,undefined,1);
@@ -223,7 +235,7 @@ export function teamRating(w:World,t:Team,starters=lineup(w,t)):number{ if(!star
 const mean=(players:Player[],...keys:StatKey[])=>players.length?players.reduce((s,p)=>s+keys.reduce((sum,k)=>sum+p.attrs[k],0)/keys.length,0)/players.length:42;
 function addStat(p:Player,key:keyof SeasonStats,amount=1){p.stats[key]+=amount;p.career[key]+=amount;}
 // XP needed for the next level grows with the square of the level, so level 15 is reserved for long, busy careers.
-export const xpGoal=(level:number)=>90+level*level*9;
+export const xpGoal=(level:number)=>90+level*level*7;
 function addXp(p:Player,amount:number){p.xp+=amount;const goal=xpGoal(p.level);if(p.xp>=goal&&p.level<15){p.xp-=goal;p.level++;if(p.rating<p.potential&&p.age<=growthEnd(p.race)){const keys=Object.keys(ROLE_WEIGHT[p.role]) as StatKey[];const key=keys[(p.level+p.id.length)%keys.length];p.attrs[key]=clamp(p.attrs[key]+1,1,99);p.rating=positionRating(p.attrs,p.role);}}}
 function event(m:Match,minute:number,kind:MatchEvent['kind'],teamId:string,player:Player|undefined,text:string,h:number,a:number,x:number){
  if(m.events.length<42)m.events.push({minute,kind,teamId,playerId:player?.id,text,homeScore:h,awayScore:a,x:clamp(x,4,96)});
@@ -496,14 +508,12 @@ function annualAwards(w:World){
  // MVP: the positional score is capped, because run-heavy or pass-heavy schemes inflate some roles' volume stats.
  // Once a player clearly leads their position, team success and overall quality decide it.
  const mvpScore=(p:Player)=>Math.min(z.get(p.id)!,3)+winShare(p)*2+(p.rating-60)*.04;
- const give=(p:Player,award:string)=>{w.awards.push({season:w.season,award,playerId:p.id,teamId:p.teamId});p.fame+=(award==='Golden Gargoyle'?18:award==='Rookie of the Year'?9:7);};
+ const give=(p:Player,award:string)=>{w.awards.push({season:w.season,award,playerId:p.id,teamId:p.teamId});p.fame+=(award==='MVP'?18:award==='Rookie of the Year'?9:7);};
  const mvp=eligible.reduce((best,p)=>mvpScore(p)>mvpScore(best)?p:best);give(mvp,'Golden Gargoyle');
  addStory(w,'milestone',`${mvp.name.toUpperCase()} NAMED WORLD MVP`,`${mvp.name}, the ${mvp.race.toLowerCase()} ${mvp.role.toLowerCase()} of the ${getTeam(w,mvp.teamId).name}, takes the season's highest individual honor. The trophy is insured against biting.`,mvp.teamId,mvp.id,undefined,5);
  const winners:string[]=[];
  for(const role of ROLES){const best=ranked.find(p=>p.role===role);if(best){give(best,POSITION_AWARD[role]);winners.push(`${POSITION_AWARD[role]}: ${best.name}`);}}
- // In a smaller league a rookie may miss the 12-game bar, so fall back to the most-used first-year athlete.
- const fallbackRookie=()=>w.players.filter(p=>p.seasons===0&&p.stats.games>0).sort((a,b)=>b.stats.games-a.stats.games||impactScore(b.role,b.stats)-impactScore(a.role,a.stats))[0];
- const rookie=w.season>1?ranked.find(p=>p.seasons===0)??fallbackRookie():undefined;
+ const rookie=w.season>1?ranked.find(p=>p.seasons===0):undefined;
  if(rookie){give(rookie,'Rookie of the Year');winners.push(`Rookie of the Year: ${rookie.name}`);}
  addStory(w,'roundup',`YEAR ${w.season} HONOURS ANNOUNCED`,`${winners.join('. ')}. Acceptance speeches were limited to ninety seconds and one small explosion each.`,undefined,undefined,undefined,3);
 }

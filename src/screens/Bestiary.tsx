@@ -16,7 +16,7 @@ const RACE_LORE: Record<Race, string> = {
   Troll: 'enormous, slow, regenerates grudges',
   Lizardkin: 'quick and sturdy, cold-blooded about it',
   Revenant: 'tireless, technically deceased',
-  Satyr: 'nimble hooves, questionable focus',
+  Giantkin: 'towering frames, thunderous strength',
 };
 
 const exemplar = (race: Race): Pick<Player, 'id' | 'race' | 'role' | 'rarity' | 'portrait' | 'age'> => ({ id: `exemplar-${race}`, race, role: 'Runner', rarity: 'Elite', portrait: 2, age: 26 });

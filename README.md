@@ -52,7 +52,7 @@ This is a working systems POC, **not the full v0.1–v0.5 design document implem
 - Arcane charges, athlete traits and tactical philosophies affect matches; coaching and detailed contracts are still simplified or not independently simulated.
 - Clubs trade athletes automatically during the offseason, but there is no contract negotiation or wage market.
 - Athlete rarity is visible for ease of testing; the long-term design can hide intrinsic potential.
-- Athlete cards and club shields still fall back to procedural vector art. The raster manifest is ready, but this build contains **0/309 requested painted portrait/badge/banner assets**; it does not misrepresent placeholders as finished artwork.
+- Athlete cards and club shields use an integrated transparent raster library: **257 race portraits** (elite, regular and coach allocations) plus **48 illustrated club badges**. Portrait alpha is deliberate: the game retains its own rarity-colored portrait grounds. The existing vectors remain only as a compatibility fallback for older saves or a missing file.
 - News is generated from real season and match outcomes plus occasional flavor headlines.
 - Full event logs are retained for recent seasons. Earlier years preserve compact results for title matches and career/historical totals, rather than every regular-season play.
 - The Hall of Legends includes legacy ranking, retirement induction, current/retired icons, career and seasonal leaderboards. Dedicated coach entities are still future scope.

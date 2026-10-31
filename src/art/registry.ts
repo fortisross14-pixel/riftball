@@ -32,7 +32,7 @@ const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(
 export function paintedPortrait(playerId: string, race: string, variant: number): string | undefined {
   if (!portraits.size) return undefined;
   const r = race.toLowerCase();
-  return portraits.get(`player-${playerId.toLowerCase()}`) ?? portraits.get(`${r}-${variant}`) ?? portraits.get(r);
+  return portraits.get(`player-${playerId.toLowerCase()}`) ?? portraits.get(`${r}-${variant}`) ?? portraits.get(`${r}-${String(variant).padStart(2, '0')}`) ?? portraits.get(r);
 }
 
 export function paintedCrest(teamId: string, name: string): string | undefined {

@@ -1,5 +1,5 @@
 export type Role = 'Bastion' | 'Breaker' | 'Runner' | 'Thrower' | 'Raider' | 'Trickster';
-export type Race = 'Human' | 'Orc' | 'Elf' | 'Dwarf' | 'Goblin' | 'Troll' | 'Lizardkin' | 'Revenant' | 'Satyr';
+export type Race = 'Human' | 'Orc' | 'Elf' | 'Dwarf' | 'Giantkin' | 'Goblin' | 'Troll' | 'Lizardkin' | 'Revenant';
 export type Rarity = 'Ordinary' | 'Professional' | 'Elite' | 'Extraordinary' | 'Legendary' | 'Generational';
 export type StatKey = 'strength' | 'speed' | 'agility' | 'endurance' | 'handling' | 'passing' | 'tackling' | 'blocking' | 'positioning' | 'awareness' | 'composure' | 'arcana';
 export type Attributes = Record<StatKey, number>;
@@ -23,7 +23,7 @@ export type World = { version:number; seasonArchive?: {season:number; leaders:{p
 export const REGIONS = ['STONEVEIL','PYREHOLD','AERIE DOMINION','THALASSA'];
 export const REGION_CAPTIONS = ['Earth Realm · mountains, forests & mines','Fire Realm · forges, ash & volcanoes','Wind Realm · clouds, storms & high citadels','Water Realm · rivers, ports & deep seas'];
 export const ROLES:Role[] = ['Bastion','Breaker','Runner','Thrower','Raider','Trickster'];
-export const RACES:Race[] = ['Human','Orc','Elf','Dwarf','Goblin','Troll','Lizardkin','Revenant','Satyr'];
+export const RACES:Race[] = ['Human','Orc','Elf','Dwarf','Giantkin','Goblin','Troll','Lizardkin','Revenant'];
 export const ATTR_KEYS:StatKey[]=['strength','speed','agility','endurance','handling','passing','tackling','blocking','positioning','awareness','composure','arcana'];
 export const EMPTY_STATS = (): SeasonStats => ({games:0,breaches:0,assists:0,tackles:0,knockouts:0,interceptions:0,distance:0,rushingYards:0,passingYards:0,passes:0,gates:0,mvp:0,injuries:0,blocks:0});
 export const EMPTY_RECORD = ():RecordTable => ({w:0,d:0,l:0,pf:0,pa:0,pts:0});
