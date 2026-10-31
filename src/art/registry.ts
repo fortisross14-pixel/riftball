@@ -4,10 +4,9 @@
 // with painted raster art, drop files into src/art/raster/ using these names and rebuild:
 //
 //   portraits/player-<playerId>.png      one specific athlete
-//   portraits/<race>-<1..6>.png          a race + portrait variant (e.g. orc-3.png)
-//   portraits/<race>.png                 every athlete of a race
+//   portraits/<race>-<NN>.png            a race + portrait variant (e.g. orc-03.png), stored as player.portraitKey
 //   crests/club-<teamId>.png             one club's arms
-//   crests/<city-nickname>.png           by club name, lower-case with dashes (coppergate-crushers.png)
+//   crests/<artKey>.png                  by the club's stable art key (kitehaven-ospreys.png)
 //
 // PNG, WebP and JPG are accepted. Square art (at least 360x360) suits portraits; crests should be
 // transparent PNGs of the shield only. The most specific match wins; anything missing falls back
@@ -27,15 +26,14 @@ function index(files: Record<string, string>) {
 
 const portraits = index(portraitFiles);
 const crests = index(crestFiles);
-const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-
-export function paintedPortrait(playerId: string, race: string, variant: number): string | undefined {
+// Lookups use the stable keys stored on each club (artKey) and athlete (portraitKey), never a display
+// name, so translating or renaming clubs never breaks their art.
+export function paintedPortrait(playerId: string, portraitKey: string | undefined): string | undefined {
   if (!portraits.size) return undefined;
-  const r = race.toLowerCase();
-  return portraits.get(`player-${playerId.toLowerCase()}`) ?? portraits.get(`${r}-${variant}`) ?? portraits.get(`${r}-${String(variant).padStart(2, '0')}`) ?? portraits.get(r);
+  return portraits.get(`player-${playerId.toLowerCase()}`) ??(portraitKey ? portraits.get(portraitKey) : undefined);
 }
 
-export function paintedCrest(teamId: string, name: string): string | undefined {
+export function paintedCrest(teamId: string, artKey: string | undefined): string | undefined {
   if (!crests.size) return undefined;
-  return crests.get(`club-${teamId.toLowerCase()}`) ?? crests.get(slug(name));
+  return crests.get(`club-${teamId.toLowerCase()}`) ??(artKey ? crests.get(artKey) : undefined);
 }

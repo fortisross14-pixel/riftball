@@ -1,0 +1,141 @@
+/* ------------------------------------------------------------ the one control bar */
+
+.control-bar {
+  margin: 0 var(--page-pad);
+  padding: 8px 14px;
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  border-top: 1px solid rgba(154, 111, 40, 0.38);
+  border-bottom: 1px solid rgba(154, 111, 40, 0.38);
+  background: rgba(73, 48, 25, 0.07);
+}
+.control-bar .season-progress { flex: 1 1 520px; margin: 0; }
+.control-bar .season-progress li { padding: 0 7px 0 13px; font-size: 0.66rem; letter-spacing: 0.02em; }
+.control-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
+.control-simulate { display: flex; flex-direction: column; align-items: flex-start; text-align: left; line-height: 1.1; padding: 6px 10px; }
+.control-simulate strong { font-size: 0.86rem; }
+.control-simulate small { font-size: 0.74rem; color: var(--ink-2); font-style: italic; }
+.control-main { padding: 9px 30px 9px 12px; min-width: 210px; }
+.control-main strong { font-size: 1.25rem; }
+.control-main small { font-size: 0.8rem; }
+
+@media (max-width: 760px) {
+  .control-bar { margin: 0 12px; padding: 8px 6px; }
+  .control-actions { width: 100%; justify-content: stretch; }
+  .control-actions > * { flex: 1 1 auto; }
+  .control-main { min-width: 0; }
+}
+
+/* ------------------------------------------------------------ showcase intro: a full-page title card */
+
+.showcase-intro {
+  min-height: calc(100vh - 220px);
+  padding: clamp(18px, 3vw, 40px) var(--page-pad) 40px;
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: 14px;
+}
+.showcase-kicker { font-family: var(--face-rubric); text-transform: uppercase; letter-spacing: 0.14em; font-size: 0.85rem; color: var(--ink-3); }
+.showcase-title {
+  font-family: var(--face-display); font-weight: 900; line-height: 0.95;
+  font-size: clamp(2.6rem, 6vw, 5.4rem); color: var(--rubric); letter-spacing: 0.01em;
+}
+.showcase-title.is-small { font-size: clamp(1.8rem, 3.6vw, 3rem); text-align: center; margin-bottom: 12px; }
+.showcase-stake { max-width: 52ch; font-size: 1.2rem; font-style: italic; color: var(--ink-2); }
+.showcase-hype { max-width: 60ch; font-size: 1.05rem; color: var(--ink); border-top: 1px solid var(--vellum-3); padding-top: 10px; }
+.showcase-go { font-size: 1.2rem; padding: 12px 28px; }
+.showcase-matchups { display: grid; gap: 14px; width: 100%; max-width: 1180px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr)); }
+.showcase-matchups.count-1 { grid-template-columns: minmax(0, 720px); justify-content: center; }
+
+.matchup {
+  position: relative;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 10px;
+  padding: 14px 12px 12px;
+  border: 1px solid var(--vellum-3);
+  background: rgba(255, 250, 235, 0.45);
+}
+.matchup-label { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--vellum); padding: 0 8px; font-family: var(--face-rubric); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--rubric); }
+.matchup-vs { align-self: center; font-family: var(--face-display); font-size: 1.4rem; color: var(--ink-3); font-style: italic; }
+.matchup-side { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.matchup-name { font-family: var(--face-display); font-size: 1.45rem; line-height: 1; color: var(--ink); }
+.matchup-city { font-size: 0.85rem; color: var(--ink-2); }
+.matchup-form { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+.matchup-form small { text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-3); }
+.matchup-star { display: flex; align-items: center; gap: 8px; text-align: left; font-size: 0.88rem; margin-top: 4px; }
+.matchup-star small { display: block; text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.7rem; color: var(--ink-3); }
+.matchup-star em { color: var(--ink-2); font-size: 0.8rem; }
+.matchup-star .portrait-img, .matchup-star svg { border-radius: 50%; flex: none; }
+
+/* ------------------------------------------------------------ showcase match list */
+
+.stage-remaining { font-family: var(--face-rubric); font-size: 1.05rem; color: var(--rubric); margin: 6px 0 12px; }
+.stage-remaining.is-done { color: var(--verdigris, #2f6b55); }
+.stage-group + .stage-group { margin-top: 16px; }
+.stage-fixtures { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.stage-fixture {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: 'h s a' 'x x x';
+  align-items: center; gap: 6px 10px;
+  padding: 8px 10px; border: 1px solid var(--vellum-3); background: rgba(255, 250, 235, 0.4);
+}
+.stage-fixture .stage-side { grid-area: h; display: flex; align-items: center; gap: 8px; min-width: 0; font-family: var(--face-display); font-size: 1.15rem; }
+.stage-fixture .stage-side.is-away { grid-area: a; justify-content: flex-end; text-align: right; }
+.stage-fixture .stage-side span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stage-fixture .stage-side.is-winner { color: var(--rubric); font-weight: 700; }
+.stage-score { grid-area: s; font-family: var(--face-data); font-size: 1.3rem; font-weight: 700; min-width: 72px; text-align: center; }
+.stage-fixture:not(.is-done) .stage-score { font-family: var(--face-display); font-style: italic; font-weight: 400; color: var(--ink-3); }
+.stage-actions { grid-area: x; display: flex; gap: 6px; justify-content: center; }
+.stage-actions button { font-size: 0.85rem; padding: 6px 12px; }
+.stage-line { font-size: 1.1rem; text-align: center; margin: 12px 0; }
+
+.stage-group-table h3 { font-family: var(--face-rubric); color: var(--rubric); margin: 10px 0 4px; }
+.stage-group-table ol { margin: 0; padding-left: 22px; display: grid; gap: 4px; }
+.stage-group-table li { display: flex; align-items: center; gap: 10px; }
+.stage-group-table li span { margin-left: auto; font-family: var(--face-data); font-size: 0.9rem; }
+.stage-group-table li em { font-size: 0.8rem; color: var(--verdigris, #2f6b55); }
+.stage-group-table li.is-through { font-weight: 700; }
+.stage-winners { display: flex; justify-content: center; gap: 28px; flex-wrap: wrap; }
+.stage-winners span { display: flex; flex-direction: column; align-items: center; gap: 6px; font-family: var(--face-display); font-size: 1.4rem; }
+
+/* ------------------------------------------------------------ trophy lifts */
+
+.trophy-lifts { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
+.trophy-lifts.count-1 { grid-template-columns: 1fr; }
+.trophy-lift { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 14px 10px; border: 2px solid var(--gold); background: rgba(240, 207, 106, 0.12); }
+.trophy-lift.is-big { padding: 22px 16px; border-width: 3px; }
+.trophy-lift-kicker { font-family: var(--face-rubric); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.8rem; color: var(--gold-deep); }
+.trophy-lift-art { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.trophy-lift-name { font-family: var(--face-display); font-size: 1.35rem; line-height: 1.05; }
+.trophy-lift.is-big .trophy-lift-name { font-size: 2rem; }
+.trophy-lift-captain { font-size: 0.9rem; color: var(--ink-2); }
+.trophy-lift-joke { font-style: italic; font-size: 0.95rem; color: var(--ink-2); max-width: 40ch; }
+
+/* ------------------------------------------------------------ the awards gala */
+
+.gala { padding: clamp(16px, 3vw, 34px) var(--page-pad) 40px; display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.gala-head { text-align: center; }
+.gala-list { list-style: none; margin: 0; padding: 0; width: 100%; max-width: 900px; display: grid; gap: 10px; }
+.gala-card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; padding: 12px 14px; border: 1px solid var(--vellum-3); background: rgba(255, 250, 235, 0.45); }
+.gala-card.is-fresh { border: 2px solid var(--gold); background: rgba(240, 207, 106, 0.14); animation: gala-in 420ms var(--ease-out, ease-out); }
+.gala-card.is-top { border-color: var(--rubric); }
+.gala-card-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.gala-award { font-family: var(--face-rubric); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.85rem; color: var(--rubric); }
+.gala-name { font-family: var(--face-display); font-size: 1.7rem; line-height: 1; }
+.gala-club { display: flex; align-items: center; gap: 6px; font-size: 0.9rem; color: var(--ink-2); }
+.gala-stats { font-family: var(--face-data); font-size: 0.9rem; }
+.gala-quote { font-style: italic; color: var(--ink); margin-top: 4px; }
+.gala-quote::before { content: '«'; } .gala-quote::after { content: '»'; }
+@keyframes gala-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .gala-card.is-fresh { animation: none; } }
+@media (max-width: 560px) { .gala-card { grid-template-columns: 1fr; justify-items: center; text-align: center; } .gala-club { justify-content: center; } }
+
+/* ------------------------------------------------------------ pre-season, legacy saves, new season */
+
+.preseason-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 8px; }
+.preseason-list li small { color: var(--ink-2); }
+.preseason-list li p { font-style: italic; font-size: 0.92rem; color: var(--ink-2); margin: 2px 0 0; }
+
+.legacy-cover { aspect-ratio: auto; width: min(600px, 92vw); padding: 30px 18px; gap: 18px; }
+.legacy-slip { max-width: 520px; padding: 22px 26px; background: var(--vellum); color: var(--ink); border: 1px solid var(--gold-deep); text-align: center; }
+.legacy-slip h1 { font-family: var(--face-display); font-weight: 700; font-size: 1.9rem; line-height: 1.05; color: var(--rubric); margin-bottom: 10px; }
+.legacy-slip p { margin: 6px 0; }
+.legacy-actions { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 14px; }
+
+.new-season h2 { font-size: 3rem; }
+.new-season .gilt-button { margin-top: 16px; font-size: 1.1rem; padding: 10px 26px; }

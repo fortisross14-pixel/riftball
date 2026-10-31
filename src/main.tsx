@@ -8,5 +8,6 @@ import './styles/tourneys.css';
 import './styles/folios.css';
 import './styles/contest.css';
 import './styles/materials.css';
+import './styles/stage.css';
 
 createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>);

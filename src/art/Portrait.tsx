@@ -543,7 +543,7 @@ function FrontProp({ role, c }: { role: Role; c: Ctx }) {
 /* ---------------------------------------------------------------- component */
 
 export type PortraitProps = {
-  player: Pick<Player, 'id' | 'race' | 'role' | 'rarity' | 'portrait' | 'age'>;
+  player: Pick<Player, 'id' | 'race' | 'role' | 'rarity' | 'portrait' | 'age'> & { portraitKey?: string };
   house?: [string, string];
   size?: number;
   framed?: boolean;
@@ -552,7 +552,7 @@ export type PortraitProps = {
 
 function PortraitImpl({ player, house = ['#7d2420', '#d4a537'], size = 180, framed = true, title }: PortraitProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const painted = paintedPortrait(player.id, player.race, player.portrait);
+  const painted = paintedPortrait(player.id, player.portraitKey);
   if (painted) return <img src={painted} width={size} height={size} alt={title ?? ''} className="portrait-img" draggable={false} />;
   const d = dice(`${player.id}:${player.portrait}`);
   const skins = SKINS[player.race];

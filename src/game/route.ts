@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 
-export type Section = 'chronicle' | 'tourneys' | 'bestiary' | 'armorial' | 'lists' | 'rolls' | 'annals' | 'colophon';
+export type Section = 'chronicle' | 'tourneys' | 'bestiary' | 'armorial' | 'lists' | 'rolls' | 'annals' | 'colophon' | 'evento';
 export type Route =
   | { kind: 'section'; section: Section }
   | { kind: 'athlete'; id: string }
   | { kind: 'house'; id: string }
   | { kind: 'contest'; id: string };
 
-const SECTIONS: Section[] = ['chronicle', 'tourneys', 'bestiary', 'armorial', 'lists', 'rolls', 'annals', 'colophon'];
+const SECTIONS: Section[] = ['chronicle', 'tourneys', 'bestiary', 'armorial', 'lists', 'rolls', 'annals', 'colophon', 'evento'];
 
 export function parseHash(hash: string): Route {
   const [a, b] = hash.replace(/^#\/?/, '').split('/');

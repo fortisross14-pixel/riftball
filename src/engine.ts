@@ -1,10 +1,22 @@
 import { ATTR_KEYS, EMPTY_RECORD, EMPTY_STATS, RACES, REGIONS, ROLES } from './types';
 import { chronicleOffseason, chronicleWeek, rebuildRecords } from './chronicle';
-import type { Attributes, Match, MatchEvent, Player, Race, Rarity, Role, SeasonStats, StatKey, Story, Team, World, MatchTeamStats, MatchPlayerStats, MatchDrive, MatchReport } from './types';
+import type { Attributes, GalaItem, Match, MatchEvent, Player, Race, Rarity, Role, SeasonStats, StatKey, Story, Team, World, StageState, ShowcaseId, MatchTeamStats, MatchPlayerStats, MatchDrive, MatchReport } from './types';
 
 /** A 30-week Chronicle calendar. These numbers are intentionally exported so UI and jump controls cannot drift from the engine. */
 export const SEASON = { LEAGUE_END:22, NATIONAL_SEMI:23, NATIONAL_FINAL:24, WORLD_GROUPS:25, WORLD_SEMI:26, WORLD_FINAL:27, AWARDS:28, MARKET:29, NEW_SEASON:30 } as const;
 
+/** Save format version. Bumped whenever a saved world needs migrating. */
+export const CURRENT_VERSION=4;
+/** The current world has exactly this many clubs. Older 80-club saves cannot be mapped onto them. */
+export const TEAM_COUNT=48;
+/** Stable art keys: lower-case, dash-separated. Never derived from a (translatable) display name at runtime. */
+export const slugKey=(s:string)=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+export const portraitKeyOf=(race:Race,variant:number)=>`${race.toLowerCase()}-${String(variant).padStart(2,'0')}`;
+/** True for saves from before the 48-club world (the 80-club format). Those cannot be loaded. */
+export function isLegacyWorld(raw:unknown):boolean{
+ const w=raw as Partial<World>|null;
+ return !w||typeof w!=='object'||!Array.isArray(w.teams)||w.teams.length!==TEAM_COUNT||!Array.isArray(w.players);
+}
 /** Twelve permanent clubs per elemental country.  Names are deliberately authored, not procedural. */
 const CITIES = [
  ['Stonehaven','Ironroot','Deepmount','Oakridge','Granitefall','Mossvale','Thornwall','Copperhollow','Pinewatch','Valebarrow','Runestone','Boulderwake'],
@@ -151,13 +163,14 @@ function createPlayer(w:World,team:Team,role:Role,newProspect=false):Player {
  const attrs={} as Attributes;
  for(const key of ATTR_KEYS)attrs[key]=clamp(Math.round(base+int(w,-15,15)+(MOD[race][key]||0)+(ROLE_WEIGHT[role][key]?int(w,3,13):0)),13,99);
  const rating=positionRating(attrs,role); const potential=clamp(Math.round(rating+ageGap(race,age)),rating,99);
- return {id:rid(w,'p'),name:`${pick(w,FIRST[race])} ${pick(w,LAST[race])}`,race,role,teamId:team.id,age,level:newProspect?1:int(w,1,7),xp:0,rating,rarity,potential,attrs,trait:pick(w,TRAITS),ability:pick(w,ABILITIES),injury:0,careerWear:0,stats:EMPTY_STATS(),career:EMPTY_STATS(),titles:0,championships:0,fame:0,portrait:int(w,ELITE_PORTRAIT_COUNTS[race]+1,ELITE_PORTRAIT_COUNTS[race]+REGULAR_PORTRAIT_COUNTS[race]),seasons:0};
+ const p:Player={id:rid(w,'p'),name:`${pick(w,FIRST[race])} ${pick(w,LAST[race])}`,race,role,teamId:team.id,age,level:newProspect?1:int(w,1,7),xp:0,rating,rarity,potential,attrs,trait:pick(w,TRAITS),ability:pick(w,ABILITIES),injury:0,careerWear:0,stats:EMPTY_STATS(),career:EMPTY_STATS(),titles:0,championships:0,fame:0,portrait:int(w,ELITE_PORTRAIT_COUNTS[race]+1,ELITE_PORTRAIT_COUNTS[race]+REGULAR_PORTRAIT_COUNTS[race]),portraitKey:'',seasons:0};
+ p.portraitKey=portraitKeyOf(race,p.portrait);return p;
 }
 function assignFoundingPortraits(w:World){
  for(const race of RACES){
   const pool=w.players.filter(p=>p.race===race).sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id));
   const elite=ELITE_PORTRAIT_COUNTS[race];
-  pool.slice(0,elite).forEach((p,i)=>p.portrait=i+1);
+  pool.slice(0,elite).forEach((p,i)=>{p.portrait=i+1;p.portraitKey=portraitKeyOf(p.race,p.portrait);});
  }
 }
 // One offseason of the age curve. Academy quality speeds up young players' growth.
@@ -189,10 +202,10 @@ function seedSchedule(w:World){
  }
 }
 export function createWorld(seed=2026):World {
- const w:World={version:3,seed,rng:seed>>>0,season:1,week:1,teams:[],players:[],matches:[],news:[],trophies:[],awards:[],storylines:[],records:[],retired:[],history:[],serial:0,totalGames:0,lastUpdated:Date.now()};
+ const w:World={version:CURRENT_VERSION,seed,rng:seed>>>0,season:1,week:1,teams:[],players:[],matches:[],news:[],trophies:[],awards:[],storylines:[],records:[],retired:[],history:[],serial:0,totalGames:0,lastUpdated:Date.now()};
  for(let region=0;region<4;region++)for(let i=0;i<12;i++){
   const city=CITIES[region][i],nickname=NICKNAMES[region][i],colors=PALETTE[region][i%5];
-  const team:Team={id:rid(w,'t'),name:`${city} ${nickname}`,city,nickname,initials:(city.slice(0,2)+nickname.slice(0,1)).toUpperCase(),region,division:0,colors,philosophy:pick(w,PHILOSOPHIES).toUpperCase(),power:int(w,45,85),fanbase:int(w,32,94),academy:int(w,35,90),budget:int(w,15,85),roster:[],record:EMPTY_RECORD(),historyTitles:0,worldTitles:0,rival:'',rivalHeat:0,rivalRecord:{w:0,d:0,l:0},form:[]};
+  const team:Team={id:rid(w,'t'),artKey:slugKey(`${city} ${nickname}`),name:`${city} ${nickname}`,city,nickname,initials:(city.slice(0,2)+nickname.slice(0,1)).toUpperCase(),region,division:0,colors,philosophy:pick(w,PHILOSOPHIES).toUpperCase(),power:int(w,45,85),fanbase:int(w,32,94),academy:int(w,35,90),budget:int(w,15,85),roster:[],record:EMPTY_RECORD(),historyTitles:0,worldTitles:0,rival:'',rivalHeat:0,rivalRecord:{w:0,d:0,l:0},form:[]};
   w.teams.push(team);
   for(const role of [...ROLES,'Bastion','Breaker','Runner','Thrower','Raider','Trickster','Bastion','Breaker','Runner'] as Role[]){
    const player=createPlayer(w,team,role); team.roster.push(player.id);w.players.push(player);
@@ -206,6 +219,7 @@ export function createWorld(seed=2026):World {
  }
  assignFoundingPortraits(w);
  seedSchedule(w);
+ enterWeek(w);
  addStory(w,'roundup','A NEW ERA OF ABSOLUTE MAYHEM',`Welcome to Year One. Forty-eight clubs across the four elemental countries begin the first recorded Riftball season. The medical guild advises everyone to remain extremely calm.`,undefined,undefined,undefined,5);
  addStory(w,'scandal','REFEREES REQUEST HAZARD PAY',`The Riftball Authority has confirmed that all match officials will receive protective armor, a whistle, and exactly one emergency teleportation voucher.`,undefined,undefined,undefined,1);
  return w;
@@ -540,11 +554,12 @@ function offseason(w:World){
   // Elemental countries now have one twelve-club national league; identities never move division.
  }
  // Contract moves between clubs and rookie arrival.
+ const log={season:w.season,retired:[] as string[],transfers:[] as {playerId:string;from:string;to:string}[],rookies:[] as string[]};w.offseasonLog=log;
  const movements=int(w,30,55);
  for(let i=0;i<movements;i++){
   const from=pick(w,w.teams),to=pick(w,w.teams);if(from.id===to.id)continue;
   const p=pick(w,teamRoster(w,from)),q=pick(w,teamRoster(w,to));if(!p||!q)continue;
-  from.roster=from.roster.filter(id=>id!==p.id);to.roster=to.roster.filter(id=>id!==q.id);from.roster.push(q.id);to.roster.push(p.id);p.teamId=to.id;q.teamId=from.id;
+  from.roster=from.roster.filter(id=>id!==p.id);to.roster=to.roster.filter(id=>id!==q.id);from.roster.push(q.id);to.roster.push(p.id);p.teamId=to.id;q.teamId=from.id;log.transfers.push({playerId:p.id,from:from.id,to:to.id},{playerId:q.id,from:to.id,to:from.id});
   if(i<3)addStory(w,'transfer',`${p.name.toUpperCase()} SWITCHES COLORS`,`${getTeam(w,to.id).name} sign ${p.name} from ${from.name}. The contract reportedly includes a hazard allowance and unlimited soup.`,to.id,p.id,undefined,2);
  }
  const expired:Player[]=[];
@@ -555,17 +570,69 @@ function offseason(w:World){
   if(p.age>=ageThreshold&&random(w)<.15+Math.max(0,p.age-ageThreshold)*.11)expired.push(p);
   p.stats=EMPTY_STATS();
  }
- for(const p of expired){p.retired=true;p.hallOfLegends=p.fame>=85||p.championships>=2||p.career.breaches>=55;w.retired.push(p);w.players=w.players.filter(x=>x.id!==p.id);const t=getTeam(w,p.teamId);t.roster=t.roster.filter(id=>id!==p.id);if(p.hallOfLegends) addStory(w,'milestone',`${p.name.toUpperCase()} ENTERS THE HALL OF LEGENDS`,`${p.name} retires with a legacy score of ${p.fame}, ${p.career.breaches} Breaches and ${p.championships} world titles. The portrait is hung where future generations can be suitably intimidated.`,t.id,p.id,undefined,5);else if(p.career.breaches>35||p.championships>=2)addStory(w,'milestone',`FAREWELL TO ${p.name.toUpperCase()}`,`${p.name} retires after ${p.seasons} seasons, ${p.career.breaches} Breaches and ${p.championships} world titles. The retirement speech was briefly interrupted by a goblin with a trumpet.`,t.id,p.id,undefined,3);}
+ for(const p of expired){p.retired=true;p.retiredSeason=w.season;log.retired.push(p.id);p.hallOfLegends=p.fame>=85||p.championships>=2||p.career.breaches>=55;w.retired.push(p);w.players=w.players.filter(x=>x.id!==p.id);const t=getTeam(w,p.teamId);t.roster=t.roster.filter(id=>id!==p.id);if(p.hallOfLegends) addStory(w,'milestone',`${p.name.toUpperCase()} ENTERS THE HALL OF LEGENDS`,`${p.name} retires with a legacy score of ${p.fame}, ${p.career.breaches} Breaches and ${p.championships} world titles. The portrait is hung where future generations can be suitably intimidated.`,t.id,p.id,undefined,5);else if(p.career.breaches>35||p.championships>=2)addStory(w,'milestone',`FAREWELL TO ${p.name.toUpperCase()}`,`${p.name} retires after ${p.seasons} seasons, ${p.career.breaches} Breaches and ${p.championships} world titles. The retirement speech was briefly interrupted by a goblin with a trumpet.`,t.id,p.id,undefined,3);}
  chronicleOffseason(w,expired);
- for(const t of w.teams){const count=Math.max(0,15-t.roster.length);for(let i=0;i<count;i++){const role=ROLES.filter(role=>teamRoster(w,t).filter(p=>p.role===role).length<2)[0]||pick(w,ROLES);const p=createPlayer(w,t,role,true);w.players.push(p);t.roster.push(p.id);}}
+ for(const t of w.teams){const count=Math.max(0,15-t.roster.length);for(let i=0;i<count;i++){const role=ROLES.filter(role=>teamRoster(w,t).filter(p=>p.role===role).length<2)[0]||pick(w,ROLES);const p=createPlayer(w,t,role,true);w.players.push(p);t.roster.push(p.id);log.rookies.push(p.id);}}
  // Compact long-term history, keep recent seasons full and all finals.
  w.matches=w.matches.filter(m=>m.season>=w.season-2||m.phase==='grand-final'||m.phase==='regional-final');
  w.news=w.news.slice(0,450);
 }
 /** Resolve a single fixture without advancing the calendar: used by Watch Match and Quick Result. */
-export function resolveMatch(w:World,id:string):World { const m=w.matches.find(x=>x.id===id); if(!m) throw new Error('That fixture is not in this chronicle.'); if(m.season!==w.season||m.week!==w.week) throw new Error('Only current fixtures may be resolved directly.'); simulateMatch(w,m); w.lastUpdated=Date.now(); return w; }
+export function resolveMatch(w:World,id:string):World { const m=w.matches.find(x=>x.id===id); if(!m) throw new Error('Ese partido no está en esta crónica.'); if(m.season!==w.season||m.week!==w.week) throw new Error('Solo se pueden jugar los partidos de esta semana.'); simulateMatch(w,m); w.lastUpdated=Date.now(); return w; }
+
+// ── Stages ──────────────────────────────────────────────────────────────────────────────
+// Every week belongs to a stage. Showcase stages (national finals, World Cup groups, semifinals,
+// the Grand Final) and the awards gala block the calendar: advanceOneWeek refuses to run until
+// every showcase fixture has been played and every award revealed.
+export const SHOWCASE_WEEKS:Record<number,ShowcaseId>={[SEASON.NATIONAL_FINAL]:'national-finals',[SEASON.WORLD_GROUPS]:'world-groups',[SEASON.WORLD_SEMI]:'world-semis',[SEASON.WORLD_FINAL]:'grand-final'};
+export class StageBlockedError extends Error{constructor(message:string){super(message);this.name='StageBlockedError';}}
+function stageKindOf(week:number):StageState['kind']{
+ if(SHOWCASE_WEEKS[week])return 'showcase';
+ if(week===SEASON.AWARDS)return 'awards';
+ if(week===SEASON.MARKET)return 'market';
+ if(week===SEASON.NEW_SEASON)return 'preseason';
+ return 'league';
+}
+/** The gala's running order: positional awards, Rookie of the Year, the Golden Gargoyle (MVP), then records broken this season. */
+export function galaItems(w:World):GalaItem[]{
+ const season=w.awards.filter(a=>a.season===w.season);
+ const order=[...ROLES.map(r=>POSITION_AWARD[r]),'Rookie of the Year','Golden Gargoyle'];
+ const items:GalaItem[]=[];
+ for(const name of order)for(const a of season.filter(x=>x.award===name))items.push({kind:'award',award:a.award,playerId:a.playerId,teamId:a.teamId});
+ const records=w.records.filter(r=>r.season===w.season).sort((a,b)=>(a.scope===b.scope?0:a.scope==='career'?-1:1)||b.value-a.value).slice(0,4);
+ for(const r of records)items.push({kind:'record',stat:r.stat,scope:r.scope,value:r.value,playerId:r.playerId,teamId:r.teamId});
+ return items;
+}
+/** Set up the stage for the week the world has just entered. The gala's awards are decided on arrival. */
+function enterWeek(w:World){
+ const kind=stageKindOf(w.week);
+ if(kind==='awards'&&!w.awards.some(a=>a.season===w.season))annualAwards(w);
+ w.stage={season:w.season,week:w.week,kind,showcase:SHOWCASE_WEEKS[w.week],introSeen:false,revealed:0,total:kind==='awards'?galaItems(w).length:0};
+}
+/** The current stage, rebuilt if the save predates stages or the stored one is stale. */
+export function currentStage(w:World):StageState{
+ if(!w.stage||w.stage.season!==w.season||w.stage.week!==w.week)enterWeek(w);
+ return w.stage!;
+}
+export const currentFixtures=(w:World)=>matchesIn(w,w.week);
+export const pendingFixtures=(w:World)=>matchesIn(w,w.week).filter(m=>m.homeScore===null);
+/** Showcases are complete when every fixture is played; the gala when every award is revealed. */
+export function isStageComplete(w:World):boolean{
+ const stage=currentStage(w);
+ if(stage.kind==='showcase')return pendingFixtures(w).length===0;
+ if(stage.kind==='awards')return stage.revealed>=stage.total;
+ return true;
+}
+/** Showcase intro dismissed: the match list opens. */
+export function dismissIntro(w:World):World{const stage=currentStage(w);if(stage.kind==='showcase')stage.introSeen=true;return w;}
+/** Reveal the next award at the gala. */
+export function revealAward(w:World):World{const stage=currentStage(w);if(stage.kind==='awards')stage.revealed=Math.min(stage.total,stage.revealed+1);return w;}
+/** "Simulate to the next event" stops on any week that is not a plain league week. */
+export const isEventStage=(w:World)=>currentStage(w).kind!=='league';
 export function advanceOneWeek(w:World):World {
- const week=w.week;for(const p of w.players)if(p.injury>0)p.injury--;const fixtures=matchesIn(w,week);
+ const stage=currentStage(w);
+ if(!isStageComplete(w))throw new StageBlockedError(stage.kind==='awards'?'Aún quedan premios por revelar en la Gala.':`Aún quedan ${pendingFixtures(w).length} partidos por jugar en este evento.`);
+ const week=w.week;const fixtures=matchesIn(w,week);
  for(const m of fixtures)simulateMatch(w,m);
  if(week<=SEASON.WORLD_FINAL&&fixtures.length)pickHeadline(w,fixtures);
  if(week===SEASON.LEAGUE_END)setupRegional(w);
@@ -574,7 +641,6 @@ export function advanceOneWeek(w:World):World {
  if(week===SEASON.WORLD_GROUPS)setupWorldSemis(w);
  if(week===SEASON.WORLD_SEMI)setupFromPrevious(w,SEASON.WORLD_SEMI,'world-semi','grand-final');
  if(week===SEASON.WORLD_FINAL){const final=matchesIn(w,SEASON.WORLD_FINAL,'grand-final')[0];if(final?.winner){const winner=getTeam(w,final.winner);winner.worldTitles++;for(const p of teamRoster(w,winner)){p.championships++;p.fame+=25;}w.trophies.push({season:w.season,competition:'GRAND RIFT CHAMPIONSHIP',teamId:winner.id,runnerUpId:final.home===winner.id?final.away:final.home});w.history.unshift({season:w.season,teamId:winner.id,description:`World champions · ${winner.name}`});}}
- if(week===SEASON.AWARDS)annualAwards(w);
  chronicleWeek(w,week,fixtures);
  if(week===SEASON.MARKET){
   w.seasonArchive??=[];
@@ -583,14 +649,28 @@ export function advanceOneWeek(w:World):World {
   offseason(w);addStory(w,'roundup',`YEAR ${w.season} CLOSES — A NEW WORLD AWAITS`,`Contracts have changed hands, some heroes have retired, and the league claims to have repaired most of the stadiums. The next season approaches.`,undefined,undefined,undefined,3);}
  if(week===SEASON.NEW_SEASON){w.season++;w.week=1;seedSchedule(w);addStory(w,'roundup',`YEAR ${w.season} IS HERE`,`Forty-eight clubs. Four elemental countries. One world championship. The accountants have approved a fresh season of extremely expensive violence.`,undefined,undefined,undefined,3);}
  else w.week++;
+ // Injuries heal as the new week begins, before any of its fixtures can be played.
+ for(const p of w.players)if(p.injury>0)p.injury--;
+ enterWeek(w);
  w.lastUpdated=Date.now();return w;
 }
-export function simulateWeeks(world:World,n:number):World{const w=structuredClone(world) as World;for(let i=0;i<n;i++)advanceOneWeek(w);return w;}
+/**
+ * Headless play for tests, scripts and balance runs: plays any showcase fixtures, reveals the
+ * whole gala, then advances. The UI never calls this; players resolve showcases themselves.
+ */
+export function advanceWeekAuto(w:World):World{
+ const stage=currentStage(w);
+ if(stage.kind==='showcase'){stage.introSeen=true;for(const m of pendingFixtures(w))simulateMatch(w,m);}
+ if(stage.kind==='awards')stage.revealed=stage.total;
+ return advanceOneWeek(w);
+}
+export function simulateWeeks(world:World,n:number):World{const w=structuredClone(world) as World;for(let i=0;i<n;i++)advanceWeekAuto(w);return w;}
 export function upcoming(w:World){return w.matches.filter(m=>m.season===w.season&&m.week===w.week);}
 export function recent(w:World){return [...w.matches].filter(m=>m.homeScore!==null).reverse();}
 export function topPlayers(w:World,stat:'breaches'|'tackles'|'interceptions'|'rating'|'knockouts',n=10){return [...w.players].sort((a,b)=>stat==='rating'?b.rating-a.rating:b.stats[stat]-a.stats[stat]||b.rating-a.rating).slice(0,n);}
 export function summarize(w:World){const completed=w.matches.filter(m=>m.homeScore!==null&&m.season===w.season).length;return {completed,active:w.players.length,clubs:w.teams.length,stories:w.news.length,champions:w.trophies.filter(x=>x.competition==='GRAND RIFT CHAMPIONSHIP').length};}
 // Fill in fields added after a save was written, so older universes keep loading.
+// Callers must reject legacy 80-club worlds first (see isLegacyWorld).
 export function normalizeWorld(w:World):World{
  w.awards??=[];w.seasonArchive??=[];
  // v1 -> v2: storylines and the records table.
@@ -598,6 +678,20 @@ export function normalizeWorld(w:World):World{
  w.storylines??=[];if(!w.records)rebuildRecords(w);
  for(const t of w.teams){t.rivalHeat??=30;t.rivalRecord??={w:0,d:0,l:0};}
  for(const p of [...w.players,...w.retired]){p.stats.blocks??=0;p.career.blocks??=0;p.stats.rushingYards??=p.stats.distance??0;p.career.rushingYards??=p.career.distance??0;p.stats.passingYards??=0;p.career.passingYards??=0;p.fame??=(p.championships??0)*25+(p.career?.mvp??0)*2;p.hallOfLegends??=false;if((p.race as string)==='Satyr')p.race='Giantkin';}
- w.version=3;
+ // v3 -> v4: stable art keys. Clubs are matched to the authored list by their English city, else by position in their country.
+ for(let r=0;r<4;r++)w.teams.filter(t=>t.region===r).forEach((t,i)=>{
+  if(t.artKey)return;
+  const at=CITIES[r].indexOf(t.city),k=at>=0?at:i;
+  t.artKey=CITIES[r][k]?slugKey(`${CITIES[r][k]} ${NICKNAMES[r][k]}`):slugKey(t.name);
+ });
+ for(const p of [...w.players,...w.retired]){
+  if(p.portraitKey)continue;
+  const max=PORTRAIT_COUNTS[p.race]-1;
+  if(!(p.portrait>=1&&p.portrait<=max))p.portrait=1+hashIndex(p.id,max);
+  p.portraitKey=portraitKeyOf(p.race,p.portrait);
+ }
+ w.version=CURRENT_VERSION;
+ currentStage(w);
  return w;
 }
+const hashIndex=(s:string,n:number)=>{let h=0;for(let i=0;i<s.length;i++)h=(Math.imul(h,31)+s.charCodeAt(i))>>>0;return h%n;};

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import type { Match } from '../types';
 import { REGIONS } from '../types';
-import { upcoming } from '../engine';
+import { currentStage, upcoming } from '../engine';
 import { PHASE_NAME, useGame } from '../game/context';
 import { roman } from '../art/hash';
 import { Blank, Choice, Pick } from '../ui/bits';
@@ -40,7 +40,7 @@ export function Lists() {
             {p === 'league' && list.length > 12 && <p className="aside-note">…and {list.length - 12} more league contests across the realms.</p>}
           </div>
         )) : <Blank>No contests are scheduled this week. The athletes are recovering, or pretending to.</Blank>}
-        {next.length > 0 && <button type="button" className="gilt-button spaced-button" disabled={busy || locked} onClick={() => advance(1)}>Play this week's contests</button>}
+        {next.length > 0 && currentStage(w).kind === 'league' && <button type="button" className="gilt-button spaced-button" disabled={busy || locked} onClick={() => advance(1)}>Play this week's contests</button>}
       </section>
 
       <section className="page recto">

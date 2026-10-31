@@ -126,11 +126,11 @@ function Field({ arms }: { arms: Arms }) {
   return <>{parts}</>;
 }
 
-type ShieldProps = { team: Pick<Team, 'id' | 'nickname' | 'region' | 'name'>; size?: number; title?: boolean };
+type ShieldProps = { team: Pick<Team, 'id' | 'nickname' | 'region' | 'name'> & { artKey?: string }; size?: number; title?: boolean };
 
 function ShieldImpl({ team, size = 64, title = false }: ShieldProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const painted = paintedCrest(team.id, team.name);
+  const painted = paintedCrest(team.id, team.artKey);
   if (painted) return <img src={painted} width={size} height={size * 1.2} alt={title ? `Arms of ${team.name}` : ''} className="shield-img" draggable={false} />;
   const arms = armsOf(team);
   const path = SHIELD_PATHS[arms.shape];

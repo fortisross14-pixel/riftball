@@ -9,6 +9,10 @@ export type Game = {
   player: (id: string) => Player | undefined;
   advance: (weeks: number) => void;
   resolveFixture: (id: string) => Promise<boolean>;
+  resolveFixtures: (ids: string[]) => boolean;
+  dismissIntro: () => void;
+  revealAward: () => void;
+  simulateToNextEvent: () => void;
   busy: boolean;
   locked: boolean;
   importFile: (f: File) => Promise<boolean>;

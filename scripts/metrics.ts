@@ -1,5 +1,5 @@
 // Long-run balance metrics. Usage: npx tsx scripts/metrics.ts [seasons] [seed,seed,...]
-import { advanceOneWeek, createWorld, getTeam } from '../src/engine';
+import { advanceWeekAuto, createWorld, getTeam } from '../src/engine';
 import { REGIONS } from '../src/types';
 import type { World } from '../src/types';
 
@@ -15,7 +15,7 @@ for (const seed of seeds) {
   const t0 = Date.now();
   let tenYear = 0;
   while (w.season <= seasons) {
-    advanceOneWeek(w);
+    advanceWeekAuto(w);
     if (w.week === 25) {
       const mvp = w.players.find(p => p.stats.mvp > 0);
       if (mvp) mvpRoles[mvp.role] = (mvpRoles[mvp.role] ?? 0) + 1;
