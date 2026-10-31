@@ -48,9 +48,50 @@ const ROLE_WEIGHT:Record<Role,Partial<Record<StatKey,number>>>= {
  Raider:{speed:2.5,tackling:2,positioning:2,awareness:2,agility:1.5},
  Trickster:{agility:3,handling:2.5,speed:1.5,awareness:2,passing:1}
 };
-const TRAITS=['Relentless','Showboat','Ice-Cold','Undisciplined','Fan Favorite','Tactician','Hard-Nosed','Iron Will','Hot-Headed','Clutch Performer','Born Leader','Reckless'];
-const ABILITIES=['Ironhide','Blinkstep','Grave Grip','Perfect Spiral','Thundercharge','Second Wind','Trickster’s Luck','Iron Resolve','Sure Hands','Bonebreaker'];
-const PHILOSOPHIES=['IRON WALL','SILVER ARROW','STAMPede','MISCHIEF','CLOCKWORK','SWARM'];
+// Every trait has a mechanical effect in the match engine (see simulateMatch) or the offseason.
+export const TRAIT_EFFECTS:Record<string,string>={
+ 'Relentless':'Barely tires: ignores most late-game fatigue, and runs harder when the team is behind.',
+ 'Showboat':'Breaks more big plays and adds extra metres to them, but fumbles more often.',
+ 'Ice-Cold':'Far more accurate on gate shots, and their passes are rarely intercepted.',
+ 'Undisciplined':'Prone to false starts and illegal blocks that cost 5 metres and a down.',
+ 'Fan Favorite':'Lifts the home crowd for an extra home edge, and grows the club fanbase every year.',
+ 'Tactician':'Organises teammates: the whole defence reads plays better while they are on the field.',
+ 'Hard-Nosed':'Wins short-yardage and goal-line collisions, on offence and defence.',
+ 'Iron Will':'Much lower injury risk, and recovers from injuries faster.',
+ 'Hot-Headed':'Commits personal fouls on defence, gifting 10 metres and a fresh set of downs.',
+ 'Clutch Performer':'Raises their game in the final quarter and in knockout matches.',
+ 'Born Leader':'The whole lineup plays a little better while they are on the field.',
+ 'Reckless':'Lands more knockouts but gets hurt far more often, sometimes by their own tackles.'
+};
+const TRAITS=Object.keys(TRAIT_EFFECTS);
+// Abilities are one-shot effects. Each use spends one of the team's two Spark charges per match.
+export const ABILITY_EFFECTS:Record<string,string>={
+ 'Ironhide':'Spark: cancels an injury the moment it happens.',
+ 'Blinkstep':'Spark: blinks past the defence for a guaranteed 15-25 metre run.',
+ 'Grave Grip':'Spark (defence): rips the ball loose on a tackle, forcing a turnover.',
+ 'Perfect Spiral':'Spark: a 20-35 metre pass that cannot miss or be intercepted.',
+ 'Thundercharge':'Spark: a short-yardage or goal-line run that always gains the yards needed.',
+ 'Second Wind':'Spark: removes all fatigue for the rest of the match.',
+ 'Trickster’s Luck':'Spark: turns a failed play into a success.',
+ 'Iron Resolve':'Spark (defence): a guaranteed stop near the goal line.',
+ 'Sure Hands':'Spark: cancels a fumble or an interception.',
+ 'Bonebreaker':'Spark (defence): a guaranteed knockout tackle.'
+};
+const ABILITIES=Object.keys(ABILITY_EFFECTS);
+// Philosophies are play-calling profiles.
+// pass: share of plays that are passes. aggression: big plays and hard hits, but more turnovers.
+// gate: willingness to kick gate shots on a final down. tempo: drives per match and fatigue. defense: flat defensive bonus.
+export type PlayProfile={pass:number;aggression:number;gate:number;tempo:number;defense:number;summary:string};
+export const PHILOSOPHY_PROFILES:Record<string,PlayProfile>={
+ 'IRON WALL':{pass:.32,aggression:.35,gate:.75,tempo:.3,defense:2.5,summary:'Defence first, slow drives, takes the gate shot whenever in range.'},
+ 'SILVER ARROW':{pass:.62,aggression:.55,gate:.4,tempo:.6,defense:0,summary:'Pass-heavy and quick.'},
+ 'STAMPEDE':{pass:.22,aggression:.65,gate:.2,tempo:.5,defense:1,summary:'Runs straight through you and rarely settles for a gate.'},
+ 'MISCHIEF':{pass:.48,aggression:.75,gate:.35,tempo:.7,defense:-1,summary:'Trick plays: big gains, bigger turnovers.'},
+ 'CLOCKWORK':{pass:.45,aggression:.2,gate:.8,tempo:.3,defense:.5,summary:'Low risk, ball control, almost no turnovers.'},
+ 'SWARM':{pass:.38,aggression:.6,gate:.4,tempo:.8,defense:.5,summary:'High tempo and relentless defensive pressure.'}
+};
+const PHILOSOPHIES=Object.keys(PHILOSOPHY_PROFILES);
+export const playProfile=(philosophy:string)=>PHILOSOPHY_PROFILES[philosophy.toUpperCase()]??PHILOSOPHY_PROFILES['CLOCKWORK'];
 const PALETTE:[string,string][][]=[
  [['#cb634b','#faac6f'],['#a67c44','#edc389'],['#7f7e9d','#cec5e6'],['#be5349','#edbf93'],['#456c79','#9ed4d6']],
  [['#669e8d','#b0d6b5'],['#809abf','#ccd6ef'],['#a48cc7','#e0c8ee'],['#c5a870','#f9e3b0'],['#6d9aa5','#b6e0db']],
@@ -172,7 +213,9 @@ export function lineup(w:World,t:Team):Player[]{
 function teamRating(w:World,t:Team,starters=lineup(w,t)):number{ if(!starters.length)return 32; return starters.reduce((s,p)=>s+p.rating,0)/starters.length + t.power*.075;}
 const mean=(players:Player[],...keys:StatKey[])=>players.length?players.reduce((s,p)=>s+keys.reduce((sum,k)=>sum+p.attrs[k],0)/keys.length,0)/players.length:42;
 function addStat(p:Player,key:keyof SeasonStats,amount=1){p.stats[key]+=amount;p.career[key]+=amount;}
-function addXp(p:Player,amount:number){p.xp+=amount;const goal=80+p.level*25;if(p.xp>=goal&&p.level<15){p.xp-=goal;p.level++;if(p.rating<p.potential&&p.age<=growthEnd(p.race)){const keys=Object.keys(ROLE_WEIGHT[p.role]) as StatKey[];const key=keys[(p.level+p.id.length)%keys.length];p.attrs[key]=clamp(p.attrs[key]+1,1,99);p.rating=positionRating(p.attrs,p.role);}}}
+// XP needed for the next level grows with the square of the level, so level 15 is reserved for long, busy careers.
+export const xpGoal=(level:number)=>90+level*level*7;
+function addXp(p:Player,amount:number){p.xp+=amount;const goal=xpGoal(p.level);if(p.xp>=goal&&p.level<15){p.xp-=goal;p.level++;if(p.rating<p.potential&&p.age<=growthEnd(p.race)){const keys=Object.keys(ROLE_WEIGHT[p.role]) as StatKey[];const key=keys[(p.level+p.id.length)%keys.length];p.attrs[key]=clamp(p.attrs[key]+1,1,99);p.rating=positionRating(p.attrs,p.role);}}}
 function event(m:Match,minute:number,kind:MatchEvent['kind'],teamId:string,player:Player|undefined,text:string,h:number,a:number,x:number){
  if(m.events.length<42)m.events.push({minute,kind,teamId,playerId:player?.id,text,homeScore:h,awayScore:a,x:clamp(x,4,96)});
 }
@@ -190,7 +233,8 @@ const CARRY:Record<Role,number>={Runner:6,Trickster:2,Breaker:1.5,Raider:1,Basti
 const CATCH:Record<Role,number>={Runner:2,Trickster:3,Raider:2.5,Breaker:1,Bastion:.2,Thrower:.1};
 const TACKLE:Record<Role,number>={Breaker:3,Raider:3,Bastion:1.5,Trickster:1.2,Runner:.8,Thrower:.5};
 const COVER:Record<Role,number>={Raider:3,Trickster:2,Breaker:1.5,Runner:.8,Bastion:.4,Thrower:.4};
-const passRate=(philosophy:string)=>philosophy==='SILVER ARROW'?.62:philosophy==='STAMPEDE'?.22:.42;
+const has=(p:Player,trait:string)=>p.trait===trait;
+const count=(line:Player[],trait:string)=>line.filter(p=>p.trait===trait).length;
 function rivalryResult(w:World,m:Match){
  const home=getTeam(w,m.home),away=getTeam(w,m.away);if(home.rival!==away.id)return;
  const h=m.homeScore!,a=m.awayScore!,margin=Math.abs(h-a);
@@ -200,49 +244,90 @@ function rivalryResult(w:World,m:Match){
 export function simulateMatch(w:World,m:Match){
  if(m.homeScore!==null)return;
  const home=getTeam(w,m.home),away=getTeam(w,m.away),homeLine=lineup(w,home),awayLine=lineup(w,away);
- const sides=[home,away],lines=[homeLine,awayLine];const score=[0,0];
- // A small home edge that grows with the crowd. The Grand Final is played on neutral ground.
- const homeEdge=m.phase==='grand-final'?0:.2+home.fanbase*.01;
- const strengths=[teamRating(w,home,homeLine)+homeEdge,teamRating(w,away,awayLine)];
- // Each side's defensive shape: how well it reads plays, and how heavy its front line is.
- const shape=lines.map(l=>({read:mean(l,'positioning','awareness'),wall:mean(l.filter(p=>p.role==='Bastion'||p.role==='Breaker'),'strength','blocking')}));
- const possessions=int(w,13,17),first=int(w,0,1);const spark=[2,2];let minute=0;
+ const sides=[home,away],lines=[homeLine,awayLine],profiles=[playProfile(home.philosophy),playProfile(away.philosophy)];const score=[0,0];
+ const knockout=m.phase!=='league';
+ // A small home edge that grows with the crowd (and its favourite players). The Grand Final is played on neutral ground.
+ const homeEdge=m.phase==='grand-final'?0:.2+home.fanbase*.01+count(homeLine,'Fan Favorite')*.4;
+ // Born Leaders lift the whole lineup.
+ const strengths=[0,1].map(s=>teamRating(w,sides[s],lines[s])+(s===0?homeEdge:0)+Math.min(2,count(lines[s],'Born Leader')));
+ // Each side's defensive shape: how well it reads plays (Tacticians help), and how heavy its front line is.
+ const shape=lines.map((l,s)=>({read:mean(l,'positioning','awareness')+Math.min(3,count(l,'Tactician')*1.5)+profiles[s].defense,wall:mean(l.filter(p=>p.role==='Bastion'||p.role==='Breaker'),'strength','blocking')+profiles[s].defense}));
+ // Tempo: fast teams play more drives and tire everyone out.
+ const tempo=profiles[0].tempo+profiles[1].tempo;
+ const possessions=int(w,12,16)+Math.round(tempo),first=int(w,0,1);const spark=[2,2];let minute=0;
+ const fresh=new Set<string>(); // players who used Second Wind
+ const sideOf=(p:Player)=>homeLine.includes(p)?0:1;
+ const sparkEvent=(s:number,p:Player,text:string,x:number)=>{spark[s]--;addXp(p,5);event(m,minute,'spark',sides[s].id,p,`${p.ability.toUpperCase()}! ${text}`,score[0],score[1],x);};
+ // Injuries respect Iron Will, Reckless and the Ironhide ability.
+ const hurt=(p:Player,min:number,max:number,text:string,x:number)=>{
+  const s=sideOf(p);
+  if(p.ability==='Ironhide'&&spark[s]>0){sparkEvent(s,p,`${p.name} shrugs off the blow that should have ended their day.`,x);return;}
+  const weeks=Math.max(1,int(w,min,max)-(has(p,'Iron Will')?1:0));
+  p.injury=Math.max(p.injury,weeks);addStat(p,'injuries');event(m,minute,'injury',sides[s].id,p,text,score[0],score[1],x);
+ };
+ const injuryRisk=(p:Player)=>has(p,'Iron Will')?.4:has(p,'Reckless')?1.5:1;
  for(let drive=0;drive<possessions;drive++){
-  const side=(drive+first)%2,attack=sides[side],defend=sides[1-side],off=lines[side],deff=lines[1-side];
-  // Fatigue builds over the match; high endurance shrugs it off.
-  const fatigue=drive/possessions,tired=(p:Player)=>fatigue*Math.max(0,85-p.attrs.endurance)*.13;
+  const side=(drive+first)%2,attack=sides[side],defend=sides[1-side],off=lines[side],deff=lines[1-side],plan=profiles[side],defPlan=profiles[1-side];
+  // Fatigue builds over the match; high endurance shrugs it off, Relentless players barely notice, Second Wind resets it.
+  const fatigue=drive/possessions,tiredness=fatigue*(.75+tempo*.25);
+  const tired=(p:Player)=>fresh.has(p.id)?0:tiredness*Math.max(0,85-p.attrs.endurance)*.13*(has(p,'Relentless')?.3:1);
+  // Clutch Performers raise their game in the final quarter and in knockouts.
+  const clutch=(p:Player)=>has(p,'Clutch Performer')?(fatigue>=.75?4:0)+(knockout?2:0):0;
   const linemen=off.filter(p=>p.role==='Bastion'||p.role==='Breaker');
   const passer=off.find(p=>p.role==='Thrower')??off.filter(p=>p.role!=='Bastion').sort((a,b)=>b.attrs.passing-a.attrs.passing)[0];
   let x=int(w,12,29),downs=4,target=x+12,steps=0;
   while(steps<11&&x<90){steps++;minute=Math.round(((drive+steps/12)/possessions)*32);
    // Short yardage and the goal line (x >= 80) are power situations: strength and blocking decide them.
    const power=target-x<=4||x>=80;
-   const isPass=random(w)<passRate(attack.philosophy)*(power?.6:1);
+   const isPass=random(w)<plan.pass*(power?.6:1);
    const blocker=pick(w,linemen.length?linemen:off);
    const carrier=isPass?pickWeighted(w,off.filter(p=>p!==passer),p=>CATCH[p.role]):pickWeighted(w,off,p=>CARRY[p.role]);
    const defender=pickWeighted(w,deff,p=>isPass?COVER[p.role]:TACKLE[p.role]);
    const c=carrier.attrs,b=blocker.attrs,d=defender.attrs;
+   // Undisciplined blockers jump early.
+   if(has(blocker,'Undisciplined')&&random(w)<.03){x=Math.max(5,x-5);downs--;event(m,minute,'penalty',attack.id,blocker,`FLAG! ${blocker.name} moves early. Five metres back, and a stern look from the referee.`,score[0],score[1],x);if(downs<=0)break;continue;}
    let attackValue:number,defenseValue:number;
    if(isPass){
     attackValue=passer.attrs.passing*.4+c.handling*.25+c[power?'strength':'agility']*.15+b.blocking*.2-(tired(passer)+tired(carrier))*.5;
     defenseValue=d.positioning*.35+d.awareness*.25+d.speed*.15+shape[1-side].read*.25-tired(defender);
    }else if(power){
-    attackValue=c.strength*.35+c.handling*.15+b.blocking*.35+b.strength*.15-(tired(carrier)+tired(blocker))*.5;
-    defenseValue=d.strength*.35+d.tackling*.35+shape[1-side].wall*.3-tired(defender);
+    attackValue=c.strength*.35+c.handling*.15+b.blocking*.35+b.strength*.15-(tired(carrier)+tired(blocker))*.5+(has(carrier,'Hard-Nosed')||has(blocker,'Hard-Nosed')?4:0);
+    defenseValue=d.strength*.35+d.tackling*.35+shape[1-side].wall*.3-tired(defender)+(has(defender,'Hard-Nosed')?4:0);
    }else{
     attackValue=c.speed*.3+c.agility*.3+c.handling*.1+b.blocking*.3-(tired(carrier)+tired(blocker))*.5;
     defenseValue=d.tackling*.4+d.speed*.2+shape[1-side].read*.4-tired(defender);
    }
+   attackValue+=clutch(carrier)+(isPass?clutch(passer):0)+(has(carrier,'Relentless')&&score[side]<score[1-side]?2:0);
+   defenseValue+=clutch(defender);
    const diff=(attackValue-defenseValue)*.017+(strengths[side]-strengths[1-side])*.009;
    const success=clamp((isPass?.64:power?.7:.72)+diff,.21,.9);
-   if(isPass&&random(w)<.02+Math.max(0,defenseValue-attackValue)*.0006){
-    addStat(defender,'interceptions');addXp(defender,8);event(m,minute,'interception',defend.id,defender,`${defender.name} STEALS possession! The crowd loses its collective mind.`,score[0],score[1],x);break;
+   // Spark abilities: offence first, then the defence's goal-line stand.
+   let forced:'success'|'fail'|undefined,gain=0;
+   if(spark[side]>0&&random(w)<.35){
+    if(!isPass&&!power&&carrier.ability==='Blinkstep'){gain=int(w,15,25);forced='success';sparkEvent(side,carrier,`${carrier.name} vanishes and reappears ${gain} metres downfield.`,x+gain);}
+    else if(!isPass&&power&&carrier.ability==='Thundercharge'){gain=x>=84?90-x:Math.max(target-x,int(w,3,6));forced='success';sparkEvent(side,carrier,`${carrier.name} becomes a thunderclap and drives ${gain} metres through the pile.`,x+gain);}
+    else if(isPass&&x<70&&passer.ability==='Perfect Spiral'){gain=int(w,20,35);forced='success';sparkEvent(side,passer,`${passer.name} launches a ${gain}-metre spiral that lands in ${carrier.name}'s hands like it was posted there.`,x+gain);}
+    else{const winded=[carrier,passer].find(p=>p.ability==='Second Wind'&&!fresh.has(p.id)&&fatigue>=.55);if(winded){fresh.add(winded.id);sparkEvent(side,winded,`${winded.name} gulps a glowing tonic. All fatigue is gone.`,x);}}
    }
+   if(!forced&&x>=80&&defender.ability==='Iron Resolve'&&spark[1-side]>0&&random(w)<.5){forced='fail';sparkEvent(1-side,defender,`${defender.name} plants their feet on the goal line. Nothing gets through.`,x);}
+   if(isPass&&!forced){
+    const pickRisk=(.02+Math.max(0,defenseValue-attackValue)*.0006)*(.8+plan.aggression*.4)*(has(passer,'Ice-Cold')?.6:1);
+    if(random(w)<pickRisk){
+     const saver=[carrier,passer].find(p=>p.ability==='Sure Hands');
+     if(saver&&spark[side]>0){forced='fail';sparkEvent(side,saver,`${saver.name} rips the ball back from ${defender.name}'s fingertips. No interception.`,x);}
+     else{addStat(defender,'interceptions');addXp(defender,8);event(m,minute,'interception',defend.id,defender,`${defender.name} STEALS possession! The crowd loses its collective mind.`,score[0],score[1],x);break;}
+    }
+   }
+   let succeeded=forced?forced==='success':random(w)<success;
+   if(!succeeded&&!forced){const lucky=[carrier,passer].find(p=>p.ability==='Trickster’s Luck');if(lucky&&spark[side]>0&&random(w)<.25){succeeded=true;sparkEvent(side,lucky,`The play was dead. ${lucky.name} winks at it, and it isn't any more.`,x);}}
    let tackled=false;
-   if(random(w)<success){
-    let gain=isPass?int(w,4,18):power?int(w,1,6):int(w,3,13);
-    // Agile ball carriers break more big plays in open space.
-    if(!power&&random(w)<clamp(.05+(c.agility-60)*.0025,.02,.15)){gain+=int(w,10,25);event(m,minute,'bigplay',attack.id,carrier,`${carrier.name} bursts through for ${gain} metres!`,score[0],score[1],x+gain);}
+   if(succeeded){
+    if(!gain){
+     gain=isPass?int(w,3,Math.round(12+plan.aggression*8)):power?int(w,1,6):int(w,3,14);
+     // Agile carriers, Showboats and aggressive schemes break more big plays in open space.
+     const bigChance=clamp(.05+(c.agility-60)*.0025,.02,.15)*(.7+plan.aggression*.6)*(has(carrier,'Showboat')?1.6:1);
+     if(!power&&random(w)<bigChance){gain+=int(w,10,25)+(has(carrier,'Showboat')?int(w,3,8):0);event(m,minute,'bigplay',attack.id,carrier,`${carrier.name} bursts through for ${gain} metres!`,score[0],score[1],x+gain);}
+    }
     x+=gain;addStat(carrier,'distance',gain);if(isPass)addStat(passer,'passes');else if(gain>=5)addStat(blocker,'blocks');
     if(x>=90){
      score[side]+=5;addStat(carrier,'breaches');addXp(carrier,12);
@@ -256,24 +341,36 @@ export function simulateMatch(w:World,m:Match){
     downs--;
     if(!isPass){
      tackled=true;
-     // Light, twitchy carriers cough the ball up more; strong ones hold on.
-     if(random(w)<clamp(.045+(c.agility-c.strength)*.0012-(power?.015:0),.012,.11)){addStat(defender,'tackles');event(m,minute,'fumble',attack.id,carrier,`${carrier.name} fumbles under a devastating hit from ${defender.name}!`,score[0],score[1],x);break;}
+     // Light, twitchy carriers cough the ball up more; strong ones hold on. Showboats and aggressive schemes fumble more.
+     const fumbleRisk=clamp(.045+(c.agility-c.strength)*.0012-(power?.015:0),.012,.11)*(.8+plan.aggression*.4)*(has(carrier,'Showboat')?1.5:1);
+     if(forced!=='fail'&&random(w)<fumbleRisk){
+      if(carrier.ability==='Sure Hands'&&spark[side]>0)sparkEvent(side,carrier,`${carrier.name} fumbles, then catches their own fumble. Possession kept.`,x);
+      else{addStat(defender,'tackles');event(m,minute,'fumble',attack.id,carrier,`${carrier.name} fumbles under a devastating hit from ${defender.name}!`,score[0],score[1],x);break;}
+     }
     }
    }
    if(tackled){
     addStat(defender,'tackles');
-    if(random(w)<clamp(.008+(d.strength-60)*.0004+(d.tackling-60)*.0003,.003,.04)){
+    // Hot-Headed defenders take a swing after the whistle.
+    if(has(defender,'Hot-Headed')&&random(w)<.03){x=Math.min(89,x+10);downs=4;target=x+12;event(m,minute,'penalty',defend.id,defender,`FLAG! ${defender.name} keeps swinging after the whistle. Ten metres and a fresh set of downs.`,score[0],score[1],x);}
+    if(defender.ability==='Grave Grip'&&spark[1-side]>0&&x>=50&&random(w)<.25){addStat(defender,'interceptions');sparkEvent(1-side,defender,`A spectral hand rises from ${defender.name}'s glove and pulls the ball out of ${carrier.name}'s arms. Turnover!`,x);break;}
+    const bonebreaker=defender.ability==='Bonebreaker'&&spark[1-side]>0&&random(w)<.08;
+    const knockoutRisk=clamp(.008+(d.strength-60)*.0004+(d.tackling-60)*.0003,.003,.04)*(.7+defPlan.aggression*.6)*(has(defender,'Reckless')?1.8:1);
+    if(bonebreaker||random(w)<knockoutRisk){
+     if(bonebreaker)sparkEvent(1-side,defender,`${defender.name} hits ${carrier.name} so hard the replay has to be rated for mature audiences.`,x);
      addStat(defender,'knockouts');addXp(defender,4);event(m,minute,'knockout',defend.id,defender,`${defender.name} flattens ${carrier.name} with a spectacular, medically questionable tackle.`,score[0],score[1],x);
-     if(random(w)<.25){carrier.injury=Math.max(carrier.injury,int(w,1,5));addStat(carrier,'injuries');event(m,minute,'injury',attack.id,carrier,`${carrier.name} is carried off. The team physician looks concerned.`,score[0],score[1],x);}
-    }else if(random(w)<.001){carrier.injury=Math.max(carrier.injury,int(w,1,3));addStat(carrier,'injuries');event(m,minute,'injury',attack.id,carrier,`${carrier.name} limps off after an awkward landing.`,score[0],score[1],x);}
+     if(random(w)<(bonebreaker?.35:.25)*injuryRisk(carrier))hurt(carrier,1,5,`${carrier.name} is carried off. The team physician looks concerned.`,x);
+    }else if(random(w)<.001*injuryRisk(carrier))hurt(carrier,1,3,`${carrier.name} limps off after an awkward landing.`,x);
+    if(has(defender,'Reckless')&&random(w)<.0012)hurt(defender,1,3,`${defender.name} tackles so recklessly they injure themselves.`,x);
    }
-   if(spark[side]>0&&x>65&&random(w)<.11){spark[side]--;event(m,minute,'bigplay',attack.id,carrier,`${carrier.name} unleashes ${carrier.ability.toUpperCase()}! The referee checks the spellbook.`,score[0],score[1],x);}
-   if(downs===0){if(x>=55&&random(w)<.42){const kicker=passer;const probability=clamp(.72-(90-x)*.01+(kicker.attrs.composure-50)*.004,.23,.87);if(random(w)<probability){score[side]+=2;addStat(kicker,'gates');event(m,minute,'gate',attack.id,kicker,`GATE SHOT! ${kicker.name} threads it through the iron uprights!`,score[0],score[1],x);}else event(m,minute,'whistle',attack.id,kicker,`${kicker.name} misses the gate. The mascot makes no attempt to hide its disappointment.`,score[0],score[1],x);}
+   if(downs<=0){
+    // Final down: the philosophy decides whether to kick a gate shot. Ice-Cold kickers rarely miss.
+    if(x>=70-plan.gate*25&&random(w)<.2+plan.gate*.5){const kicker=passer;const probability=clamp(.72-(90-x)*.01+(kicker.attrs.composure-50)*.004+(has(kicker,'Ice-Cold')?.12:0)+clutch(kicker)*.02,.23,.92);if(random(w)<probability){score[side]+=2;addStat(kicker,'gates');event(m,minute,'gate',attack.id,kicker,`GATE SHOT! ${kicker.name} threads it through the iron uprights!`,score[0],score[1],x);}else event(m,minute,'whistle',attack.id,kicker,`${kicker.name} misses the gate. The mascot makes no attempt to hide its disappointment.`,score[0],score[1],x);}
     break;}
   }
  }
  // Very rare draw-breaker only in knockout games.
- if(m.phase!=='league'&&score[0]===score[1]){const fav=strengths[0]+int(w,-20,20)>strengths[1]+int(w,-20,20)?0:1;score[fav]+=5;const finisher=pickWeighted(w,lines[fav],p=>CARRY[p.role]);addStat(finisher,'breaches');event(m,34,'breach',sides[fav].id,finisher,`SUDDEN BREACH! ${finisher.name} wins it in overtime!`,score[0],score[1],95);}
+ if(knockout&&score[0]===score[1]){const fav=strengths[0]+int(w,-20,20)>strengths[1]+int(w,-20,20)?0:1;score[fav]+=5;const finisher=pickWeighted(w,lines[fav],p=>CARRY[p.role]+(has(p,'Clutch Performer')?3:0));addStat(finisher,'breaches');event(m,34,'breach',sides[fav].id,finisher,`SUDDEN BREACH! ${finisher.name} wins it in overtime!`,score[0],score[1],95);}
  m.homeScore=score[0];m.awayScore=score[1];w.totalGames++;if(score[0]!==score[1])m.winner=score[0]>score[1]?m.home:m.away;
  for(const row of lines)for(const p of row){addStat(p,'games');addXp(p,int(w,10,20));}
  if(m.phase==='league')recordResult(w,m);
@@ -345,6 +442,16 @@ function annualAwards(w:World){
 function offseason(w:World){
  // Old grudges cool slowly.
  for(const t of w.teams)t.rivalHeat=Math.round(t.rivalHeat*.85);
+ // Clubs rise and fall: results move budget and fanbase, and budget and results move club power.
+ // A pull back toward the middle keeps dynasties from lasting forever.
+ for(const t of w.teams){
+  const r=t.record,g=r.w+r.d+r.l,share=g?(r.w+r.d*.5)/g:.5;
+  const champion=w.trophies.some(x=>x.season===w.season&&x.teamId===t.id&&x.competition==='GRAND RIFT CHAMPIONSHIP');
+  const favourites=teamRoster(w,t).filter(p=>p.trait==='Fan Favorite').length;
+  t.budget=clamp(Math.round(t.budget+(share-.5)*10+(t.division===0?1:-1)+(champion?3:0)+(50-t.budget)*.05+int(w,-3,3)),10,95);
+  t.fanbase=clamp(Math.round(t.fanbase+(share-.5)*4+(champion?3:0)+favourites+(55-t.fanbase)*.04+int(w,-1,1)),20,99);
+  t.power=clamp(Math.round(t.power+(share-.5)*12+(t.budget-50)*.06+(champion?2:0)+(60-t.power)*.12+int(w,-3,3)),30,95);
+ }
  // Promotion/relegation after the completed season.
  for(let r=0;r<4;r++){
   const top=sortedStandings(w,r,0),bottom=sortedStandings(w,r,1);

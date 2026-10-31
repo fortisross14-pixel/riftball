@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { advanceOneWeek, createWorld, getPlayer, getTeam, simulateWeeks, sortedStandings, teamRoster } from './engine';
+import { ABILITY_EFFECTS, PHILOSOPHY_PROFILES, TRAIT_EFFECTS, advanceOneWeek, createWorld, getPlayer, getTeam, simulateWeeks, sortedStandings, teamRoster } from './engine';
 import type { World } from './types';
 
 test('Founding a world creates 80 clubs, eight divisions and 1,200 unique athletes',()=>{
@@ -103,4 +103,37 @@ test('Home advantage is small: league home win rate stays between 45% and 58%',(
  const games=w.matches.filter(m=>m.phase==='league'&&m.homeScore!==null);
  const rate=games.filter(m=>m.homeScore!>m.awayScore!).length/games.length;
  assert.ok(rate>.45&&rate<.58,`home win rate ${rate}`);
+});
+
+test('Every trait, ability and philosophy is described, and every club uses a known philosophy',()=>{
+ const w=createWorld(31);
+ assert.equal(Object.keys(TRAIT_EFFECTS).length,12);assert.equal(Object.keys(ABILITY_EFFECTS).length,10);assert.equal(Object.keys(PHILOSOPHY_PROFILES).length,6);
+ for(const t of w.teams)assert.ok(PHILOSOPHY_PROFILES[t.philosophy],t.philosophy);
+ for(const p of w.players){assert.ok(TRAIT_EFFECTS[p.trait],p.trait);assert.ok(ABILITY_EFFECTS[p.ability],p.ability);}
+});
+
+test('Spark abilities and penalties happen in real matches and name what happened',()=>{
+ const w=createWorld(5);for(let i=0;i<18;i++)advanceOneWeek(w);
+ const events=w.matches.filter(m=>m.homeScore!==null).flatMap(m=>m.events);
+ const sparks=events.filter(e=>e.kind==='spark');
+ const used=new Set<string>();
+ for(const e of sparks){const p=getPlayer(w,e.playerId!)!;assert.ok(e.text.startsWith(p.ability.toUpperCase()+'!'),e.text);used.add(p.ability);}
+ assert.ok(used.size>=9,`abilities used: ${[...used].join(', ')}`);
+ assert.ok(events.some(e=>e.kind==='penalty'));
+});
+
+test('Iron Will athletes are injured less often than Reckless ones',()=>{
+ const w=createWorld(77);for(let i=0;i<18;i++)advanceOneWeek(w);
+ const rate=(trait:string)=>{const ps=w.players.filter(p=>p.trait===trait);return ps.reduce((s,p)=>s+p.stats.injuries,0)/ps.length;};
+ assert.ok(rate('Iron Will')<rate('Reckless'),`Iron Will ${rate('Iron Will')} vs Reckless ${rate('Reckless')}`);
+});
+
+test('Club power drifts with results, and max level stays rare over 30 seasons',()=>{
+ for(const {world} of runLong()){
+  const start=createWorld(world.seed);
+  const moved=world.teams.filter((t,i)=>Math.abs(t.power-start.teams[i].power)>=8).length;
+  assert.ok(moved>=20,`only ${moved} clubs changed power`);
+  const maxed=world.players.filter(p=>p.level>=15).length/world.players.length;
+  assert.ok(maxed<.03,`max level share ${maxed}`);
+ }
 });
