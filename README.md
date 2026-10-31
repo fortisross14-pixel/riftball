@@ -1,113 +1,82 @@
-# RIFTBALL — World Chronicle (Proof of Concept)
+# RIFTBALL — la Crónica del Mundo
 
-A playable, spectator-first fantasy sports world simulator built with Vite, React 19 and TypeScript. **No backend or API keys needed.**
+Un simulador de un mundo deportivo de fantasía que se escribe solo. Tú pasas las páginas, eliges qué partidos ver y lees lo que pasa. Hecho con Vite, React 19 y TypeScript. **Sin servidor ni claves de API**: todo funciona en el navegador, también sin conexión.
 
-## Run locally
+*A self-writing fantasy sports world, in Spanish. Vite + React 19 + TypeScript, no backend.*
 
-Requires Node.js 20.19+ or Node.js 22.12+.
+## Cómo arrancarlo
+
+Necesita Node.js 20.19+ o 22.12+.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the address printed by Vite (usually `http://localhost:5173`).
+Abre la dirección que muestra Vite (normalmente `http://localhost:5173`).
 
-For deployment:
+Para publicar:
 
 ```bash
-npm run test
-npm run build
+npm test          # todas las pruebas (tarda varios minutos)
+npm run build     # comprueba los tipos y genera dist/
 npm run preview
 ```
 
-The production output is in `dist/`. `vite.config.ts` uses `base: './'` for GitHub Pages and other subpath hosts.
+`vite.config.ts` usa `base: './'`, así que `dist/` funciona en GitHub Pages y en subcarpetas. Al hacer push a `main`, el flujo de GitHub Actions ejecuta `npm test`, compila y publica.
 
-## What's playable
+## Pruebas: rápidas y completas
 
-- Generate a seeded universe with **48 clubs / four permanent elemental countries / 720 active athletes / nine races**.
-- Simulate next week, four weeks, or use forward-only jumps that stop before National Finals, the World Cup, semifinals, and World Final.
-- Follow 22-week home-and-away national leagues, national finals, two four-club World Cup groups, semifinals and the World Final.
-- Resolve every current fixture individually through **Watch / Simulate Match** (spoiler-safe progressive replay) or **Quick Result** (immediate score plus the identical preserved match data).
-- Inspect player portraits, positional attributes, roles, rarity, abilities, progression, season/career statistics and injuries.
-- See **match scores, generated event logs, spoiler-safe match replays, complete new-match box scores, possession journals** and a schematic 2D pitch with ball location tracking.
-- Explore a Chronicle feed, club rosters, league standings, group tables, player rankings, and a Hall of Legends with legacy scores, all-time and season leaderboards.
-- **Persistent IndexedDB saves** and JSON export/import; an open tab detects competing saves and offers to reload the newest version.
-- Fully offline: fonts and artwork are bundled locally.
+| Orden | Qué ejecuta | Tiempo aprox. |
+|---|---|---|
+| `npm run test:fast` | Motor, etapas y eventos, guardado/importación, arte. Sin simulaciones largas. | unos segundos |
+| `npm test` | Todo lo anterior más las simulaciones largas: 10 y 30 temporadas, 5 semillas, igualdad de los partidos y variedad de la crónica. | varios minutos |
 
-## Recommended first five minutes
+Durante el desarrollo usa `npm run test:fast`; ejecuta `npm test` antes de publicar.
 
-1. Look at the Chronicle and open a club or star athlete.
-2. Click **ADVANCE WEEK** or its chevron to simulate **4 weeks**.
-3. Open Match Center and choose a completed fixture. Press **PLAY** to watch the spoiler-safe replay, then inspect **BOX SCORE** and **DRIVEBOOK** after full time.
-4. Open Competitions to compare regional tables, then simulate **to season end** to crown the inaugural world champion.
-5. Advance **10 years** and open History. Try searching for the all-time leading scorer.
+## Los primeros cinco minutos
 
-## Prototype boundaries
+1. La primera vez, un recorrido de cuatro pasos te explica lo básico (se puede saltar).
+2. En la **Crónica**, el recuadro «Qué pasa ahora» te dice en qué punto de la temporada estás y cuál es el próximo evento.
+3. Pulsa el botón principal, **«Jugar jornada 1»**. Siempre dice exactamente qué va a pasar.
+4. Pulsa **«Simular hasta el próximo evento»**: juega la liga y se detiene en la presentación de las **Finales Nacionales**, sin saltarse nada.
+5. En el evento, elige un pronóstico (ganas *monedas de la Grieta* si aciertas), pulsa **«Ver partido»** para verlo en directo o **«Resultado rápido»**. El calendario no avanza hasta que se juegan todos los partidos.
+6. Sigue por la **Copa del Mundo**, las **Semifinales**, **la Gran Final** y la **Gala de premios**, donde se revela cada premio uno a uno. Después llegan el mercado, la pretemporada y una temporada nueva.
 
-This is a working systems POC, **not the full v0.1–v0.5 design document implemented**:
+## Cómo es una temporada
 
-- Match presentation is a schematic 2D replay of recorded highlights; there is no physics-driven animation or direct athlete control.
-- The match engine uses seeded procedural possession simulation, simplified tactics, player skill matchups, limited signature moments, injuries, turnovers, scores, and stats; rules are a prototype model, not a final officiating-level playbook.
-- Arcane charges, athlete traits and tactical philosophies affect matches; coaching and detailed contracts are still simplified or not independently simulated.
-- Clubs trade athletes automatically during the offseason, but there is no contract negotiation or wage market.
-- Athlete rarity is visible for ease of testing; the long-term design can hide intrinsic potential.
-- Athlete cards and club shields use an integrated transparent raster library: **257 race portraits** (elite, regular and coach allocations) plus **48 illustrated club badges**. Portrait alpha is deliberate: the game retains its own rarity-colored portrait grounds. The existing vectors remain only as a compatibility fallback for older saves or a missing file.
-- News is generated from real season and match outcomes plus occasional flavor headlines.
-- Full event logs are retained for recent seasons. Earlier years preserve compact results for title matches and career/historical totals, rather than every regular-season play.
-- The Hall of Legends includes legacy ranking, retirement induction, current/retired icons, career and seasonal leaderboards. Dedicated coach entities are still future scope.
+30 semanas: 22 jornadas de liga (ida y vuelta, 12 clubes por país), semifinales nacionales (semana 23), **Finales Nacionales** (24), **Copa del Mundo** en dos grupos (25), **Semifinales** (26), **la Gran Final** (27), **Gala de premios** (28), **mercado** (29) y **pretemporada** (30). Los eventos en negrita detienen el calendario hasta completarse.
 
-## Data safety and reproducibility
+**Formas de anotar:** ¡BRECHA! (5 puntos), ¡RÉPLICA! (1 punto extra tras una brecha) y ¡PORTAZO! (2 puntos, una patada entre los postes). Otras palabras del juego: ¡CHISPA! (habilidad de un solo uso), ¡KO! y ¡ROBO!. Pasa el cursor o toca las palabras subrayadas para ver el glosario.
 
-The authoritative simulation is in `src/engine.ts`. Every world has a seed and stored RNG state; results are generated deterministically from the same seeded world snapshot.
+## Lo que hay
 
-Data persists in IndexedDB with optimistic revision checks to protect against cross-tab overwrites. **Export the universe regularly** if it matters to you: browser data deletion, private browsing, or site-origin changes can remove the local database. JSON exports can be imported from Settings.
+- **48 clubes en cuatro países elementales** (Pedravelo, Piraforte, Altonido y Talasa), **720 atletas de nueve pueblos**, con apodos que se ganan con grandes temporadas.
+- **Partido en directo a pantalla completa**: marcador, reloj, posesión, inercia, el campo, las últimas cinco jugadas, dos comentaristas y llamadas con el retrato del protagonista en cada gran jugada. Velocidad 1×/2×/4×, «Ir al final» y marcador oculto hasta el saque inicial. Al terminar: probabilidad de victoria, jugada del partido, declaraciones, estadísticas, jugadores y jugadas.
+- **Partidos igualados**: los equipos que pierden por mucho arriesgan y los que ganan por mucho protegen la ventaja. Alrededor de un tercio de los partidos se decide por 6 puntos o menos, y uno de cada diez por 20 o más.
+- **Una crónica viva**: más de 70 plantillas de noticias con datos reales, personajes recurrentes (El Comisionado, el Viejo Grimbaldo, la Dra. Plumilla y las mascotas), derbis, rachas, récords, dinastías, sequías y eventos raros (tormentas de la Grieta, dragones, huelgas de árbitros goblins) con efectos reales.
+- **Atletas, Clubes, Estadísticas e Historia** con trayectorias, palmarés, cara a cara con el rival, récords y el Salón de las Leyendas.
+- **Guardado automático** en IndexedDB, exportación e importación en JSON, y protección si otra pestaña escribe a la vez.
 
-The export includes full World state; do not upload personal data into narrative/team names (none are requested by this game).
+## Guardado y partidas antiguas
 
-## Key files
+El mundo se guarda en el navegador después de cada cambio. Si borras los datos del navegador o usas una ventana privada, puedes perderlo: **exporta una copia** desde Ajustes de vez en cuando.
 
-- `src/engine.ts`, `src/chronicle.ts` — world generator, match/season engine, storylines, records (authoritative).
-- `src/types.ts` — world, club, player, match, event, news, award types.
-- `src/storage.ts` — IndexedDB storage, save conflicts, JSON import/export.
-- `src/game/` — the game state hook (saves, cross-tab protection, simulation), hash routing, shared context.
-- `src/ui/App.tsx` — the codex shell: binding, silk ribbon navigation, Book-of-Hours calendar, page turn, Turn the Page control.
-- `src/screens/` — Chronicle, Tourneys (competitions + Grand Rift), Bestiary (athletes), Armorial (clubs), The Lists (matches), contest folio (replay, ledger, drivebook), Rolls (statistics), Annals (history), Colophon (saves).
-- `src/art/` — vector artwork: race portraits (`Portrait.tsx`), heraldry with ~80 charges and generated blazons (`Heraldry.tsx`, `charges.tsx`), ornaments, realm landscapes, the wax seal.
-- `src/art/registry.ts` — drop painted PNG/WebP portraits or crests into `src/art/raster/portraits` or `src/art/raster/crests` to replace the vector art; naming rules are documented in the file.
-- `src/styles/` — self-hosted fonts (Grenze Gotisch, Alegreya family) and the codex styles. Fully offline.
-- `src/engine.test.ts` — seeded simulation and long-run invariants.
+Las partidas de versiones anteriores (el mundo de 80 clubes, o los mundos de 48 clubes con nombres en inglés) no se pueden cargar sin romperse. El juego lo detecta y muestra la pantalla «Esta crónica es de una versión antigua», con **Exportar** y **Empezar un mundo nuevo**.
 
-## Next versions
+Cada mundo es determinista: la misma semilla y las mismas decisiones dan siempre los mismos resultados.
 
-1. Position-by-position action probabilities and balanced tactical playbooks.
-2. Meaningful team Spark Charges, distinct abilities and counterplay.
-3. Coaches, training, contracts, transfer market and financial AI.
-4. Historical season archives, narrative rivalries and a true Hall of Fame election system.
-5. Enhanced pitch animation and in-match broadcast UI.
+## Rendimiento
 
+La simulación y el guardado se ejecutan en un Web Worker, así que la página no se congela al jugar. El arte se sirve en WebP con miniaturas para listas, las texturas son imágenes pequeñas ya horneadas y la animación de pasar página es corta, opcional (Ajustes) y nunca se usa en pantallas táctiles ni con movimiento reducido.
 
-## Passes 1 and 2 (prototype expansion)
+## Archivos clave
 
-- **Competitions → The Grand Rift**: global title pathway, regional qualification status, three-round world championship bracket, current/reigning champions.
-- **Athlete and club visual identity**: consistent square race/role avatars, club mascot-symbol crests and enhanced roster cards. Art currently uses generated inline SVG and is not a finished hand-illustrated sprite sheet.
-- **Statistics**: new navigation page with player seasonal and career leaderboards, region/position filters, per-game rates, team rankings, championship history and awards.
-- **Dossiers**: player season and career statistic matrices; club points, win rate, offense and defense summaries.
-- **Match Center**: recorded-event box score for completed matches. These are event-based highlight counts, not a complete attempt-level box score.
-
-### Compatibility & known constraints
-The existing IndexedDB world schema is unchanged. Existing saves are not deliberately reset. Historical individual **season-by-season** stats cannot be reconstructed from old saves: players currently retain their current season and cumulative career aggregates, not every prior season. Pass 3 adds detailed pass attempts, play-level team totals and full possession logs to newly simulated matches. Older matches cannot be retroactively reconstructed.
-
-### Validation
-Install with `npm ci`, run `npm test`, then `npm run build`. The container runs engine compilation and selected deterministic/10-year/integrity tests, but npm registry access is limited and the full Vite browser bundle must be verified by your GitHub Actions deployment.
-
-
-## Pass 3 — Simulation & Storytelling (latest)
-
-- **Match Engine v3:** tactical play selection takes opposing coverage and blocking into account. A player's position, role attributes, injuries, physical wear and selected strategy affect outcomes. Bench rotation substitutes fresh athletes and replaces injured starters. Signature Spark abilities are now limited to one activation per athlete per match (and two per team).
-- **Authoritative match reports:** Every newly simulated fixture records possessions, offensive plays, first downs, rushed and passed metres, attempts, completions, turnovers, knockouts, penalties, magic usage, and substitutions. Detailed per-player contributions and an ordered drivebook are included. Box-score totals reconcile with scoring and player actions.
-- **New Match Center:** Featured broadcast, upcoming slate, searchable result archive, 2D event tracker, transport controls/speed selection, spoiler-safe score reveal, official Box Score tab, player performances and Drivebook tab. The pitch is still schematic and does not recreate exact player paths.
-- **The Chronicle:** New weekly narratives are grounded in the match report and highlight standout athletes, late comebacks, turnover-heavy clashes and significant injury reports alongside the existing dynasty, rivalry, and record narratives.
-- **Historical season snapshots:** The Statistics screen now has an Era Archive with top scoring athletes and top Premier clubs for up to 40 finished seasons (generated starting with this version).
-- **Save compatibility:** Existing v1/v2 IndexedDB and exported worlds continue to load without changes to the exported format. Pre-upgrade matches retain their old highlights and will display a legacy ledger rather than false full-match numbers. Saved universes create new reports and archival seasons from the time the new version is installed.
-- **Automated regression checks:** New tests validate actual team scores vs recorded scoring, passes and yards reconciliation, substitutions, and archive continuity. Previous multi-year tests remain included.
+- `src/engine.ts`: generador del mundo, motor de partidos, calendario, etapas que detienen el calendario, pronósticos y eventos del mundo.
+- `src/chronicle.ts`: historias, récords, derbis, dinastías, sequías y apodos.
+- `src/i18n/es.ts`: todo el texto de la interfaz. `src/i18n/es-mundo.ts`: nombres, clubes y frases del partido. `src/i18n/es-cronica.ts`: plantillas de noticias y personajes.
+- `src/game/`: estado del mundo (`useWorld.ts`), el worker de simulación (`sim.worker.ts`, `simCore.ts`, `simClient.ts`), el siguiente paso (`nextStep.ts`), datos del partido (`matchday.ts`) y rutas.
+- `src/screens/`: Crónica, Torneos, Partidos, Atletas, Clubes, Estadísticas, Historia, Ajustes, el evento (`Stage.tsx`) y el partido (`ContestFolio.tsx`).
+- `src/art/registry.ts` y `src/art/raster/`: escudos y retratos. Las fuentes PNG están en `raster/crests` y `raster/portraits`; `node scripts/bake-art.cjs` genera las versiones WebP en `raster/web` y las texturas en `src/styles/tex` (necesita Chrome y `playwright-core`).
+- `scripts/margins.ts` y `scripts/stories.ts`: informes de igualdad de los partidos y de variedad de la crónica.
+- Pruebas: `src/engine.test.ts`, `src/stage.test.ts`, `src/storage.test.ts`, `src/art.test.ts` (rápidas) y `src/engine.slow.test.ts` (largas).
