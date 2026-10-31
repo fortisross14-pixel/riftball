@@ -11,6 +11,7 @@ import { Portrait } from '../art/Portrait';
 import { RoleGlyph } from '../art/Ornament';
 import { roman } from '../art/hash';
 import { AthleteName, Blank, HouseName, Miniature } from '../ui/bits';
+import { Term } from '../ui/Term';
 import { realmName } from './Tourneys';
 import { ES, GRIMBALDO_HOME, HABILIDAD_ES, coachQuote, commentary, filosofia, mvpQuote, raza, rol } from '../i18n/es';
 
@@ -180,7 +181,7 @@ function LiveView({ m, home, away, index, setIndex, playing, setPlaying, speed, 
               <li key={`${shown.length - i}`} className={`kind-${e.kind} ${i === 0 ? 'is-new' : ''}`}>
                 <span className="tick-min">{e.minute}′</span>
                 <i className="tick-side" style={{ background: houseColours(e.teamId === m.home ? home : away)[0] }} />
-                <strong>{KIND_WORD[e.kind]}</strong>
+                <strong><Term k={e.kind}>{KIND_WORD[e.kind]}</Term></strong>
                 <span className="tick-text">{e.text}</span>
                 <span className="tick-score">{e.homeScore}–{e.awayScore}</span>
               </li>
@@ -277,7 +278,7 @@ function Summary({ m, home, away }: { m: Match; home: Team; away: Team }) {
           <li key={`${events.length - i}-${e.minute}`} className={`moment kind-${e.kind} ${e.teamId === m.home ? 'is-home' : 'is-away'}`}>
             <span className="moment-min">{e.minute}′</span>
             <span className="moment-mark" style={{ '--side': houseColours(e.teamId === m.home ? home : away)[0] } as CSSProperties} />
-            <div><strong>{KIND_WORD[e.kind]}</strong><p>{e.text}</p></div>
+            <div><strong><Term k={e.kind}>{KIND_WORD[e.kind]}</Term></strong><p>{e.text}</p></div>
             <span className="moment-score">{e.homeScore}–{e.awayScore}</span>
           </li>
         ))}

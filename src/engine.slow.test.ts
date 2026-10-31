@@ -82,3 +82,11 @@ test('Games stay close: 30-35% end within one score (6 points) and under 12% by 
  assert.ok(closeShare>=.30&&closeShare<=.35,`one-score games ${(closeShare*100).toFixed(1)}%`);
  assert.ok(blowoutShare<.12,`20+ games ${(blowoutShare*100).toFixed(1)}%`);
 });
+
+test('The chronicle stays varied: at least 60% unique story bodies over 10 seasons',()=>{
+ const w=createWorld(2026),seen=new Set<string>(),bodies:string[]=[];
+ while(w.season<=10){advanceWeekAuto(w);for(const s of w.news)if(!seen.has(s.id)){seen.add(s.id);bodies.push(s.body);}}
+ assert.ok(bodies.length>500,`stories ${bodies.length}`);
+ const share=new Set(bodies).size/bodies.length;
+ assert.ok(share>=.6,`unique story bodies ${(share*100).toFixed(1)}%`);
+});

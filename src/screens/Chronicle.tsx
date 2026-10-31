@@ -8,6 +8,9 @@ import { FeaturedContestCard } from './parts/FeaturedContestCard';
 import { ChallengeRow } from './Tourneys';
 import { AthleteName, Blank, HouseName, Miniature } from '../ui/bits';
 import { ES, raza, rol, titleCase } from '../i18n/es';
+import { SEASON, currentStage, isStageComplete } from '../engine';
+import { mainAction, nextEventName, progressIndex } from '../game/nextStep';
+import { Hourglass } from '../art/Ornament';
 
 export { titleCase };
 
@@ -45,6 +48,7 @@ export function Chronicle() {
 
   return (
     <div className="spread chronicle">
+      <NowBanner />
       <section className="page verso">
         <h1 className="folio-title">{T.title}</h1>
         <p className="folio-sub">{T.sub(w.season, w.week <= 22 ? ES.headband.round(w.week) : stageOf(w.week))}</p>
@@ -129,5 +133,33 @@ function LeadMiniature({ id }: { id: string }) {
       <span>{m.homeScore === null ? ES.common.vs : `${m.homeScore}–${m.awayScore}`}</span>
       <Shield team={a} size={54} />
     </button>
+  );
+}
+
+const EVENT_WEEK = [SEASON.NATIONAL_FINAL, SEASON.WORLD_GROUPS, SEASON.WORLD_SEMI, SEASON.WORLD_FINAL, SEASON.AWARDS, SEASON.MARKET, SEASON.NEW_SEASON];
+
+/** Where the season stands, what comes next, and the same main button as the bar. */
+function NowBanner() {
+  const { world: w, advance, go, busy, locked } = useGame();
+  const action = mainAction(w);
+  const stage = currentStage(w);
+  const at = progressIndex(w);
+  const next = nextEventName(w);
+  const nextWeek = at === 0 || at === 7 ? SEASON.NATIONAL_FINAL : EVENT_WEEK[Math.min(EVENT_WEEK.length - 1, at)];
+  const waiting = stage.kind !== 'league' && !isStageComplete(w);
+  return (
+    <section className="across now-banner" aria-label={ES.now.label}>
+      <div className="now-col">
+        <span className="now-kicker">{ES.now.now}</span>
+        <strong>{ES.now.week(ES.progress[at], w.week)}</strong>
+      </div>
+      <div className="now-col">
+        <span className="now-kicker">{ES.now.next}</span>
+        <strong>{at === 0 || at === 7 ? ES.now.nextAt(next, nextWeek) : ES.now.nextNow(ES.progress[at])}</strong>
+      </div>
+      {waiting
+        ? <button type="button" className="gilt-button now-go" onClick={() => go({ kind: 'section', section: 'evento' })}>{ES.bar.toEvent}<small>{ES.now.pending}</small></button>
+        : <button type="button" className="turn-page now-go" disabled={busy || locked || !action.enabled} onClick={() => advance(1)}><Hourglass size={22} /><span><strong>{action.label}</strong><small>{action.sub}</small></span></button>}
+    </section>
   );
 }

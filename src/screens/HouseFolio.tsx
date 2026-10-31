@@ -4,12 +4,13 @@ import { Achievement } from '../art/Heraldry';
 import { RoleGlyph } from '../art/Ornament';
 import { AthleteName, Blank, FormPips, HouseName, Miniature } from '../ui/bits';
 import { ChallengeRow, realmName } from './Tourneys';
-import { ES, filosofia, raza, rol } from '../i18n/es';
+import { ES, awardName, filosofia, raza, rol } from '../i18n/es';
+import { MASCOT_LINES, mascotOf, pickLine } from '../i18n/es-cronica';
 
 const T = ES.club;
 
 export function HouseFolio({ id }: { id: string }) {
-  const { world: w, team, go } = useGame();
+  const { world: w, team, player, go } = useGame();
   const t = team(id);
   if (!t) {
     return <div className="spread"><section className="page verso"><h1 className="folio-title">{ES.common.tornPage}</h1><Blank>{T.missing}</Blank></section><section className="page recto" /></div>;
@@ -24,6 +25,8 @@ export function HouseFolio({ id }: { id: string }) {
   const recentPlayed = contests.filter((m) => m.homeScore !== null).sort((a, b) => order(b) - order(a)).slice(0, 6);
   const next = contests.filter((m) => m.homeScore === null && m.season === w.season).sort((a, b) => a.week - b.week)[0];
   const honours = w.trophies.filter((x) => x.teamId === t.id).slice().reverse();
+  const meetings = rival ? contests.filter((m) => m.homeScore !== null && (m.home === rival.id || m.away === rival.id)).sort((a, b) => order(b) - order(a)).slice(0, 5) : [];
+  const shelf = w.awards.filter((a) => a.teamId === t.id).slice().reverse().slice(0, 12);
   const games = played(t);
   const values = [t.power, t.fanbase, t.academy, t.budget];
 
@@ -64,12 +67,26 @@ export function HouseFolio({ id }: { id: string }) {
           {!honours.length && <li><Blank>{T.emptyCabinet}</Blank></li>}
         </ul>
 
+        <h2 className="page-head small spaced">{ES.shelf.title}</h2>
+        {shelf.length ? (
+          <ul className="honours award-shelf">
+            {shelf.map((a, i) => <li key={`${a.season}-${a.award}-${i}`}><span className="yr">{ES.common.season(a.season)}</span>{awardName(a.award)} · <AthleteName player={player(a.playerId)} /></li>)}
+          </ul>
+        ) : <Blank>{ES.shelf.none}</Blank>}
+
         {rival && (
           <div className="feud">
             <h2 className="page-head small">{T.feud}</h2>
             <p>{T.sworn}<HouseName team={rival} size={26} full />. {T.feudLine(t.nickname, t.rivalHeat, t.rivalRecord.w, t.rivalRecord.d, t.rivalRecord.l)}</p>
           </div>
         )}
+        {rival && (
+          <>
+            <h3 className="h2h-title">{ES.h2h.title}</h3>
+            {meetings.length ? meetings.map((m) => <ChallengeRow key={m.id} m={m} showPhase />) : <Blank>{ES.h2h.none}</Blank>}
+          </>
+        )}
+        <p className="mascot-line"><b>{ES.h2h.mascot}:</b> {pickLine(MASCOT_LINES, `${t.id}:${w.season}:${w.week}`)(mascotOf(t.id, t.nickname))}</p>
         {next && <><h2 className="page-head small spaced">{T.next}</h2><ChallengeRow m={next} showPhase /></>}
         <h2 className="page-head small spaced">{T.recent}</h2>
         {recentPlayed.length ? recentPlayed.map((m) => <ChallengeRow key={m.id} m={m} showPhase />) : <Blank>{T.noGames}</Blank>}

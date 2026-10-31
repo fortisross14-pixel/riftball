@@ -2,7 +2,8 @@
 // prodigies, upsets) after each week and offseason, writes stories about them, and lets later
 // stories refer back ("Un año después de la decepción de Puertocoral, ...").
 import type { Match, NewsKind, Player, RecordEntry, RecordStat, Story, StoryBadge, Storyline, StorylineKind, Team, World } from './types';
-import { SEASON, addStory, getPlayer, getTeam, giveNickname, impactScore, lineup, retireAge, teamRating } from './engine';
+import { SEASON, addStory, getPlayer, getTeam, giveNickname, impactScore, lineup, retireAge, storySeed, teamRating } from './engine';
+import { DRAMA, INJURY, LOSE_STREAK, NICKNAME_STORY, RIVAL_PREVIEW, STAR, WIN_STREAK, mascotOf, pickLine } from './i18n/es-cronica';
 import { PAISES, RECORD_STAT_ES, awardEs, rol } from './i18n/es-mundo';
 
 export const RECORD_STATS:RecordStat[]=['breaches','tackles','interceptions','knockouts','assists','distance','rushingYards','passingYards','mvp','gates'];
@@ -96,7 +97,7 @@ function rivalryPreviews(w:World,next:Match[]){
   const home=getTeam(w,m.home),away=getTeam(w,m.away),line=openStoryline(w,pairId(home.id,away.id),'rivalry',[home.id,away.id],'');
   const last=line.data.lastMeeting?` El último duelo: ${line.data.lastMeeting}.`:'';
   tell(w,line,'RIVALRY','result',`SEMANA DE DERBI: ${home.nickname.toUpperCase()} CONTRA ${away.nickname.toUpperCase()}`,
-   `La rivalidad en ${home.city} arde a ${home.rivalHeat} grados. Los ${home.nickname} dominan el historial ${series(home)}.${last}`,{teamId:home.id,matchId:m.id,importance:3});
+   pickLine(RIVAL_PREVIEW,storySeed(w,m.id))({home:home.name,away:away.name,city:home.city,heat:home.rivalHeat,series:`${home.nickname} ${series(home)} ${away.nickname}`,last}),{teamId:home.id,matchId:m.id,importance:3});
  }
 }
 function rivalryRecaps(w:World,fixtures:Match[]){
@@ -225,13 +226,26 @@ function awardFollowUps(w:World){
 
 // ---------- Nicknames ----------
 // Athletes without a nickname earn one with a standout season. One christening per week at most.
-const NICKNAME_JOKES=['La grada ya ha encargado las pancartas.','Su madre sigue llamándole por su nombre, pero es la única.','El club ya vende camisetas. Están mal escritas, pero se venden.','El Viejo Grimbaldo asegura que el apodo se lo puso él.'];
 function nicknameMilestones(w:World,week:number){
  const reasons=(p:Player):string|undefined=>p.stats.breaches>=12?`${p.stats.breaches} brechas esta temporada`:p.stats.interceptions>=6?`${p.stats.interceptions} robos esta temporada`:p.stats.knockouts>=7?`${p.stats.knockouts} KO esta temporada`:p.stats.tackles>=85?`${p.stats.tackles} placajes esta temporada`:p.career.mvp>=8?`${p.career.mvp} premios al mejor del partido`:undefined;
  const found=w.players.filter(p=>!p.nickname&&reasons(p)).sort((a,b)=>b.fame-a.fame||b.rating-a.rating||a.id.localeCompare(b.id))[0];
  if(!found)return;
  const why=reasons(found)!,team=getTeam(w,found.teamId),nick=giveNickname(w,found);
- addStory(w,'milestone',`NACE UN APODO: «${nick.toUpperCase()}»`,`${found.name}, de ${team.name}, ya tiene apodo: desde hoy la grada le llama «${nick}». El motivo: ${why}. ${NICKNAME_JOKES[(week+w.season)%NICKNAME_JOKES.length]}`,team.id,found.id,undefined,3);
+ addStory(w,'milestone',`NACE UN APODO: «${nick.toUpperCase()}»`,pickLine(NICKNAME_STORY,storySeed(w,`${found.id}:${week}`))({name:found.name,club:team.name,nick,why}),team.id,found.id,undefined,3);
+}
+
+// ---------- Streaks ----------
+// A club reaching five wins or five defeats in a row gets a story (once per run, at exactly five).
+function streakStories(w:World,week:number){
+ for(const t of w.teams){
+  const run=(k:string)=>{let n=0;while(n<t.form.length&&t.form[n]===k)n++;return n;};
+  const wins=run('W'),losses=run('L');
+  if(wins!==5&&losses!==5)continue;
+  const ctx={club:t.name,nick:t.nickname,n:5,mascot:mascotOf(t.id,t.nickname)};
+  if(wins===5)addStory(w,'result',`${t.nickname.toUpperCase()}: CINCO DE CINCO`,pickLine(WIN_STREAK,storySeed(w,t.id))(ctx),t.id,undefined,undefined,3);
+  else addStory(w,'result',`${t.nickname.toUpperCase()} NO LEVANTAN CABEZA`,pickLine(LOSE_STREAK,storySeed(w,t.id))(ctx),t.id,undefined,undefined,2);
+  if(week>0)return;
+ }
 }
 
 // Broadcast stories use recorded match facts and never synthesize statistics from headline events.
@@ -243,8 +257,7 @@ function matchReportStories(w:World,fixtures:Match[]){
  if(standout?.row.impact>=20){
   const p=getPlayer(w,standout.row.playerId),t=getTeam(w,standout.row.teamId);
   if(p){const stats=standout.row;const feats=[stats.breaches?`${stats.breaches} ${stats.breaches===1?'brecha':'brechas'}`:'',stats.interceptions?`${stats.interceptions} ${stats.interceptions===1?'robo':'robos'}`:'',stats.tackles>=4?`${stats.tackles} placajes`:'',stats.yards>=40?`${stats.yards} metros ganados`:'',stats.knockouts?`${stats.knockouts} KO`:''].filter(Boolean);
-   const hooks=['ha mandado al rival directamente a un libro de medicina','ha exigido una segunda página en el acta','ha dejado al locutor del estadio sin adjetivos'];
-   addStory(w,'milestone',`${p.name.toUpperCase()} SE ADUEÑA DE LA JORNADA`,`${p.name}, de ${t.name}, firma ${feats.slice(0,3).join(', ')||'una actuación decisiva'} en el ${getTeam(w,standout.m.home).name} ${standout.m.homeScore}–${standout.m.awayScore} ${getTeam(w,standout.m.away).name}. Su actuación ${hooks[(w.week+w.season)%hooks.length]}.`,t.id,p.id,standout.m.id,4);
+   addStory(w,'milestone',`${p.name.toUpperCase()} SE ADUEÑA DE LA JORNADA`,pickLine(STAR,storySeed(w,p.id))({name:p.name,nick:p.nickname,club:t.name,feats:feats.slice(0,3).join(', ')||'una actuación decisiva',game:`${getTeam(w,standout.m.home).name} ${standout.m.homeScore}–${standout.m.awayScore} ${getTeam(w,standout.m.away).name}`}),t.id,p.id,standout.m.id,4);
   }
  }
  const drama=scored.map(m=>{
@@ -262,12 +275,12 @@ function matchReportStories(w:World,fixtures:Match[]){
   const win=getTeam(w,drama.winner),lose=getTeam(w,drama.loser),m=drama.m;
   const occasion=drama.leadFlip?'una remontada tardía':drama.turnoverBattle>=3?'una batalla llena de pérdidas':drama.physical>=4?'un choque a cara de perro':'un final de infarto';
   const title=drama.leadFlip?`${win.nickname.toUpperCase()} LE DAN LA VUELTA`:drama.turnoverBattle>=3?`CAOS EN EL CAMPO: GANAN ${win.nickname.toUpperCase()}`:`${win.nickname.toUpperCase()} SALEN VIVOS DEL APRIETO`;
-  addStory(w,'result',title,`${win.name} ganan a ${lose.name} por ${Math.max(m.homeScore!,m.awayScore!)}–${Math.min(m.homeScore!,m.awayScore!)} en ${occasion}. El acta registra ${drama.turnoverBattle} pérdidas y ${drama.physical} KO. Los árbitros han pedido una semana libre.`,win.id,undefined,m.id,3);
+  addStory(w,'result',title,pickLine(DRAMA,storySeed(w,m.id))({winner:win.name,loser:lose.name,hi:Math.max(m.homeScore!,m.awayScore!),lo:Math.min(m.homeScore!,m.awayScore!),turnovers:drama.turnoverBattle,kos:drama.physical,occasion}),win.id,undefined,m.id,3);
  }
  // Injury reports are grounded in this week's player-specific match events, not accumulated career totals.
  const injuries=scored.flatMap(m=>m.events.filter(e=>e.kind==='injury'&&e.playerId).map(e=>({m,e}))).slice(0,5);
  if(injuries.length>=2&&w.week%3===0){const sample=injuries[0];const p=sample.e.playerId?getPlayer(w,sample.e.playerId):undefined;
-  addStory(w,'injury','LA DRA. PLUMILLA TIENE PREGUNTAS',`Las actas de esta semana recogen ${injuries.length} lesiones. ${p?`${p.name} está entre quienes necesitan tratamiento. `:''}La doctora asegura que las camillas ya son de madera reglamentaria y que, por favor, alguien le traiga un café.`,sample.e.teamId,sample.e.playerId,sample.m.id,2);
+  addStory(w,'injury','LA DRA. PLUMILLA TIENE PREGUNTAS',pickLine(INJURY,storySeed(w,'injury'))({count:injuries.length,name:p?.name}),sample.e.teamId,sample.e.playerId,sample.m.id,2);
  }
 }
 
@@ -279,6 +292,7 @@ export function chronicleWeek(w:World,week:number,fixtures:Match[]){
  rivalryRecaps(w,fixtures);
  rivalryPreviews(w,w.matches.filter(m=>m.season===w.season&&m.week===week+1&&m.homeScore===null));
  if(week<=SEASON.LEAGUE_END&&week%2===0)nicknameMilestones(w,week);
+ if(week<=SEASON.LEAGUE_END)streakStories(w,week);
  if(week===10)prodigyWatch(w);
  // The national semifinals are the first knockout week: veterans of the qualified clubs get their last dance.
  if(week===SEASON.LEAGUE_END)lastDances(w,w.matches.filter(m=>m.season===w.season&&m.week===SEASON.NATIONAL_SEMI));

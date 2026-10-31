@@ -6,6 +6,7 @@ import { Portrait } from '../art/Portrait';
 import { RoleGlyph } from '../art/Ornament';
 import { Shield } from '../art/Heraldry';
 import { Blank, Choice, Miniature } from '../ui/bits';
+import { Term } from '../ui/Term';
 import { ES, RAZA_PLURAL_ES, raza, rareza, rol } from '../i18n/es';
 
 const T = ES.athletes;
@@ -58,7 +59,7 @@ export function Bestiary() {
           <Choice label={ES.common.position} compact value={role} onChange={(v) => { setRole(v); setShown(48); }} options={[{ value: 'All' as Role | 'All', label: ES.common.all }, ...ROLES.map((r) => ({ value: r as Role | 'All', label: <span className="role-opt"><RoleGlyph role={r} size={20} />{rol(r)}</span> }))]} />
           <Choice label={T.order} compact value={sort} onChange={setSort} options={[{ value: 'rating', label: T.sort.rating }, { value: 'potential', label: T.sort.potential }, { value: 'level', label: T.sort.level }, { value: 'age', label: T.sort.age }]} />
         </div>
-        <p className="found-count">{T.found(found.length, nfmt(found.length))}</p>
+        <p className="found-count">{T.found(found.length, nfmt(found.length))} <Term k="rating">{ES.glossary.label}</Term></p>
 
         <div className="leaves">
           {found.slice(0, shown).map((p) => {

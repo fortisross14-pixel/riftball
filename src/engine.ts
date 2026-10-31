@@ -1,7 +1,8 @@
 import { ATTR_KEYS, EMPTY_RECORD, EMPTY_STATS, RACES, REGIONS, ROLES } from './types';
 import { chronicleOffseason, chronicleWeek, rebuildRecords } from './chronicle';
+import { COMISIONADO, DRAGON, FAREWELL_STORY, LEGEND_STORY, MVP_STORY, NATIONAL_CHAMPS, RESULT_CLEAR, RESULT_CLOSE, RESULT_ROUT, STORM, STRIKE, TRANSFER, WORLD_CHAMPS, mascotOf, pickLine } from './i18n/es-cronica';
 import { APELLIDOS, APODOS_CLUB, APODOS_RASGO, APODOS_ROL, CIUDADES, EV, NOMBRES, PAISES, awardEs, filosofia, raza, rol } from './i18n/es-mundo';
-import type { Attributes, GalaItem, Match, MatchEvent, Player, Race, Rarity, Role, SeasonStats, StatKey, Story, Team, World, StageState, ShowcaseId, MatchTeamStats, MatchPlayerStats, MatchDrive, MatchReport } from './types';
+import type { WorldEvent, Attributes, GalaItem, Match, MatchEvent, Player, Race, Rarity, Role, SeasonStats, StatKey, Story, Team, World, StageState, ShowcaseId, MatchTeamStats, MatchPlayerStats, MatchDrive, MatchReport } from './types';
 
 /** A 30-week Chronicle calendar. These numbers are intentionally exported so UI and jump controls cannot drift from the engine. */
 export const SEASON = { LEAGUE_END:22, NATIONAL_SEMI:23, NATIONAL_FINAL:24, WORLD_GROUPS:25, WORLD_SEMI:26, WORLD_FINAL:27, AWARDS:28, MARKET:29, NEW_SEASON:30 } as const;
@@ -182,6 +183,39 @@ function ageCurve(w:World,p:Player){
   shiftRating(w,p,-(int(w,1,2)+(p.age-declineAge(p.race))*.35));
  }else if(random(w)<.3)shiftRating(w,p,random(w)<.5?1:-1);
 }
+// ── Rare world events ─────────────────────────────────────────────────────────────────────
+// One to three per season, planned when the fixtures are drawn. Chosen by hash, so they never use the dice.
+// A Rift storm postpones a country's round to week 22; a dragon moves a match to the other ground;
+// a goblin referees' strike means many more penalties in that country's round.
+/** A well-mixed 32-bit hash (FNV-1a plus a murmur finaliser), so nearby seasons get unrelated events. */
+function mixHash(str:string):number{let x=2166136261;for(let i=0;i<str.length;i++)x=Math.imul(x^str.charCodeAt(i),16777619);x^=x>>>16;x=Math.imul(x,0x85ebca6b);x^=x>>>13;x=Math.imul(x,0xc2b2ae35);x^=x>>>16;return x>>>0;}
+function planWorldEvents(w:World){
+ const h=(tag:string,n:number)=>mixHash(`${w.seed}:${w.season}:${tag}`)%n;
+ const count=1+h('count',3),kinds:WorldEvent['kind'][]=['storm','dragon','strike'];
+ const used=new Set<number>();
+ for(let i=0;i<count;i++){
+  const kind=kinds[h(`kind${i}`,3)],region=h(`region${i}`,4);
+  let week=3+h(`week${i}`,16);while(used.has(week))week++;used.add(week);
+  const round=w.matches.filter(m=>m.season===w.season&&m.week===week&&m.region===region&&m.phase==='league');
+  if(!round.length)continue;
+  const ev:WorldEvent={season:w.season,week,kind,region};
+  if(kind==='storm')for(const m of round)m.week=SEASON.LEAGUE_END;
+  if(kind==='dragon'){const m=round[h(`match${i}`,round.length)];[m.home,m.away]=[m.away,m.home];ev.matchId=m.id;ev.home=m.away;ev.away=m.home;}
+  (w.worldEvents??=[]).push(ev);
+ }
+ if(w.worldEvents&&w.worldEvents.length>30)w.worldEvents=w.worldEvents.slice(-30);
+}
+/** Announce this week's world events as the week begins. */
+function announceWorldEvents(w:World){
+ for(const e of (w.worldEvents??[]).filter(x=>x.season===w.season&&x.week===w.week)){
+  const country=PAISES[e.region],seed=storySeed(w,e.kind);
+  if(e.kind==='storm')addStory(w,'scandal',`TORMENTA DE LA GRIETA EN ${country.toUpperCase()}`,pickLine(STORM,seed)({country,week:e.week}),undefined,undefined,undefined,4);
+  if(e.kind==='strike')addStory(w,'scandal',`HUELGA DE ÁRBITROS GOBLINS EN ${country.toUpperCase()}`,((t:string)=>t.includes('Comisionado')?t:t+' '+pickLine(COMISIONADO,seed))(pickLine(STRIKE,seed)({country,week:e.week})),undefined,undefined,undefined,4);
+  if(e.kind==='dragon'&&e.home&&e.away){const hostless=getTeam(w,e.home),host=getTeam(w,e.away);addStory(w,'scandal',`UN DRAGÓN OCUPA EL ESTADIO DE ${hostless.nickname.toUpperCase()}`,pickLine(DRAGON,seed)({country,week:e.week,home:hostless.name,away:host.name,city:host.city}),hostless.id,undefined,e.matchId,4);}
+ }
+}
+/** True when goblin substitutes are refereeing this match. */
+const refereeStrike=(w:World,m:Match)=>!!w.worldEvents?.some(e=>e.kind==='strike'&&e.season===m.season&&e.week===m.week&&e.region===m.region);
 function seedSchedule(w:World){
  for (const team of w.teams){team.record=EMPTY_RECORD();team.form=[];}
  for(let r=0;r<4;r++){
@@ -198,6 +232,7 @@ function seedSchedule(w:World){
    rotation=[rotation[0],rotation[n-1],...rotation.slice(1,n-1)];
   }
  }
+ planWorldEvents(w);
 }
 export function createWorld(seed=2026):World {
  const w:World={version:CURRENT_VERSION,seed,rng:seed>>>0,season:1,week:1,teams:[],players:[],matches:[],news:[],trophies:[],awards:[],storylines:[],records:[],retired:[],history:[],serial:0,totalGames:0,lastUpdated:Date.now()};
@@ -224,6 +259,8 @@ export function createWorld(seed=2026):World {
  addStory(w,'scandal','LOS ÁRBITROS PIDEN PLUS DE PELIGROSIDAD',`El Comisionado confirma que cada colegiado recibirá armadura, silbato y exactamente un vale de teletransporte de emergencia, previa revisión de seguridad.`,undefined,undefined,undefined,1);
  return w;
 }
+/** A seed for picking a story template: changes with every story written, never touches the dice. */
+export const storySeed=(w:World,tag='')=>`${w.seed}:${w.season}:${w.week}:${w.serial}:${tag}`;
 export function addStory(w:World,kind:Story['kind'],title:string,body:string,teamId?:string,playerId?:string,matchId?:string,importance=2):Story{
  const story:Story={id:rid(w,'n'),season:w.season,week:w.week,kind,title,body,teamId,playerId,matchId,importance};w.news.unshift(story);
  if(w.news.length>450)w.news.length=450;
@@ -311,6 +348,7 @@ export function simulateMatch(w:World,m:Match){
  const homeEdge=m.phase==='grand-final'?0:.2+home.fanbase*.01+count(homeLine,'Fan Favorite')*.4;
  // Born Leaders lift the whole lineup.
  const startingLineRating=lines.map(line=>line.reduce((sum,p)=>sum+p.rating,0)/line.length);
+ const strike=refereeStrike(w,m),flagRate=strike?3:1;
  const strengths=[0,1].map(s=>teamRating(w,sides[s],lines[s])+(s===0?homeEdge:0)+Math.min(2,count(lines[s],'Born Leader')));
  // Each side's defensive shape: how well it reads plays (Tacticians help), and how heavy its front line is.
  const shape=lines.map((l,s)=>({read:mean(l,'positioning','awareness')+Math.min(3,count(l,'Tactician')*1.5)+profiles[s].defense,wall:mean(l.filter(p=>p.role==='Bastion'||p.role==='Breaker'),'strength','blocking')+profiles[s].defense}));
@@ -362,7 +400,7 @@ export function simulateMatch(w:World,m:Match){
    const defender=pickWeighted(w,deff,p=>isPass?COVER[p.role]:TACKLE[p.role]);
    const c=carrier.attrs,b=blocker.attrs,d=defender.attrs;
    // Undisciplined blockers jump early.
-   if(has(blocker,'Undisciplined')&&random(w)<.03){x=Math.max(5,x-5);downs--;teamStat(side,'penalties');event(m,minute,'penalty',attack.id,blocker,EV.falseStart(blocker.name),score[0],score[1],x);if(downs<=0)break;continue;}
+   if((has(blocker,'Undisciplined')&&random(w)<.03*flagRate)||(strike&&random(w)<.025)){x=Math.max(5,x-5);downs--;teamStat(side,'penalties');event(m,minute,'penalty',attack.id,blocker,EV.falseStart(blocker.name),score[0],score[1],x);if(downs<=0)break;continue;}
    matchDrive.plays++;teamStat(side,'plays');pStat(carrier,'plays');pStat(blocker,'plays');pStat(defender,'plays');
    if(isPass){teamStat(side,'passAttempts');pStat(passer,'passesAttempted');}else{teamStat(side,'runAttempts');pStat(carrier,'rushAttempts');}
    let attackValue:number,defenseValue:number;
@@ -435,7 +473,7 @@ export function simulateMatch(w:World,m:Match){
    if(tackled){
     addStat(defender,'tackles');teamStat(1-side,'tackles');pStat(defender,'tackles');
     // Hot-Headed defenders take a swing after the whistle.
-    if(has(defender,'Hot-Headed')&&random(w)<.03){x=Math.min(89,x+10);downs=4;target=x+12;teamStat(1-side,'penalties');event(m,minute,'penalty',defend.id,defender,EV.hotHeaded(defender.name),score[0],score[1],x);}
+    if(has(defender,'Hot-Headed')&&random(w)<.03*flagRate){x=Math.min(89,x+10);downs=4;target=x+12;teamStat(1-side,'penalties');event(m,minute,'penalty',defend.id,defender,EV.hotHeaded(defender.name),score[0],score[1],x);}
     if((defender.ability==='Grave Grip'&&!spentAbility.has(defender.id))&&spark[1-side]>0&&x>=50&&random(w)<.25){addStat(defender,'interceptions');teamStat(1-side,'interceptions');teamStat(side,'turnovers');pStat(defender,'interceptions');pStat(carrier,'turnovers');matchDrive.result='interception';sparkEvent(1-side,defender,EV.graveGrip(defender.name,carrier.name),x);break;}
     const bonebreaker=(defender.ability==='Bonebreaker'&&!spentAbility.has(defender.id))&&spark[1-side]>0&&random(w)<.08;
     const knockoutRisk=clamp(.008+(d.strength-60)*.0004+(d.tackling-60)*.0003,.003,.04)*(.7+defPlan.aggression*.6)*(has(defender,'Reckless')?1.8:1);
@@ -447,7 +485,8 @@ export function simulateMatch(w:World,m:Match){
     if(has(defender,'Reckless')&&random(w)<.0012)hurt(defender,1,3,EV.recklessSelf(defender.name),x);
    }
    if(downs<=0){
-    // Final down: the philosophy decides whether to kick a gate shot. Ice-Cold kickers rarely miss.
+    // Final down: kick a ¡PORTAZO! (2) or give the ball up. Kicking teams try from further out; long kicks miss more.
+    // Three ways to score: ¡BRECHA! 5, ¡RÉPLICA! 1 after a brecha, ¡PORTAZO! 2 (about 5.4, 3.4 and 1.2 per match).
     if(x>=46-plan.gate*20&&random(w)<.6+plan.gate*.35){teamStat(side,'gatesAttempted');const kicker=passer;const probability=clamp(.72-(90-x)*.01+(kicker.attrs.composure-50)*.004+(has(kicker,'Ice-Cold')?.12:0)+clutch(kicker)*.02,.23,.92);if(random(w)<probability){score[side]+=2;teamStat(side,'gates');pStat(kicker,'gates');matchDrive.result='gate';matchDrive.scorerId=kicker.id;addStat(kicker,'gates');event(m,minute,'gate',attack.id,kicker,EV.gate(kicker.name),score[0],score[1],x);}else {matchDrive.result='miss';event(m,minute,'miss',attack.id,kicker,EV.gateMiss(kicker.name),score[0],score[1],x);}}
     break;}
   }
@@ -485,7 +524,7 @@ function setupWorldGroups(w:World){
   const pool=entrants.slice(group*4,group*4+4), pairings:[[number,number],[number,number],[number,number],[number,number],[number,number],[number,number]]=[[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]];
   for(const [a,b] of pairings){ const m:Match={id:rid(w,'m'),season:w.season,week:SEASON.WORLD_GROUPS,home:pool[a].id,away:pool[b].id,homeScore:null,awayScore:null,phase:'world-group',region:-1,group,events:[],seed:int(w,1,99999999)}; w.matches.push(m); }
  }
- champions.forEach(c=>addStory(w,'championship',`${c.nickname.toUpperCase()}, CAMPEONES DE ${PAISES[c.region].toUpperCase()}`,`${c.name} se coronan en ${PAISES[c.region]} y sacan billete para la Copa del Mundo. La ciudad decreta tres días de destrozos festivos.`,c.id,undefined,undefined,4));
+ champions.forEach(c=>{const captain=[...teamRoster(w,c)].sort((a,b)=>b.fame-a.fame)[0];addStory(w,'championship',`${c.nickname.toUpperCase()}, CAMPEONES DE ${PAISES[c.region].toUpperCase()}`,pickLine(NATIONAL_CHAMPS,storySeed(w,c.id))({club:c.name,nick:c.nickname,country:PAISES[c.region],captain:captain?.name}),c.id,undefined,undefined,4);});
 }
 function setupWorldSemis(w:World){
  const all=matchesIn(w,SEASON.WORLD_GROUPS,'world-group');
@@ -504,7 +543,13 @@ function pickHeadline(w:World,weekly:Match[]){
  const h=getTeam(w,m.home),a=getTeam(w,m.away),winner=getTeam(w,m.winner||m.home),margin=Math.abs((m.homeScore??0)-(m.awayScore??0));
  let headline=margin<=2?`${winner.nickname.toUpperCase()} SOBREVIVEN A UN CLÁSICO`:margin>=20?`${winner.nickname.toUpperCase()} FIRMAN UNA MASACRE`:`${winner.nickname.toUpperCase()} SE LLEVAN EL BOTÍN`;
  if(m.phase==='grand-final')headline=`¡CAMPEONES DEL MUNDO! ${winner.name.toUpperCase()}`;
- addStory(w,m.phase==='grand-final'?'championship':'result',headline,`${h.name} ${m.homeScore} — ${m.awayScore} ${a.name}. ${margin<=2?'Un partido de comerse las uñas, y los nudillos. La liga ha recibido diecisiete quejas de espectadores preocupados.':'La liga confirma el resultado a pesar de varias protestas redactadas con mucha energía.'}`,winner.id,undefined,m.id,m.phase==='grand-final'?8:m.phase==='league'?2:4);
+ const loserT=winner.id===h.id?a:h,hi=Math.max(m.homeScore??0,m.awayScore??0),lo=Math.min(m.homeScore??0,m.awayScore??0);
+ const star=m.mvpId?getPlayer(w,m.mvpId):undefined;let streak=0;while(streak<winner.form.length&&winner.form[streak]==='W')streak++;
+ const ctx={winner:winner.name,loser:loserT.name,wNick:winner.nickname,lNick:loserT.nickname,hi,lo,margin,star:star?(star.nickname?`«${star.nickname}» ${star.name}`:star.name):undefined,streak,mascot:mascotOf(loserT.id,loserT.nickname)};
+ const captain=[...teamRoster(w,winner)].sort((x,y)=>y.fame-x.fame)[0];
+ const body=m.phase==='grand-final'?pickLine(WORLD_CHAMPS,storySeed(w,m.id))({club:winner.name,nick:winner.nickname,country:PAISES[winner.region],captain:captain?.name,score:`${hi}-${lo}`,runnerUp:loserT.name})
+  :pickLine(margin<=6?RESULT_CLOSE:margin>=20?RESULT_ROUT:RESULT_CLEAR,storySeed(w,m.id))(ctx);
+ addStory(w,m.phase==='grand-final'?'championship':'result',headline,body,winner.id,undefined,m.id,m.phase==='grand-final'?8:m.phase==='league'?2:4);
 }
 // Role-aware impact: each role is judged only on the work that role is meant to do.
 const ROLE_IMPACT:Record<Role,Partial<Record<keyof SeasonStats,number>>>={
@@ -536,7 +581,8 @@ function annualAwards(w:World){
  const mvpScore=(p:Player)=>Math.min(z.get(p.id)!,3)+winShare(p)*2+(p.rating-60)*.04;
  const give=(p:Player,award:string)=>{w.awards.push({season:w.season,award,playerId:p.id,teamId:p.teamId});p.fame+=(award==='Golden Gargoyle'?18:award==='Rookie of the Year'?9:7);};
  const mvp=eligible.reduce((best,p)=>mvpScore(p)>mvpScore(best)?p:best);give(mvp,'Golden Gargoyle');
- addStory(w,'milestone',`${mvp.name.toUpperCase()} GANA LA GÁRGOLA DE ORO`,`${mvp.name}, ${rol(mvp.role).toLowerCase()} ${raza(mvp.race).toLowerCase()} de ${getTeam(w,mvp.teamId).name}, se lleva el máximo honor individual de la temporada. El trofeo está asegurado contra mordiscos.`,mvp.teamId,mvp.id,undefined,5);
+ {const st=mvp.stats;const line=[st.breaches?`${st.breaches} brechas`:'',st.tackles>=40?`${st.tackles} placajes`:'',st.interceptions?`${st.interceptions} robos`:'',st.passingYards>=500?`${st.passingYards} metros de pase`:''].filter(Boolean).slice(0,3).join(', ')||`${st.games} partidos`;
+ addStory(w,'milestone',`${mvp.name.toUpperCase()} GANA LA GÁRGOLA DE ORO`,pickLine(MVP_STORY,storySeed(w,mvp.id))({name:mvp.name,nick:mvp.nickname,role:rol(mvp.role).toLowerCase(),race:raza(mvp.race).toLowerCase(),club:getTeam(w,mvp.teamId).name,line}),mvp.teamId,mvp.id,undefined,5);}
  const winners:string[]=[];
  for(const role of ROLES){const best=ranked.find(p=>p.role===role);if(best){give(best,POSITION_AWARD[role]);winners.push(`${awardEs(POSITION_AWARD[role])}: ${best.name}`);}}
  // In a smaller league a rookie may miss the 12-game bar, so fall back to the most-used first-year athlete.
@@ -570,7 +616,7 @@ function offseason(w:World){
   const from=pick(w,w.teams),to=pick(w,w.teams);if(from.id===to.id)continue;
   const p=pick(w,teamRoster(w,from)),q=pick(w,teamRoster(w,to));if(!p||!q)continue;
   from.roster=from.roster.filter(id=>id!==p.id);to.roster=to.roster.filter(id=>id!==q.id);from.roster.push(q.id);to.roster.push(p.id);p.teamId=to.id;q.teamId=from.id;log.transfers.push({playerId:p.id,from:from.id,to:to.id},{playerId:q.id,from:to.id,to:from.id});
-  if(i<3)addStory(w,'transfer',`${p.name.toUpperCase()} CAMBIA DE COLORES`,`${getTeam(w,to.id).name} fichan a ${p.name}, procedente de ${from.name}. Según fuentes cercanas, el contrato incluye plus de peligrosidad y sopa ilimitada.`,to.id,p.id,undefined,2);
+  if(i<3)addStory(w,'transfer',`${p.name.toUpperCase()} CAMBIA DE COLORES`,pickLine(TRANSFER,storySeed(w,p.id))({name:p.name,to:getTeam(w,to.id).name,from:from.name,role:rol(p.role).toLowerCase()}),to.id,p.id,undefined,2);
  }
  const expired:Player[]=[];
  for(const p of w.players){
@@ -578,9 +624,10 @@ function offseason(w:World){
   ageCurve(w,p);
   const ageThreshold=RETIRE_AGE[p.race];
   if(p.age>=ageThreshold&&random(w)<.15+Math.max(0,p.age-ageThreshold)*.11)expired.push(p);
+  (p.history??=[]).push({season:w.season,teamId:p.teamId,games:p.stats.games,breaches:p.stats.breaches,tackles:p.stats.tackles,interceptions:p.stats.interceptions,rating:p.rating});
   p.stats=EMPTY_STATS();
  }
- for(const p of expired){p.retired=true;p.retiredSeason=w.season;log.retired.push(p.id);p.hallOfLegends=p.fame>=85||p.championships>=2||p.career.breaches>=55;w.retired.push(p);w.players=w.players.filter(x=>x.id!==p.id);const t=getTeam(w,p.teamId);t.roster=t.roster.filter(id=>id!==p.id);if(p.hallOfLegends) addStory(w,'milestone',`${p.name.toUpperCase()} ENTRA EN EL SALÓN DE LEYENDAS`,`${p.name} se retira con ${p.fame} puntos de leyenda, ${p.career.breaches} brechas y ${p.championships} títulos mundiales. Su retrato se cuelga donde pueda intimidar como es debido a las generaciones futuras.`,t.id,p.id,undefined,5);else if(p.career.breaches>35||p.championships>=2)addStory(w,'milestone',`ADIÓS A ${p.name.toUpperCase()}`,`${p.name} se retira tras ${p.seasons} temporadas, ${p.career.breaches} brechas y ${p.championships} títulos mundiales. Un goblin con trompeta interrumpió brevemente el discurso de despedida.`,t.id,p.id,undefined,3);}
+ for(const p of expired){p.retired=true;p.retiredSeason=w.season;log.retired.push(p.id);p.hallOfLegends=p.fame>=85||p.championships>=2||p.career.breaches>=55;w.retired.push(p);w.players=w.players.filter(x=>x.id!==p.id);const t=getTeam(w,p.teamId);t.roster=t.roster.filter(id=>id!==p.id);const fctx={name:p.name,seasons:p.seasons,breaches:p.career.breaches,titles:p.championships,fame:p.fame};if(p.hallOfLegends) addStory(w,'milestone',`${p.name.toUpperCase()} ENTRA EN EL SALÓN DE LEYENDAS`,pickLine(LEGEND_STORY,storySeed(w,p.id))(fctx),t.id,p.id,undefined,5);else if(p.career.breaches>35||p.championships>=2)addStory(w,'milestone',`ADIÓS A ${p.name.toUpperCase()}`,pickLine(FAREWELL_STORY,storySeed(w,p.id))(fctx),t.id,p.id,undefined,3);}
  chronicleOffseason(w,expired);
  for(const t of w.teams){const count=Math.max(0,15-t.roster.length);for(let i=0;i<count;i++){const role=ROLES.filter(role=>teamRoster(w,t).filter(p=>p.role===role).length<2)[0]||pick(w,ROLES);const p=createPlayer(w,t,role,true);w.players.push(p);t.roster.push(p.id);log.rookies.push(p.id);}}
  // Compact long-term history, keep recent seasons full and all finals.
@@ -646,6 +693,7 @@ export function galaItems(w:World):GalaItem[]{
 function enterWeek(w:World){
  const kind=stageKindOf(w.week);
  if(kind==='awards'&&!w.awards.some(a=>a.season===w.season))annualAwards(w);
+ announceWorldEvents(w);
  w.stage={season:w.season,week:w.week,kind,showcase:SHOWCASE_WEEKS[w.week],introSeen:false,revealed:0,total:kind==='awards'?galaItems(w).length:0};
 }
 /** The current stage, rebuilt if the save predates stages or the stored one is stale. */

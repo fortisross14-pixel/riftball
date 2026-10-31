@@ -146,3 +146,46 @@
 .leaf-nick { display: block; font-style: italic; color: var(--rubric); font-size: 0.92rem; line-height: 1.1; }
 .athlete-nickname { font-family: var(--face-display); font-size: 1.7rem; line-height: 1; color: var(--rubric); margin: -4px 0 6px; }
 .colophon-word .gear { vertical-align: -3px; margin-right: 2px; }
+
+/* ------------------------------------------------------------ glossary words */
+.term { position: relative; border-bottom: 1px dotted currentColor; cursor: help; outline: none; }
+.term-tip {
+  position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+  width: max-content; max-width: 260px; padding: 8px 10px;
+  background: #1b120c; color: #fff6dc; border: 1px solid var(--gold);
+  font: 400 0.85rem/1.35 var(--face-text); text-transform: none; letter-spacing: 0; text-align: left; white-space: normal;
+  border-radius: 4px; z-index: 80; pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity 120ms;
+}
+.term:hover .term-tip, .term:focus .term-tip, .term:focus-within .term-tip { opacity: 1; visibility: visible; }
+.term:focus-visible { outline: 2px solid var(--lapis); outline-offset: 2px; }
+
+/* ------------------------------------------------------------ what happens now */
+.now-banner { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding: 10px 16px; margin-bottom: 8px; border: 1px solid var(--gold-deep); background: rgba(240, 207, 106, 0.12); border-radius: 6px; }
+.now-col { display: flex; flex-direction: column; min-width: 0; }
+.now-kicker { font-family: var(--face-rubric); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--rubric); }
+.now-col strong { font-family: var(--face-display); font-size: 1.25rem; line-height: 1.1; }
+.now-go { margin-left: auto; }
+.now-go small { display: block; font-size: 0.75rem; }
+.now-banner .turn-page { padding: 8px 30px 8px 12px; }
+.now-banner .turn-page strong { font-size: 1.15rem; }
+
+/* ------------------------------------------------------------ first-run tour */
+.tour-slip { max-width: 520px; text-align: left; }
+.tour-step { font-family: var(--face-rubric); text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.8rem; color: var(--ink-3); }
+.tour-dots { list-style: none; display: flex; gap: 6px; padding: 0; margin: 12px 0; }
+.tour-dots li { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--gold-deep); }
+.tour-dots li.is-on { background: var(--gold); }
+.tour-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* ------------------------------------------------------------ voices, timeline, head-to-head */
+.showcase-voice { max-width: 60ch; font-style: italic; color: var(--ink-2); }
+.timeline-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.timeline-list li { display: grid; grid-template-columns: 150px 140px minmax(0, 1fr); gap: 4px 10px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--vellum-3); font-size: 0.92rem; }
+.tl-club { display: flex; align-items: center; gap: 6px; }
+.tl-line { font-family: var(--face-data); }
+.tl-awards { grid-column: 2 / -1; color: var(--rubric); font-size: 0.85rem; }
+@media (max-width: 640px) { .timeline-list li { grid-template-columns: 1fr; } .tl-awards { grid-column: auto; } }
+.h2h-title { font-family: var(--face-rubric); color: var(--rubric); margin: 10px 0 4px; }
+.mascot-line { font-style: italic; color: var(--ink-2); margin-top: 10px; }
+.mascot-line b { font-style: normal; color: var(--rubric); }

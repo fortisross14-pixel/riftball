@@ -114,3 +114,25 @@ test('Showcase predictions pay coins of the Rift for correct picks, more for und
   assert.equal(seasonCoins(w), expected);
   assert.ok(predictionReward(0.2) > predictionReward(0.6));
 });
+
+test('Rare world events have real effects: storms postpone a round, dragons move a match, strikes are announced', () => {
+  let storm: World | undefined, dragon: World | undefined;
+  for (let seed = 1; seed < 80 && (!storm || !dragon); seed++) {
+    const w = createWorld(seed);
+    const events = w.worldEvents ?? [];
+    assert.ok(events.length >= 1 && events.length <= 3, `seed ${seed}: ${events.length} events`);
+    if (!storm && events.some((e) => e.kind === 'storm')) storm = w;
+    if (!dragon && events.some((e) => e.kind === 'dragon')) dragon = w;
+  }
+  assert.ok(storm && dragon, 'found worlds with a storm and a dragon');
+  const s = storm!.worldEvents!.find((e) => e.kind === 'storm')!;
+  const league = storm!.matches.filter((m) => m.phase === 'league' && m.region === s.region);
+  assert.equal(league.filter((m) => m.week === s.week).length, 0, 'the stormy round is empty');
+  assert.equal(league.filter((m) => m.week === SEASON.LEAGUE_END).length, 12, 'and is played in week 22 with the last round');
+  assert.equal(league.length, 132, 'no fixture is lost');
+  const d = dragon!.worldEvents!.find((e) => e.kind === 'dragon')!;
+  const moved = dragon!.matches.find((m) => m.id === d.matchId)!;
+  assert.equal(moved.home, d.away, 'the dragon sends the match to the other ground');
+  while (dragon!.week <= d.week) advanceWeekAuto(dragon!);
+  assert.ok(dragon!.news.some((n) => n.title.startsWith('UN DRAGÓN')), 'the dragon makes the news');
+});

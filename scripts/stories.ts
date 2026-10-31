@@ -1,12 +1,17 @@
-// Prints storyline/badge counts and sample stories from a simulated run. Usage: npx tsx scripts/stories.ts [seasons] [seed]
+// Story variety report: share of unique story bodies, world events and a sample of headlines.
+// Usage: npx tsx scripts/stories.ts [seasons] [seed]
 import { advanceWeekAuto, createWorld } from '../src/engine';
 import type { Story } from '../src/types';
-const seasons = Number(process.argv[2] ?? 10), w = createWorld(Number(process.argv[3] ?? 2026));
-const all: Story[] = [], seen = new Set<string>();
+
+const seasons = Number(process.argv[2] ?? 10);
+const w = createWorld(Number(process.argv[3] ?? 2026));
+const seen = new Set<string>();
+const all: Story[] = [];
 while (w.season <= seasons) { advanceWeekAuto(w); for (const s of w.news) if (!seen.has(s.id)) { seen.add(s.id); all.push(s); } }
-const badges: Record<string, number> = {}; for (const s of all) if (s.badge) badges[s.badge] = (badges[s.badge] ?? 0) + 1;
-const kinds: Record<string, number> = {}; for (const l of w.storylines) kinds[l.kind] = (kinds[l.kind] ?? 0) + 1;
-console.log('stories', all.length, 'unique bodies', (new Set(all.map(s => s.body)).size / all.length).toFixed(2));
-console.log('badges', badges); console.log('storylines', kinds, 'records', w.records.length);
-for (const b of Object.keys(badges)) { const s = all.filter(x => x.badge === b).pop()!; console.log(`[${b}] ${s.title} :: ${s.body}`); }
-console.log('--- callbacks'); console.log(all.filter(s => / after (the|[A-Z])/.test(s.body)).slice(-4).map(s => s.body).join('\n'));
+const bodies = new Set(all.map((s) => s.body));
+console.log(`stories ${all.length} · unique bodies ${bodies.size} (${((bodies.size / all.length) * 100).toFixed(1)}%)`);
+const events = w.worldEvents ?? [];
+const perSeason = new Map<number, number>();
+for (const e of events) perSeason.set(e.season, (perSeason.get(e.season) ?? 0) + 1);
+console.log('world events per season:', Object.fromEntries(perSeason), 'kinds:', events.map((e) => e.kind).join(','));
+for (const s of all.filter((x) => x.kind === 'scandal').slice(0, 4)) console.log('-', s.title, '::', s.body);

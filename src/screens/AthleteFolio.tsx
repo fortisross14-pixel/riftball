@@ -5,6 +5,8 @@ import { houseColours } from '../art/Heraldry';
 import { Portrait } from '../art/Portrait';
 import { RoleGlyph } from '../art/Ornament';
 import { Blank, HouseName } from '../ui/bits';
+import { Term } from '../ui/Term';
+import { Shield } from '../art/Heraldry';
 import { ATRIBUTO_ES, ES, HABILIDAD_ES, RASGO_ES, RECORD_STAT_ES as RECORD_LABEL, awardName, raza, rareza, rol, titleCase } from '../i18n/es';
 
 const METRIC_KEYS: (keyof SeasonStats)[] = ['games', 'breaches', 'assists', 'distance', 'passes', 'gates', 'tackles', 'blocks', 'interceptions', 'knockouts', 'injuries', 'mvp'];
@@ -40,19 +42,19 @@ export function AthleteFolio({ id }: { id: string }) {
         <div className="athlete-hero">
           <div className={`great-miniature rarity-${p.rarity.toLowerCase()}`}>
             <Portrait player={p} house={t ? houseColours(t) : undefined} size={300} title={T.portrait(p.name)} />
-            <span className="great-rating"><strong>{p.rating}</strong><small>{T.rating}</small></span>
+            <span className="great-rating"><strong>{p.rating}</strong><small><Term k="rating">{T.rating}</Term></small></span>
           </div>
           <div className="athlete-heading">
             <h1 className="folio-title">{p.name}</h1>
             {p.nickname && <p className="athlete-nickname">«{p.nickname}»</p>}
-            <p className="athlete-line"><RoleGlyph role={p.role} size={24} /><span><b className={`rarity-word rarity-${p.rarity.toLowerCase()}`}>{rareza(p.rarity)}</b> · {T.roleRaceAge(rol(p.role), raza(p.race).toLowerCase(), p.age)}</span>{p.retired ? T.nowRetired : ''}</p>
+            <p className="athlete-line"><RoleGlyph role={p.role} size={24} /><span><b className={`rarity-word rarity-${p.rarity.toLowerCase()}`}><Term k="rarity">{rareza(p.rarity)}</Term></b> · {T.roleRaceAge(rol(p.role), raza(p.race).toLowerCase(), p.age)}</span>{p.retired ? T.nowRetired : ''}</p>
             <p className="athlete-house">{p.retired ? T.played : T.plays}<HouseName team={t} size={28} full /></p>
             {p.injury > 0 && <p className="athlete-injury">{T.injured(p.injury)}</p>}
           </div>
         </div>
 
         <div className="level-track">
-          <div><strong>{T.level(p.level)}</strong><span>{T.xp(p.xp, goal, p.level + 1)}</span></div>
+          <div><strong><Term k="level">{T.level(p.level)}</Term></strong><span>{T.xp(p.xp, goal, p.level + 1)}</span></div>
           <div className="level-rule"><span style={{ width: `${Math.min(100, (p.xp / goal) * 100)}%` }} /></div>
         </div>
 
@@ -71,7 +73,7 @@ export function AthleteFolio({ id }: { id: string }) {
           <div><dt>{T.facts.seasons}</dt><dd>{p.seasons}</dd></div>
           <div><dt>{T.facts.crowns}</dt><dd>{p.championships}</dd></div>
           <div><dt>{T.facts.titles}</dt><dd>{p.titles}</dd></div>
-          <div><dt>{T.facts.potential}</dt><dd>{p.potential}</dd></div>
+          <div><dt><Term k="potential">{T.facts.potential}</Term></dt><dd>{p.potential}</dd></div>
         </dl>
 
         {(honours.length > 0 || records.length > 0) && (
@@ -83,6 +85,7 @@ export function AthleteFolio({ id }: { id: string }) {
             </ul>
           </>
         )}
+        <Timeline id={p.id} />
         <h2 className="page-head small spaced">{T.mentions}</h2>
         {tidings.length ? (
           <ul className="mentions">
@@ -126,5 +129,35 @@ export function AthleteFolio({ id }: { id: string }) {
         </div>
       </section>
     </div>
+  );
+}
+
+/** One line per finished season (and the current one): club, games and the main numbers. */
+function Timeline({ id }: { id: string }) {
+  const { world: w, player, team } = useGame();
+  const p = player(id)!;
+  const rows = [...(p.history ?? [])];
+  if (!p.retired && p.stats.games) rows.push({ season: w.season, teamId: p.teamId, games: p.stats.games, breaches: p.stats.breaches, tackles: p.stats.tackles, interceptions: p.stats.interceptions, rating: p.rating });
+  const TL = ES.timeline;
+  return (
+    <>
+      <h2 className="page-head small spaced">{TL.title}</h2>
+      {rows.length ? (
+        <ol className="timeline-list">
+          {rows.slice().reverse().map((r) => {
+            const t = team(r.teamId);
+            const honours = w.awards.filter((a) => a.playerId === p.id && a.season === r.season);
+            return (
+              <li key={r.season}>
+                <span className="yr">{ES.common.season(r.season)}{r.season === w.season && !p.retired ? ` · ${TL.current}` : ''}</span>
+                <span className="tl-club">{t && <Shield team={t} size={20} />}{t?.nickname ?? '—'}</span>
+                <span className="tl-line">{TL.line(r.games, r.breaches, r.tackles, r.interceptions)} · {TL.rating(r.rating)}</span>
+                {honours.length > 0 && <span className="tl-awards">{honours.map((a) => awardName(a.award)).join(' · ')}</span>}
+              </li>
+            );
+          })}
+        </ol>
+      ) : <Blank>{TL.empty}</Blank>}
+    </>
   );
 }

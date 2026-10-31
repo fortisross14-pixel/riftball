@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { currentFixtures, currentStage, galaItems, getTeam, lineup, seasonCoins, teamRoster } from '../engine';
 import { PredictionPicker } from './parts/PreMatchCard';
+import { COMISIONADO, GRIMBALDO_LINES, pickLine } from '../i18n/es-cronica';
 import { useGame } from '../game/context';
 import { Shield, houseColours } from '../art/Heraldry';
 import { Portrait } from '../art/Portrait';
@@ -46,6 +47,7 @@ function ShowcaseIntro({ id }: { id: ShowcaseId }) {
         {pairs.map(([h, a], i) => <Matchup key={`${h}-${a}-${i}`} home={getTeam(w, h)} away={getTeam(w, a)} label={id === 'world-groups' ? ES.stage.group(i) : undefined} />)}
       </div>
       <p className="showcase-hype">{hypeLine(id, `${w.season}-${w.week}`)}</p>
+      <p className="showcase-voice">{pickLine(GRIMBALDO_LINES, `${w.seed}-${w.season}-${w.week}`)}</p>
       <button type="button" className="gilt-button showcase-go" disabled={busy || locked} onClick={dismissIntro}>{ES.stage.introGo}</button>
     </div>
   );
@@ -244,6 +246,7 @@ function Gala() {
       <header className="gala-head">
         <h1 className="showcase-title">{ES.gala.title}</h1>
         <p className="showcase-stake">{ES.gala.sub(w.season)}</p>
+        <p className="showcase-voice">{pickLine(COMISIONADO, `gala-${w.seed}-${w.season}`)}</p>
         {seasonCoins(w) > 0 && <p className="stage-coins"><b>{ES.predict.tally(seasonCoins(w))}</b></p>}
       </header>
       {!items.length && <Blank>{ES.gala.nothing}</Blank>}
