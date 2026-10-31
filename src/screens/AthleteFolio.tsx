@@ -53,9 +53,8 @@ export function AthleteFolio({ id }: { id: string }) {
             <span className="great-rating"><strong>{p.rating}</strong><small>rating</small></span>
           </div>
           <div className="athlete-heading">
-            <span className={`banderole rarity-band rarity-${p.rarity.toLowerCase()}`}>{p.rarity}</span>
             <h1 className="folio-title">{p.name}</h1>
-            <p className="athlete-line"><RoleGlyph role={p.role} size={24} />{p.race} {p.role.toLowerCase()}, aged {p.age}{p.retired ? ', now retired' : ''}</p>
+            <p className="athlete-line"><RoleGlyph role={p.role} size={24} /><span><b className={`rarity-word rarity-${p.rarity.toLowerCase()}`}>{p.rarity}</b> {p.race.toLowerCase()} {p.role.toLowerCase()}, aged {p.age}</span>{p.retired ? ', now retired' : ''}</p>
             <p className="athlete-house">{p.retired ? 'Last played for ' : 'Plays for '}<HouseName team={t} size={28} full /></p>
             {p.injury > 0 && <p className="athlete-injury">Abed with injury for {p.injury} more {p.injury === 1 ? 'week' : 'weeks'}.</p>}
           </div>
@@ -68,11 +67,11 @@ export function AthleteFolio({ id }: { id: string }) {
 
         <div className="gifts">
           <article className="gift">
-            <h3><span>Trait</span>{p.trait}</h3>
-            <p>{TRAIT_EFFECTS[p.trait] ?? 'Its effect is not yet recorded.'}</p>
+            <h3>{p.trait}</h3>
+            <p><em>Trait.</em> {TRAIT_EFFECTS[p.trait] ?? 'Its effect is not yet recorded.'}</p>
           </article>
           <article className="gift is-spark">
-            <h3><span>Spark ability</span>{p.ability}</h3>
+            <h3>{p.ability}</h3>
             <p>{ABILITY_EFFECTS[p.ability] ?? 'Its effect is not yet recorded.'}</p>
           </article>
         </div>
@@ -93,6 +92,17 @@ export function AthleteFolio({ id }: { id: string }) {
             </ul>
           </>
         )}
+        <h2 className="page-head small spaced">In the Chronicle</h2>
+        {tidings.length ? (
+          <ul className="mentions">
+            {tidings.map((s) => (
+              <li key={s.id}>
+                <button type="button" className="story-link" onClick={() => s.matchId ? go({ kind: 'contest', id: s.matchId }) : undefined} disabled={!s.matchId}>{titleCase(s.title)}</button>
+                <small>Year {roman(s.season)}, week {s.week}</small>
+              </li>
+            ))}
+          </ul>
+        ) : <Blank>The chroniclers have not yet written of {p.name.split(' ')[0]}. Give it time, or a spectacular foul.</Blank>}
       </section>
 
       <section className="page recto">
@@ -124,17 +134,6 @@ export function AthleteFolio({ id }: { id: string }) {
           </table>
         </div>
 
-        <h2 className="page-head small spaced">In the Chronicle</h2>
-        {tidings.length ? (
-          <ul className="mentions">
-            {tidings.map((s) => (
-              <li key={s.id}>
-                <button type="button" className="story-link" onClick={() => s.matchId ? go({ kind: 'contest', id: s.matchId }) : undefined} disabled={!s.matchId}>{titleCase(s.title)}</button>
-                <small>Year {roman(s.season)}, week {s.week}</small>
-              </li>
-            ))}
-          </ul>
-        ) : <Blank>The chroniclers have not yet written of {p.name.split(' ')[0]}. Give it time, or a spectacular foul.</Blank>}
       </section>
     </div>
   );

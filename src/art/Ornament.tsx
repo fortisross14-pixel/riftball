@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 import type { NewsKind, Role } from '../types';
 import { PortraitGrounds } from './Portrait';
 import { TINCTURES } from './Heraldry';
+import { hashString } from './hash';
 
 const INK = '#2a1a10';
 const GOLD = '#c8962e';
@@ -142,9 +143,84 @@ const DROLLERY: Record<NewsKind, () => JSX.Element> = {
   ),
 };
 
-export function Drollery({ kind, size = 44 }: { kind: NewsKind; size?: number }) {
-  const draw = DROLLERY[kind] ?? DROLLERY.roundup;
-  return <svg viewBox="0 0 48 48" width={size} height={size} className="drollery" aria-hidden="true">{draw()}</svg>;
+/* Further marginal creatures, so a column of tidings never repeats one picture. */
+const MORE: Partial<Record<NewsKind, (() => JSX.Element)[]>> = {
+  result: [
+    () => (
+      <g>
+        <path d="M6 30 C6 18 20 12 34 16 L44 10 L42 24 C40 34 30 40 18 38 C12 37 6 35 6 30 Z" fill="#c9a06a" {...o} />
+        <path d="M34 16 C30 22 30 30 34 36" {...l} />
+        <path d="M10 26 L28 26" {...l} stroke={GOLD} strokeWidth={2.4} />
+        <circle cx="40" cy="15" r="1.6" fill={INK} />
+        <path d="M4 40 Q10 36 16 40 Q22 44 28 40" {...l} />
+      </g>
+    ),
+    () => (
+      <g>
+        <ellipse cx="30" cy="24" rx="13" ry="10" fill="#8a4a24" {...o} />
+        <path d="M17 22 Q30 16 43 22 M17 27 Q30 33 43 27" {...l} stroke={GOLD} strokeWidth={2} />
+        <path d="M14 18 L4 14 M14 24 L2 24 M14 30 L4 34" {...l} strokeWidth={2} />
+        <path d="M22 36 C20 42 26 46 30 42 C34 46 40 42 38 36" fill={VERMILION} {...o} strokeWidth={1.4} />
+      </g>
+    ),
+    () => (
+      <g>
+        <path d="M8 40 C8 28 14 22 20 22 C20 14 30 10 36 16 C42 12 46 22 40 26 C44 30 42 40 34 40 Z" fill="#7c8f86" {...o} />
+        <circle cx="30" cy="22" r="2" fill={INK} />
+        <path d="M26 30 Q31 34 36 30" {...l} />
+        <path d="M20 22 L14 8 L22 18 Z" fill={GOLD} {...o} strokeWidth={1.2} />
+        <path d="M6 44 L44 44" {...l} />
+      </g>
+    ),
+  ],
+  milestone: [
+    () => (
+      <g>
+        <path d="M10 10 L36 10 C40 10 40 16 36 16 L36 40 C36 44 30 44 30 40 L12 40 C8 40 8 34 12 34 L12 16 Z" fill="#efe2c2" {...o} />
+        <path d="M16 20 L30 20 M16 26 L30 26 M16 32 L26 32" {...l} stroke={VERMILION} />
+        <path d="M44 4 C36 8 30 16 26 26 L28 27 C32 18 38 12 44 4 Z" fill="#efe7d2" {...o} strokeWidth={1.2} />
+      </g>
+    ),
+  ],
+  injury: [
+    () => (
+      <g>
+        <path d="M14 6 L14 44 M30 6 L30 44" stroke="#8a5a2a" strokeWidth="4" strokeLinecap="round" />
+        <path d="M14 6 L14 44 M30 6 L30 44" {...l} />
+        <path d="M10 6 L18 6 M26 6 L34 6 M14 24 L30 24" {...l} strokeWidth={3} />
+        <circle cx="40" cy="14" r="5" fill="#e8c8a8" {...o} strokeWidth={1.2} />
+        <path d="M36 12 L44 16" stroke="#f3e7c8" strokeWidth="3" />
+      </g>
+    ),
+  ],
+  championship: [
+    () => (
+      <g>
+        <path d="M8 30 C6 18 14 8 24 6 M40 30 C42 18 34 8 24 6" {...l} stroke={VERDIGRIS} strokeWidth={2.4} />
+        {[[9, 26], [11, 16], [17, 9], [39, 26], [37, 16], [31, 9]].map(([x, y], i) => <ellipse key={i} cx={x} cy={y} rx="4" ry="2" fill={VERDIGRIS} {...o} strokeWidth={0.9} transform={`rotate(${i < 3 ? -50 : 50} ${x} ${y})`} />)}
+        <path d="M14 40 L18 26 L24 34 L30 26 L34 40 Z" fill={GOLD} {...o} />
+        <circle cx="24" cy="40" r="2" fill={VERMILION} />
+      </g>
+    ),
+  ],
+  roundup: [
+    () => (
+      <g>
+        <rect x="8" y="10" width="32" height="28" fill="#efe2c2" {...o} />
+        <path d="M8 10 C8 4 16 4 16 10 M40 38 C40 44 32 44 32 38" {...l} />
+        <path d="M14 18 L34 18 M14 24 L34 24 M14 30 L28 30" {...l} stroke={VERMILION} />
+        <circle cx="34" cy="34" r="6" fill="url(#rb-wax)" {...o} strokeWidth={1.2} />
+      </g>
+    ),
+  ],
+};
+
+export function Drollery({ kind, size = 44, seed = '' }: { kind: NewsKind; size?: number; seed?: string }) {
+  const pool = [DROLLERY[kind] ?? DROLLERY.roundup, ...(MORE[kind] ?? [])];
+  const h = hashString(seed + kind);
+  const draw = pool[h % pool.length];
+  const flip = (h >> 3) % 2 === 1;
+  return <svg viewBox="0 0 48 48" width={size} height={size} className="drollery" aria-hidden="true"><g transform={flip ? 'translate(48 0) scale(-1 1)' : undefined}>{draw()}</g></svg>;
 }
 
 /* ---------------------------------------------------------------- role glyphs */

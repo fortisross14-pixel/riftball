@@ -38,8 +38,8 @@ export function HouseFolio({ id }: { id: string }) {
         <div className="house-hero">
           <Achievement team={t} size={250} />
           <div>
-            <p className="house-realm">{realmName(t.region)} · {t.division === 0 ? 'Premier' : 'Challenger'} league</p>
             <h1 className="folio-title">{t.name}</h1>
+            <p className="house-realm">of {realmName(t.region)}, in the {t.division === 0 ? 'Premier' : 'Challenger'} league</p>
             <p className="blazon"><span>Blazon:</span> {arms.blazon}</p>
           </div>
         </div>
@@ -55,11 +55,11 @@ export function HouseFolio({ id }: { id: string }) {
           </dl>
         </div>
 
-        <div className="house-virtues">
+        <dl className="facts house-virtues">
           {virtues.map(([name, v, note]) => (
-            <div key={name}><strong>{v}</strong><span>{name}</span><small>{note}</small></div>
+            <div key={name}><dt>{name} <small>{note}</small></dt><dd>{v}</dd></div>
           ))}
-        </div>
+        </dl>
 
         <h2 className="page-head small spaced">Honours</h2>
         <p className="honour-line"><b>{t.worldTitles}</b> Grand Rift {t.worldTitles === 1 ? 'crown' : 'crowns'} · <b>{t.historyTitles}</b> realm {t.historyTitles === 1 ? 'title' : 'titles'}</p>
@@ -74,6 +74,10 @@ export function HouseFolio({ id }: { id: string }) {
             <p>Sworn rivals of <HouseName team={rival} size={26} full />. Heat {t.rivalHeat}; in their meetings {t.nickname} have won {t.rivalRecord.w}, drawn {t.rivalRecord.d} and lost {t.rivalRecord.l}.</p>
           </div>
         )}
+        {next && <><h2 className="page-head small spaced">Next Contest</h2><ChallengeRow m={next} showPhase /></>}
+        <h2 className="page-head small spaced">Recent Contests</h2>
+        {recentPlayed.length ? recentPlayed.map((m) => <ChallengeRow key={m.id} m={m} showPhase />) : <Blank>No contests yet this age.</Blank>}
+
       </section>
 
       <section className="page recto">
@@ -98,10 +102,6 @@ export function HouseFolio({ id }: { id: string }) {
           <div><dt>Won</dt><dd>{games ? Math.round((t.record.w / games) * 100) : 0}%</dd></div>
           <div><dt>Form</dt><dd><FormPips team={t} /></dd></div>
         </dl>
-
-        {next && <><h2 className="page-head small spaced">Next Contest</h2><ChallengeRow m={next} showPhase /></>}
-        <h2 className="page-head small spaced">Recent Contests</h2>
-        {recentPlayed.length ? recentPlayed.map((m) => <ChallengeRow key={m.id} m={m} showPhase />) : <Blank>No contests yet this age.</Blank>}
 
         <h2 className="page-head small spaced">The Full Roll</h2>
         <div className="table-scroll">

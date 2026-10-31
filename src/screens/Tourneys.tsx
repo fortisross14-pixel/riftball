@@ -110,10 +110,10 @@ export function ChallengeRow({ m, showPhase = false }: { m: Match; showPhase?: b
   const done = m.homeScore !== null;
   return (
     <button type="button" className={`challenge ${done ? 'is-done' : ''}`} onClick={() => go({ kind: 'contest', id: m.id })}>
-      {showPhase && <span className="challenge-phase">{PHASE_NAME[m.phase]} · week {m.week}</span>}
       <span className={`challenge-side ${m.winner === h.id ? 'is-winner' : ''}`}><Shield team={h} size={30} /><span>{h.nickname}</span></span>
       <span className="challenge-score">{done ? `${m.homeScore} – ${m.awayScore}` : 'v.'}</span>
       <span className={`challenge-side is-away ${m.winner === a.id ? 'is-winner' : ''}`}><span>{a.nickname}</span><Shield team={a} size={30} /></span>
+      {showPhase && <span className="challenge-phase">{PHASE_NAME[m.phase]} · week {m.week}</span>}
     </button>
   );
 }
@@ -131,6 +131,14 @@ function GrandRift() {
   const finals = stage('regional-final');
   const contenders = w.teams.filter((t) => t.division === 0).sort((a, b) => b.record.pts - a.record.pts || (b.record.pf - b.record.pa) - (a.record.pf - a.record.pa));
 
+  // Before qualification, pencil in the field the engine would draw today: realm leaders plus the best other Premier house of each realm, 1v8, 2v7, 3v6, 4v5.
+  const byPts = (a: Team, b: Team) => b.record.pts - a.record.pts || b.record.pf - a.record.pf;
+  const leaders = REGIONS.map((_, i) => finals.find((m) => m.region === i)?.winner).map((id, i) => (id ? team(id) : contenders.find((t) => t.region === i))).filter((t): t is Team => !!t);
+  const extras: Team[] = [];
+  for (const t of contenders.filter((c) => !leaders.some((l) => l.id === c.id)).sort(byPts)) { if (extras.some((e) => e.region === t.region)) continue; extras.push(t); if (extras.length === 4) break; }
+  const field = [...leaders, ...extras].sort(byPts);
+  const projected = (i: number) => field.length === 8 ? <ProjectedMatch a={field[i]} b={field[7 - i]} /> : <div className="bracket-match is-empty"><span>Awaiting the heralds</span></div>;
+  const qfSlot = (i: number) => qf[i] ? <BracketMatch m={qf[i]} /> : projected(i);
   const slot = (m: Match | undefined, label: string) => m ? <BracketMatch m={m} /> : <div className="bracket-match is-empty"><span>{label}</span></div>;
 
   return (
@@ -138,12 +146,13 @@ function GrandRift() {
       <div className="rift-head">
         <h2>The Grand Rift</h2>
         <p>Four realm champions and four wildcards meet in weeks 21 to 23. One house is crowned champion of the world; the rest are crowned with ice packs.</p>
+        {!qf.length && <p className="rift-projected-note">Until the realms are settled, the heralds pencil in the field as it stands today.</p>}
       </div>
       <div className="bracket">
         <div className="bracket-col">
           <span className="bracket-round">Quarterfinals · week 21</span>
-          {slot(qf[0], 'Awaiting the heralds')}
-          {slot(qf[1], 'Awaiting the heralds')}
+          {qfSlot(0)}
+          {qfSlot(3)}
         </div>
         <div className="bracket-col is-semi">
           <span className="bracket-round">Semifinal · week 22</span>
@@ -167,8 +176,8 @@ function GrandRift() {
         </div>
         <div className="bracket-col">
           <span className="bracket-round">Quarterfinals · week 21</span>
-          {slot(qf[2], 'Awaiting the heralds')}
-          {slot(qf[3], 'Awaiting the heralds')}
+          {qfSlot(1)}
+          {qfSlot(2)}
         </div>
       </div>
       <div className="rift-realms">
@@ -188,6 +197,21 @@ function GrandRift() {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+function ProjectedMatch({ a, b }: { a: Team; b: Team }) {
+  return (
+    <div className="bracket-match is-projected" aria-label={`Projected: ${a.name} against ${b.name}`}>
+      {[a, b].map((t) => (
+        <span key={t.id} className="bracket-side">
+          <Shield team={t} size={26} />
+          <span className="bracket-name">{t.nickname}</span>
+          <strong>{t.record.pts}</strong>
+        </span>
+      ))}
+      <em className="projected-word">projected · points so far</em>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { recent, topPlayers, upcoming } from '../engine';
 import { nfmt, record, stageOf, useGame } from '../game/context';
 import { Drollery, Initial } from '../art/Ornament';
 import { roman } from '../art/hash';
+import { Shield } from '../art/Heraldry';
 import { FeaturedContestCard } from './parts/FeaturedContestCard';
 import { ChallengeRow } from './Tourneys';
 import { AthleteName, Blank, HouseName, Miniature } from '../ui/bits';
@@ -45,10 +46,10 @@ export function Chronicle() {
         {lead ? (
           <article className="lead-story">
             <div className="lead-initial"><Initial letter={lead.title.replace(/[^A-Za-z]/, '').charAt(0) || 'R'} size={128} tone={TONES[lead.season % 4]} /></div>
-            {lead.badge && <span className="banderole">{lead.badge.toLowerCase()}</span>}
             <h2><button type="button" className="story-link" onClick={() => open(lead)} disabled={!lead.matchId && !lead.playerId && !lead.teamId}>{titleCase(lead.title)}</button></h2>
             <p className="lead-body">{lead.body}</p>
-            <p className="dateline">Set down in Year {roman(lead.season)}, week {lead.week}</p>
+            {lead.matchId && <LeadMiniature id={lead.matchId} />}
+            <p className="dateline">{lead.badge ? `${lead.badge.toLowerCase()} · ` : ''}set down in Year {roman(lead.season)}, week {lead.week}</p>
           </article>
         ) : <Blank>The first page is blank. Turn the page to write the opening week.</Blank>}
 
@@ -56,7 +57,7 @@ export function Chronicle() {
 
         <h2 className="page-head small spaced">Last Week on the Field</h2>
         <p className="aside-note">{lastWeek.length ? `The most telling results of week ${lastWeek[0].week}.` : 'No contests have been fought yet this year.'}</p>
-        <div className="challenges">{lastWeek.slice(0, 8).map((m) => <ChallengeRow key={m.id} m={m} showPhase={m.phase !== 'league'} />)}</div>
+        <div className="challenges">{lastWeek.slice(0, 10).map((m) => <ChallengeRow key={m.id} m={m} showPhase={m.phase !== 'league'} />)}</div>
       </section>
 
       <section className="page recto">
@@ -64,12 +65,11 @@ export function Chronicle() {
         <ol className="tidings">
           {rest.map((s) => (
             <li key={s.id} className={`tiding kind-${s.kind}`}>
-              <span className="tiding-drollery"><Drollery kind={s.kind} size={40} /></span>
               <div>
-                <p className="tiding-meta">{s.kind === 'roundup' ? 'Proclamation' : s.kind}{s.badge ? ` · ${s.badge.toLowerCase()}` : ''} · week {s.week}</p>
                 <h3><button type="button" className="story-link" onClick={() => open(s)} disabled={!s.matchId && !s.playerId && !s.teamId}>{titleCase(s.title)}</button></h3>
                 <p>{s.body}</p>
               </div>
+              <span className="tiding-gloss"><Drollery kind={s.kind} seed={s.id} size={46} /><small>{s.kind === 'roundup' ? 'proclamation' : s.kind}{s.badge ? ` · ${s.badge.toLowerCase()}` : ''}<br />week {s.week}</small></span>
             </li>
           ))}
           {!rest.length && <li><Blank>No further tidings. The heralds are resting their voices.</Blank></li>}
@@ -111,6 +111,21 @@ export function Chronicle() {
         </p>
       </section>
     </div>
+  );
+}
+
+function LeadMiniature({ id }: { id: string }) {
+  const { world: w, team, go } = useGame();
+  const m = w.matches.find((x) => x.id === id);
+  const h = m && team(m.home);
+  const a = m && team(m.away);
+  if (!m || !h || !a) return null;
+  return (
+    <button type="button" className="lead-miniature" onClick={() => go({ kind: 'contest', id })} aria-label={`Open the contest: ${h.name} against ${a.name}`}>
+      <Shield team={h} size={54} />
+      <span>{m.homeScore === null ? 'v.' : `${m.homeScore}–${m.awayScore}`}</span>
+      <Shield team={a} size={54} />
+    </button>
   );
 }
 

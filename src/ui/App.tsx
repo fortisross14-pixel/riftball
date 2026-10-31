@@ -70,6 +70,7 @@ export default function App() {
       <ArtDefs />
       <div className="desk">
         <a className="skip" href="#folio">Skip to the page</a>
+        <div className="masthead">
         <nav className="ribbons" aria-label="Sections of the chronicle">
           {RIBBONS.map((r) => (
             <a
@@ -85,6 +86,8 @@ export default function App() {
             </a>
           ))}
         </nav>
+        <TurnCorner world={w} busy={!!game.busy} locked={game.conflict} onAdvance={(n) => void game.advance(n)} />
+        </div>
         <div className="codex">
           <span className="boss boss-tl" aria-hidden="true" /><span className="boss boss-tr" aria-hidden="true" />
           <span className="boss boss-bl" aria-hidden="true" /><span className="boss boss-br" aria-hidden="true" />
@@ -97,7 +100,6 @@ export default function App() {
             <div className="gutter-shade" aria-hidden="true" />
           </div>
         </div>
-        <TurnCorner world={w} busy={!!game.busy} locked={game.conflict} onAdvance={(n) => void game.advance(n)} />
       </div>
       {game.notice && (
         <aside className="marginal-note" role="status">
@@ -194,6 +196,15 @@ function TurnCorner({ world, busy, locked, onAdvance }: { world: World; busy: bo
   const disabled = busy || locked;
   return (
     <div className={`turn-corner ${open ? 'is-open' : ''}`} ref={ref}>
+      <div className="turn-actions">
+        <button type="button" className="turn-more" aria-expanded={open} aria-haspopup="menu" disabled={disabled} onClick={() => setOpen(!open)}>
+          Further
+        </button>
+        <button type="button" className="turn-page" disabled={disabled} onClick={() => onAdvance(1)}>
+          <Hourglass size={26} />
+          <span><strong>Turn the page</strong><small>{world.week >= 26 ? 'begin a new year' : `play week ${world.week}`}</small></span>
+        </button>
+      </div>
       {open && (
         <div className="turn-menu" role="menu">
           <p className="turn-menu-head">Write further ahead</p>
@@ -204,15 +215,6 @@ function TurnCorner({ world, busy, locked, onAdvance }: { world: World; busy: bo
           ))}
         </div>
       )}
-      <div className="turn-actions">
-        <button type="button" className="turn-more" aria-expanded={open} aria-haspopup="menu" disabled={disabled} onClick={() => setOpen(!open)}>
-          Further
-        </button>
-        <button type="button" className="turn-page" disabled={disabled} onClick={() => onAdvance(1)}>
-          <Hourglass size={26} />
-          <span><strong>Turn the page</strong><small>{world.week >= 26 ? 'begin a new year' : `play week ${world.week}`}</small></span>
-        </button>
-      </div>
     </div>
   );
 }

@@ -39,8 +39,7 @@ export function Annals() {
               <li key={c.season}>
                 <span className="annal-shield">{t && <Shield team={t} size={56} title />}</span>
                 <div>
-                  <span className="annal-year">Year {roman(c.season)}</span>
-                  <p>In this year <HouseName team={t} size={0} full /> took the crown of the Grand Rift{ru ? <>, overcoming <HouseName team={ru} size={0} full /> in the final</> : ''}.</p>
+                  <p><span className="annal-year">Year {roman(c.season)}.</span> In this year <HouseName team={t} size={0} full /> took the crown of the Grand Rift{ru ? <>, overcoming <HouseName team={ru} size={0} full /> in the final</> : ''}.</p>
                 </div>
               </li>
             );
@@ -50,15 +49,21 @@ export function Annals() {
 
         <h2 className="page-head small spaced">The Eternal Ledger</h2>
         {careerRecords.length || seasonRecords.length ? (
-          <div className="records">
-            {[...careerRecords, ...seasonRecords].map((r) => (
-              <div key={`${r.scope}-${r.stat}`} className="record-plaque">
-                <span className="record-label">{r.scope === 'career' ? 'Career' : 'Single season'} · {RECORD_LABEL[r.stat] ?? r.stat}</span>
-                <strong>{nfmt(r.value)}</strong>
-                <span className="record-holder"><AthleteName player={player(r.playerId)}>{r.playerName}</AthleteName>{r.scope === 'season' ? `, Year ${roman(r.season)}` : ''}</span>
-              </div>
-            ))}
-          </div>
+          <table className="ledger record-ledger">
+            <thead><tr><th>Record</th><th>Holder</th><th className="num">Figure</th></tr></thead>
+            <tbody>
+              {[['career', careerRecords], ['season', seasonRecords]].map(([scope, list]) => (list as typeof careerRecords).length > 0 && [
+                <tr key={`h-${scope}`} className="record-group"><td colSpan={3}>{scope === 'career' ? 'Across whole careers' : 'In a single season'}</td></tr>,
+                ...(list as typeof careerRecords).map((r) => (
+                  <tr key={`${r.scope}-${r.stat}`}>
+                    <td>{RECORD_LABEL[r.stat] ?? r.stat}</td>
+                    <td><AthleteName player={player(r.playerId)}>{r.playerName}</AthleteName>{r.scope === 'season' ? <small> · Year {roman(r.season)}</small> : null}</td>
+                    <td className="num strong">{nfmt(r.value)}</td>
+                  </tr>
+                )),
+              ])}
+            </tbody>
+          </table>
         ) : <Blank>No records have been set down yet. Play a season and the ledger begins.</Blank>}
 
       </section>
@@ -82,8 +87,7 @@ export function Annals() {
           <ul className="sagas">
             {sagas.map((s) => (
               <li key={s.id}>
-                <span className="saga-kind">{STORY_KIND[s.kind]} · since Year {roman(s.startSeason)}</span>
-                <p>{s.memory}</p>
+                <p><strong className="saga-kind">{STORY_KIND[s.kind]}:</strong> {s.memory || 'the chroniclers are still deciding what to call it'}, <span className="saga-since">since Year {roman(s.startSeason)}</span>.</p>
                 <span className="saga-subjects">{s.subjects.map(subjectLink)}</span>
               </li>
             ))}

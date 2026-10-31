@@ -77,7 +77,7 @@ export function Bestiary() {
               <button key={p.id} type="button" className={`leaf-card rarity-${p.rarity.toLowerCase()}`} onClick={() => go({ kind: 'athlete', id: p.id })}>
                 <span className="leaf-portrait">
                   <Miniature player={p} size={180} />
-                  <span className="rating-seal" aria-label={`Rating ${p.rating}`}>{p.rating}</span>
+                  <span className={`rating-seal ${p.rarity === 'Legendary' || p.rarity === 'Generational' ? 'is-gilt' : ''}`} aria-label={`Rating ${p.rating}`}>{p.rating}</span>
                   {p.injury > 0 && <span className="injury-tag">abed {p.injury} wk</span>}
                 </span>
                 <strong className="leaf-name">{p.name}</strong>

@@ -1,0 +1,210 @@
+/* =====================================================================
+   Materials and finishing: leaf, brass, tooling, deckle and foxing,
+   plus the reviewed layout corrections. Loaded last.
+   ===================================================================== */
+
+:root {
+  --leaf: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='140'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03 .055' numOctaves='3' seed='7' result='n'/%3E%3CfeSpecularLighting in='n' surfaceScale='3.2' specularConstant='1' specularExponent='16' lighting-color='%23fff2c0' result='s'%3E%3CfeDistantLight azimuth='225' elevation='38'/%3E%3C/feSpecularLighting%3E%3CfeComposite in='s' in2='SourceGraphic' operator='arithmetic' k1='0' k2='.6' k3='1' k4='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' fill='%23b0802a' filter='url(%23f)'/%3E%3C/svg%3E");
+  --boss: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='b' cx='.35' cy='.3' r='.85'%3E%3Cstop offset='0' stop-color='%23f6dc8a'/%3E%3Cstop offset='.5' stop-color='%23b8862a'/%3E%3Cstop offset='1' stop-color='%235a3e0c'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M2 2 H62 V12 C52 12 47 16 45 21 C40 19 34 22 33 27 C28 26 23 30 22 34 C17 35 13 41 12 46 L12 62 H2 Z' fill='url(%23b)' stroke='%232a1a10' stroke-width='1.5'/%3E%3Ccircle cx='15' cy='15' r='8' fill='url(%23b)' stroke='%232a1a10' stroke-width='1.3'/%3E%3Ccircle cx='15' cy='15' r='3.4' fill='none' stroke='%235a3e0c' stroke-width='1.2'/%3E%3Ccircle cx='12.5' cy='12.5' r='2' fill='%23fff3c8' opacity='.75'/%3E%3Ccircle cx='52' cy='7' r='2.1' fill='%235a3e0c'/%3E%3Ccircle cx='7' cy='52' r='2.1' fill='%235a3e0c'/%3E%3Cpath d='M5 30 Q12 27 14 21 M30 5 Q27 12 21 14' fill='none' stroke='%235a3e0c' stroke-width='1.4'/%3E%3C/svg%3E");
+  --tooling: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect x='3' y='3' width='42' height='42' fill='none' stroke='%23a07a2c' stroke-width='1.2'/%3E%3Crect x='13' y='13' width='22' height='22' fill='none' stroke='%23a07a2c' stroke-width='1'/%3E%3Cg fill='%23c8962e'%3E%3Cpath d='M8 5.5 L10.5 8 L8 10.5 L5.5 8Z'/%3E%3Cpath d='M24 5.5 L26.5 8 L24 10.5 L21.5 8Z'/%3E%3Cpath d='M40 5.5 L42.5 8 L40 10.5 L37.5 8Z'/%3E%3Cpath d='M8 21.5 L10.5 24 L8 26.5 L5.5 24Z'/%3E%3Cpath d='M40 21.5 L42.5 24 L40 26.5 L37.5 24Z'/%3E%3Cpath d='M8 37.5 L10.5 40 L8 42.5 L5.5 40Z'/%3E%3Cpath d='M24 37.5 L26.5 40 L24 42.5 L21.5 40Z'/%3E%3Cpath d='M40 37.5 L42.5 40 L40 42.5 L37.5 40Z'/%3E%3C/g%3E%3C/svg%3E");
+  --deckle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='64'%3E%3Cpath d='M0 0 H6 L3 5 L7 11 L2 17 L6 23 L3 30 L8 36 L2 43 L6 50 L3 57 L5 64 H0 Z' fill='%23a88a5c' opacity='.55'/%3E%3Cpath d='M0 0 H3 L1 6 L4 12 L1 19 L3 26 L1 33 L4 40 L1 47 L3 55 L1 64 H0 Z' fill='%232e0b09' opacity='.85'/%3E%3C/svg%3E");
+}
+
+/* ------------------------------------------------------------ binding, bosses, deckle, foxing */
+
+.codex {
+  border: 16px solid transparent;
+  border-image: var(--tooling) 16 round;
+  background-origin: border-box;
+  padding: clamp(6px, 0.8vw, 12px);
+}
+.boss { width: 64px; height: 64px; background: var(--boss) no-repeat center / contain; clip-path: none; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.55)); }
+.boss-tl { top: -10px; left: -10px; }
+.boss-tr { top: -10px; right: -10px; }
+.boss-bl { bottom: -10px; left: -10px; }
+.boss-br { bottom: -10px; right: -10px; }
+.book {
+  background-image:
+    radial-gradient(circle at 9% 14%, rgba(150, 95, 40, 0.13) 0 6px, rgba(150, 95, 40, 0.05) 12px, transparent 30px),
+    radial-gradient(circle at 46% 31%, rgba(150, 95, 40, 0.08) 0 4px, transparent 18px),
+    radial-gradient(circle at 88% 62%, rgba(150, 95, 40, 0.1) 0 10px, rgba(150, 95, 40, 0.04) 22px, transparent 52px),
+    radial-gradient(circle at 61% 7%, rgba(150, 95, 40, 0.09) 0 5px, transparent 22px),
+    radial-gradient(circle at 27% 77%, rgba(150, 95, 40, 0.09) 0 8px, transparent 34px),
+    radial-gradient(circle at 74% 91%, rgba(150, 95, 40, 0.07) 0 6px, transparent 26px),
+    var(--tex-vellum),
+    var(--tex-fibre),
+    radial-gradient(ellipse 60% 70% at 25% 50%, rgba(255, 250, 235, 0.45), transparent 70%),
+    radial-gradient(ellipse 60% 70% at 75% 50%, rgba(255, 250, 235, 0.45), transparent 70%),
+    radial-gradient(ellipse 100% 100% at 50% 50%, transparent 70%, rgba(150, 105, 50, 0.32));
+}
+.book::before, .book::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; width: 10px;
+  background: var(--deckle) repeat-y;
+  z-index: 5;
+  pointer-events: none;
+}
+.book::before { left: 0; }
+.book::after { right: 0; transform: scaleX(-1); }
+
+/* ------------------------------------------------------------ gold leaf, kept for now, next and honours */
+
+.gilt-button {
+  background: var(--leaf) center / cover;
+  border-color: #5a3e0c;
+  color: #2b1a08;
+  text-shadow: 0 1px 0 rgba(255, 240, 190, 0.6);
+  box-shadow: 0 0 0 1px rgba(255, 236, 170, 0.45) inset, 0 3px 6px rgba(70, 45, 10, 0.35);
+}
+.calendar li.is-now { background: var(--leaf) center / 300px auto; }
+.great-rating, .rating-seal.is-gilt { background: var(--leaf) center / 200px auto; }
+.rating-seal { background: var(--vellum); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); }
+.rating-seal.is-gilt { border-color: #5a3e0c; color: #2b1a08; }
+.scriptorium-rule span { background: var(--leaf) center / cover; }
+
+/* ------------------------------------------------------------ the masthead: ribbons, and Turn the Page hanging from the book's top right */
+
+.masthead {
+  position: sticky; top: 0; z-index: 20;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: start; gap: 12px;
+  max-width: 1540px; margin: 0 auto;
+  pointer-events: none;
+}
+.masthead .ribbons { position: static; grid-column: 2; padding: 0; }
+.turn-corner { position: relative; right: auto; bottom: auto; grid-column: 3; justify-self: end; flex-direction: column; align-items: flex-end; pointer-events: auto; margin-right: 22px; }
+.turn-actions { filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.5)); }
+.turn-page {
+  padding: 18px 30px 14px 16px;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%);
+}
+.turn-page::after { top: auto; bottom: 0; right: 0; width: 24px; height: 24px; background: linear-gradient(315deg, transparent 50%, #c9ae7c 50%, #ead9b2); box-shadow: -2px -2px 3px rgba(0, 0, 0, 0.18); }
+.turn-page strong { font-size: 1.45rem; }
+.turn-more { border-radius: 0 0 0 4px; }
+.turn-menu { margin-top: 8px; transform-origin: top right; animation-name: unroll-down; }
+@keyframes unroll-down { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+.codex { margin-top: -6px; }
+
+/* ------------------------------------------------------------ Chronicle: glosses in the outer margin, the lead miniature */
+
+.tiding { grid-template-columns: minmax(0, 1fr) 92px; gap: 18px; }
+.tiding-gloss { display: flex; flex-direction: column; align-items: center; gap: 4px; padding-top: 2px; text-align: center; }
+.tiding-gloss small { font-family: var(--face-rubric); font-weight: 700; font-size: 0.8rem; line-height: 1.2; color: var(--rubric); }
+.lead-miniature {
+  grid-column: 1 / -1; justify-self: start;
+  display: inline-flex; align-items: center; gap: 16px;
+  margin-top: 16px; padding: 10px 22px;
+  border: 3px solid transparent;
+  background: radial-gradient(circle, rgba(240, 207, 106, 0.5) 1px, transparent 1.6px) 0 0 / 16px 16px padding-box, linear-gradient(var(--lapis), var(--lapis)) padding-box, var(--leaf) center / cover border-box;
+  box-shadow: 0 0 0 1px var(--ink), 0 6px 12px rgba(30, 20, 10, 0.3);
+  transition: transform 220ms var(--ease-out);
+}
+.lead-miniature:hover { transform: translateY(-2px) rotate(-0.5deg); }
+.lead-miniature span { font-family: var(--face-display); font-weight: 900; font-size: 2rem; color: #fff4d6; font-variant-numeric: lining-nums; min-width: 70px; text-align: center; }
+.dateline { text-transform: none; }
+
+/* ------------------------------------------------------------ labels follow what they describe */
+
+.challenge { row-gap: 2px; }
+.challenge-phase { grid-row: 2; grid-column: 1 / -1; text-align: center; font-size: 0.8rem; }
+.sb-phase { margin-top: 2px; }
+.spotlight-kind { font-family: var(--face-rubric); font-weight: 700; color: var(--rubric); }
+.spotlight-who { margin-top: 2px; }
+.house-realm { margin-top: 8px; font-family: var(--face-rubric); font-weight: 700; color: var(--rubric); }
+.athlete-line b { font-family: var(--face-rubric); }
+.gift h3 { margin-bottom: 2px; }
+.gift p em { font-style: normal; font-family: var(--face-rubric); font-weight: 700; color: var(--verdigris); }
+.annal-year { font-size: 1.3rem; margin-right: 0.25em; }
+.sagas p { font-style: normal; margin: 0; }
+.saga-kind { font-family: var(--face-rubric); color: var(--rubric); }
+.saga-since { color: var(--ink-2); font-style: italic; }
+.saga-subjects { margin-top: 4px; }
+
+/* ------------------------------------------------------------ ruled ledgers in place of stat tiles */
+
+.facts, .season-figures, .colophon-facts, .house-virtues { display: grid; grid-template-columns: 1fr 1fr; column-gap: 30px; row-gap: 0; }
+.facts div, .season-figures div, .colophon-facts div, .house-virtues div {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  border-top: 0; padding: 7px 0;
+  border-bottom: 1px solid rgba(163, 39, 28, 0.25);
+}
+.facts dt, .season-figures dt, .colophon-facts dt, .house-virtues dt { font-family: var(--face-rubric); font-weight: 700; color: var(--ink); font-size: 0.98rem; }
+.house-virtues dt small { display: block; font-family: var(--face-text); font-weight: 400; font-size: 0.84rem; color: var(--ink-2); }
+.facts dd, .season-figures dd, .colophon-facts dd, .house-virtues dd { font-size: 1.2rem; margin: 0; font-family: var(--face-data); font-weight: 700; font-variant-numeric: lining-nums tabular-nums; }
+.record-ledger .record-group td { padding-top: 14px; font-family: var(--face-rubric); font-weight: 700; color: var(--rubric); border-bottom: 1.5px solid var(--rubric); }
+.record-ledger td small { color: var(--ink-2); }
+
+/* ------------------------------------------------------------ the Grand Rift: a converging bracket with drawn joins */
+
+.bracket { --g: clamp(10px, 1.6vw, 26px); gap: var(--g); }
+.bracket-col { position: relative; }
+.bracket-col:nth-child(1) .bracket-match::after, .bracket-col:nth-child(2) .bracket-match::after { width: calc(var(--g) / 2); }
+.bracket-col:nth-child(4) .bracket-match::before, .bracket-col:nth-child(5) .bracket-match::before { width: calc(var(--g) / 2); }
+.bracket-col:nth-child(1)::after, .bracket-col:nth-child(5)::after {
+  content: ''; position: absolute; top: calc(25% + 12px); bottom: calc(25% - 12px); width: 2px; background: var(--gold);
+}
+.bracket-col:nth-child(1)::after { right: calc(var(--g) / -2 - 1px); }
+.bracket-col:nth-child(5)::after { left: calc(var(--g) / -2 - 1px); }
+.bracket-col:nth-child(2) .bracket-match::before { content: ''; position: absolute; right: 100%; top: 50%; width: calc(var(--g) / 2); height: 2px; background: var(--gold); }
+.bracket-col:nth-child(4) .bracket-match::after { content: ''; position: absolute; left: 100%; top: 50%; width: calc(var(--g) / 2); height: 2px; background: var(--gold); }
+.bracket-match.is-projected { border-style: dashed; border-color: var(--gold); background: rgba(239, 227, 198, 0.9); }
+.projected-word { font-family: var(--face-data); font-size: 0.74rem; color: var(--ink-2); text-align: center; margin-top: 2px; }
+.rift-projected-note { margin-top: 6px !important; font-size: 0.92rem; color: var(--gold-hi) !important; }
+@media (max-width: 1250px) and (min-width: 1001px) {
+  .bracket { grid-template-columns: 1fr 1fr minmax(170px, 1fr) 1fr 1fr; }
+  .bracket-heart { grid-column: auto; grid-row: auto; }
+  .bracket .bracket-match::after, .bracket .bracket-match::before { display: block !important; }
+  .bracket-name { font-size: 0.9rem; }
+  .bracket-heart .rift-crown { width: 132px; height: 132px; }
+}
+@media (max-width: 1000px) {
+  .bracket-col:nth-child(1)::after, .bracket-col:nth-child(5)::after { display: none; }
+}
+
+/* ------------------------------------------------------------ names never cut */
+
+.thread strong { white-space: normal; overflow: visible; line-height: 1.15; }
+.bracket-name { white-space: normal; }
+
+@media (max-width: 1100px) {
+  .turn-corner { margin-right: 8px; }
+  .turn-page { padding: 14px 26px 12px 12px; }
+  .turn-page strong { font-size: 1.2rem; }
+}
+@media (max-width: 900px) {
+  .masthead { grid-template-columns: minmax(0, 1fr) auto; }
+  .masthead .ribbons { grid-column: 1; pointer-events: auto; }
+  .turn-corner { grid-column: 2; margin-right: 4px; }
+  .turn-page small { display: none; }
+  .turn-page .hourglass { width: 20px; height: 24px; }
+  .facts, .season-figures, .colophon-facts, .house-virtues { grid-template-columns: 1fr; }
+  .tiding { grid-template-columns: minmax(0, 1fr) 64px; }
+}
+
+/* masthead: the turn tab floats at the right; its menu overlays the page instead of pushing it */
+.masthead { display: flex; justify-content: center; }
+.masthead .ribbons { justify-content: center; }
+.turn-corner { position: absolute; top: 0; right: 22px; margin: 0; }
+.turn-page strong, .turn-page small { white-space: nowrap; }
+.turn-menu { position: absolute; top: 100%; right: 0; }
+@media (max-width: 1300px) { .ribbon { width: clamp(70px, 6.6vw, 112px); } .ribbon-name { font-size: 0.86rem; } }
+@media (max-width: 900px) {
+  .masthead { justify-content: flex-start; padding-right: 150px; }
+  .masthead .ribbons { justify-content: flex-start; }
+  .turn-corner { right: 4px; }
+}
+
+.masthead { padding: 0 clamp(250px, 20.5vw, 300px); }
+@media (max-width: 900px) { .masthead { padding: 0 150px 0 0; } }
+.record-ledger td:first-child::first-letter { text-transform: uppercase; }
+
+.masthead { padding: 0 clamp(270px, 24vw, 350px); }
+.ribbon { width: clamp(64px, 6.2vw, 104px); }
+@media (max-width: 900px) { .masthead { padding: 0 150px 0 0; } .ribbon { width: 76px; } }
+
+@media (max-width: 1300px) and (min-width: 901px) { .masthead { padding: 0 360px 0 16px; } }
+@media (max-width: 600px) {
+  .masthead { padding: 0 215px 0 0; }
+  .turn-page { padding: 12px 22px 10px 10px; gap: 6px; }
+  .turn-page strong { font-size: 1rem; }
+  .turn-more { padding: 0 8px; font-size: 0.8rem; }
+}

@@ -189,7 +189,6 @@ function Scoreboard({ m, home, away, score, state, minute }: { m: Match; home: T
         <div><strong>{home.name}</strong><small>{realmName(home.region)} · home</small></div>
       </div>
       <div className="sb-centre">
-        <span className="sb-phase">{PHASE_NAME[m.phase]} · Year {roman(m.season)}, week {m.week}</span>
         {state === 'sealed' ? (
           <div className="sb-seal"><WaxSeal size={86} /><span>The result lies under seal</span></div>
         ) : state === 'challenge' ? (
@@ -200,6 +199,7 @@ function Scoreboard({ m, home, away, score, state, minute }: { m: Match; home: T
         <span className="sb-state">
           {state === 'revealed' ? (winner ? `${winner.nickname} victorious` : 'Honours even') : state === 'unfolding' ? `Minute ${minute ?? 0}` : state === 'sealed' ? 'Spoiler-safe replay' : 'Not yet fought'}
         </span>
+        <span className="sb-phase">{PHASE_NAME[m.phase]} · Year {roman(m.season)}, week {m.week}</span>
       </div>
       <div className="sb-side is-away">
         <div><strong>{away.name}</strong><small>{realmName(away.region)} · away</small></div>
@@ -353,9 +353,8 @@ function Spotlight({ event, m, home, away }: { event?: MatchEvent; m: Match; hom
       <div className="spotlight-card">
         {p ? <Miniature player={p} size={128} /> : <Shield team={side} size={108} />}
         <div>
-          <span className="spotlight-kind">{KIND_WORD[event.kind]} · minute {event.minute}</span>
           <h3>{p ? <AthleteName player={p} /> : side.name}</h3>
-          {p && <p className="spotlight-who">{p.race} {p.role.toLowerCase()} of {side.nickname}</p>}
+          <p className="spotlight-who"><span className="spotlight-kind">{KIND_WORD[event.kind]}, minute {event.minute}.</span>{p ? ` ${p.race} ${p.role.toLowerCase()} of ${side.nickname}` : ''}</p>
           <p className="spotlight-text">{event.text}</p>
         </div>
       </div>
