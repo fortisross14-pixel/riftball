@@ -235,7 +235,7 @@ export function teamRating(w:World,t:Team,starters=lineup(w,t)):number{ if(!star
 const mean=(players:Player[],...keys:StatKey[])=>players.length?players.reduce((s,p)=>s+keys.reduce((sum,k)=>sum+p.attrs[k],0)/keys.length,0)/players.length:42;
 function addStat(p:Player,key:keyof SeasonStats,amount=1){p.stats[key]+=amount;p.career[key]+=amount;}
 // XP needed for the next level grows with the square of the level, so level 15 is reserved for long, busy careers.
-export const xpGoal=(level:number)=>90+level*level*7;
+export const xpGoal=(level:number)=>90+level*level*9;
 function addXp(p:Player,amount:number){p.xp+=amount;const goal=xpGoal(p.level);if(p.xp>=goal&&p.level<15){p.xp-=goal;p.level++;if(p.rating<p.potential&&p.age<=growthEnd(p.race)){const keys=Object.keys(ROLE_WEIGHT[p.role]) as StatKey[];const key=keys[(p.level+p.id.length)%keys.length];p.attrs[key]=clamp(p.attrs[key]+1,1,99);p.rating=positionRating(p.attrs,p.role);}}}
 function event(m:Match,minute:number,kind:MatchEvent['kind'],teamId:string,player:Player|undefined,text:string,h:number,a:number,x:number){
  if(m.events.length<42)m.events.push({minute,kind,teamId,playerId:player?.id,text,homeScore:h,awayScore:a,x:clamp(x,4,96)});
@@ -322,7 +322,9 @@ export function simulateMatch(w:World,m:Match){
   // Clutch Performers raise their game in the final quarter and in knockouts.
   const clutch=(p:Player)=>has(p,'Clutch Performer')?(fatigue>=.75?4:0)+(knockout?2:0):0;
   const linemen=off.filter(p=>p.role==='Bastion'||p.role==='Breaker');
-  const passer=off.find(p=>p.role==='Thrower')??off.filter(p=>p.role!=='Bastion').sort((a,b)=>b.attrs.passing-a.attrs.passing)[0];
+  // Substitutions can leave a Bastion-only line, so the last fallback is whoever passes best.
+  const byPassing=(a:Player,b:Player)=>b.attrs.passing-a.attrs.passing;
+  const passer=off.find(p=>p.role==='Thrower')??off.filter(p=>p.role!=='Bastion').sort(byPassing)[0]??[...off].sort(byPassing)[0];
   let x=int(w,12,29),downs=4,target=x+12,steps=0;
   const matchDrive:MatchDrive={index:drive+1,teamId:attack.id,startMinute:Math.round(drive/possessions*32),endMinute:0,startX:x,endX:x,plays:0,firstDowns:0,yards:0,points:0,result:'downs'};
   teamStat(side,'possessions');const beforeScore=score[side];
@@ -508,12 +510,14 @@ function annualAwards(w:World){
  // MVP: the positional score is capped, because run-heavy or pass-heavy schemes inflate some roles' volume stats.
  // Once a player clearly leads their position, team success and overall quality decide it.
  const mvpScore=(p:Player)=>Math.min(z.get(p.id)!,3)+winShare(p)*2+(p.rating-60)*.04;
- const give=(p:Player,award:string)=>{w.awards.push({season:w.season,award,playerId:p.id,teamId:p.teamId});p.fame+=(award==='MVP'?18:award==='Rookie of the Year'?9:7);};
+ const give=(p:Player,award:string)=>{w.awards.push({season:w.season,award,playerId:p.id,teamId:p.teamId});p.fame+=(award==='Golden Gargoyle'?18:award==='Rookie of the Year'?9:7);};
  const mvp=eligible.reduce((best,p)=>mvpScore(p)>mvpScore(best)?p:best);give(mvp,'Golden Gargoyle');
  addStory(w,'milestone',`${mvp.name.toUpperCase()} NAMED WORLD MVP`,`${mvp.name}, the ${mvp.race.toLowerCase()} ${mvp.role.toLowerCase()} of the ${getTeam(w,mvp.teamId).name}, takes the season's highest individual honor. The trophy is insured against biting.`,mvp.teamId,mvp.id,undefined,5);
  const winners:string[]=[];
  for(const role of ROLES){const best=ranked.find(p=>p.role===role);if(best){give(best,POSITION_AWARD[role]);winners.push(`${POSITION_AWARD[role]}: ${best.name}`);}}
- const rookie=w.season>1?ranked.find(p=>p.seasons===0):undefined;
+ // In a smaller league a rookie may miss the 12-game bar, so fall back to the most-used first-year athlete.
+ const fallbackRookie=()=>w.players.filter(p=>p.seasons===0&&p.stats.games>0).sort((a,b)=>b.stats.games-a.stats.games||impactScore(b.role,b.stats)-impactScore(a.role,a.stats))[0];
+ const rookie=w.season>1?ranked.find(p=>p.seasons===0)??fallbackRookie():undefined;
  if(rookie){give(rookie,'Rookie of the Year');winners.push(`Rookie of the Year: ${rookie.name}`);}
  addStory(w,'roundup',`YEAR ${w.season} HONOURS ANNOUNCED`,`${winners.join('. ')}. Acceptance speeches were limited to ninety seconds and one small explosion each.`,undefined,undefined,undefined,3);
 }
@@ -593,7 +597,7 @@ export function normalizeWorld(w:World):World{
  if(!w.version||w.version<2){w.storylines??=[];if(!w.records)rebuildRecords(w);w.version=2;}
  w.storylines??=[];if(!w.records)rebuildRecords(w);
  for(const t of w.teams){t.rivalHeat??=30;t.rivalRecord??={w:0,d:0,l:0};}
- for(const p of [...w.players,...w.retired]){p.stats.blocks??=0;p.career.blocks??=0;p.stats.rushingYards??=p.stats.distance??0;p.career.rushingYards??=p.career.distance??0;p.stats.passingYards??=0;p.career.passingYards??=0;p.fame??=(p.championships??0)*25+(p.career?.mvp??0)*2;p.hallOfLegends??=false;}
+ for(const p of [...w.players,...w.retired]){p.stats.blocks??=0;p.career.blocks??=0;p.stats.rushingYards??=p.stats.distance??0;p.career.rushingYards??=p.career.distance??0;p.stats.passingYards??=0;p.career.passingYards??=0;p.fame??=(p.championships??0)*25+(p.career?.mvp??0)*2;p.hallOfLegends??=false;if((p.race as string)==='Satyr')p.race='Giantkin';}
  w.version=3;
  return w;
 }
