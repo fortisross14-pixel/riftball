@@ -25,12 +25,13 @@ The production output is in `dist/`. `vite.config.ts` uses `base: './'` for GitH
 
 ## What's playable
 
-- Generate a seeded universe with **80 clubs / four fantasy regions / two divisions each / 1,200 active athletes / nine races**.
-- Simulate **one week, four weeks, the rest of a season, one year or ten years**.
-- Follow 18-week home-and-away schedules, **promotion and relegation**, regional playoffs, Grand Rift world championship, league tables and fixtures.
+- Generate a seeded universe with **48 clubs / four permanent elemental countries / 720 active athletes / nine races**.
+- Simulate next week, four weeks, or use forward-only jumps that stop before National Finals, the World Cup, semifinals, and World Final.
+- Follow 22-week home-and-away national leagues, national finals, two four-club World Cup groups, semifinals and the World Final.
+- Resolve every current fixture individually through **Watch / Simulate Match** (spoiler-safe progressive replay) or **Quick Result** (immediate score plus the identical preserved match data).
 - Inspect player portraits, positional attributes, roles, rarity, abilities, progression, season/career statistics and injuries.
 - See **match scores, generated event logs, spoiler-safe match replays, complete new-match box scores, possession journals** and a schematic 2D pitch with ball location tracking.
-- Explore a Chronicle feed, club rosters, league standings, player rankings, champions, and historical career records.
+- Explore a Chronicle feed, club rosters, league standings, group tables, player rankings, and a Hall of Legends with legacy scores, all-time and season leaderboards.
 - **Persistent IndexedDB saves** and JSON export/import; an open tab detects competing saves and offers to reload the newest version.
 - Fully offline: fonts and artwork are bundled locally.
 
@@ -51,10 +52,10 @@ This is a working systems POC, **not the full v0.1–v0.5 design document implem
 - Arcane charges, athlete traits and tactical philosophies affect matches; coaching and detailed contracts are still simplified or not independently simulated.
 - Clubs trade athletes automatically during the offseason, but there is no contract negotiation or wage market.
 - Athlete rarity is visible for ease of testing; the long-term design can hide intrinsic potential.
-- Athlete cards use procedural vector portraits and generated club shields, not licensed artwork.
+- Athlete cards and club shields still fall back to procedural vector art. The raster manifest is ready, but this build contains **0/309 requested painted portrait/badge/banner assets**; it does not misrepresent placeholders as finished artwork.
 - News is generated from real season and match outcomes plus occasional flavor headlines.
 - Full event logs are retained for recent seasons. Earlier years preserve compact results for title matches and career/historical totals, rather than every regular-season play.
-- The Hall of History includes champions and career leaderboards; a full selective induction system is future scope.
+- The Hall of Legends includes legacy ranking, retirement induction, current/retired icons, career and seasonal leaderboards. Dedicated coach entities are still future scope.
 
 ## Data safety and reproducibility
 

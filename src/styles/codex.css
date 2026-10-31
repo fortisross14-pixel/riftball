@@ -562,6 +562,15 @@ h1, h2, h3, h4, p { margin: 0; }
 .cover-plate .wordmark-sub { color: #e8cf98; }
 .cover-note { font-style: italic; color: #e8cf98; animation: breathe 1.6s ease-in-out infinite; }
 
+/* The new navigation is deliberately a narrow strip of the existing book UI, not a replacement dashboard. */
+.season-nav { margin: 0 var(--page-pad); padding: 9px 14px 11px; border-top: 1px solid rgba(154,111,40,.38); border-bottom: 1px solid rgba(154,111,40,.38); background: rgba(73,48,25,.07); }
+.season-progress { list-style:none; margin:0 0 8px; padding:0; display:flex; align-items:center; gap:0; overflow:auto; }
+.season-progress li { position:relative; flex:1 0 max-content; padding:0 12px 0 16px; font-family:var(--face-rubric); font-size:.71rem; color:#786c58; letter-spacing:.04em; text-transform:uppercase; }
+.season-progress li::before { content:''; position:absolute; left:3px; top:50%; width:7px; height:7px; transform:translateY(-50%); border-radius:50%; border:1px solid #a98a51; background:#e8dec7; }
+.season-progress li:not(:last-child)::after { content:''; position:absolute; right:-2px; top:50%; width:8px; height:1px; background:#b69b65; }
+.season-progress li.is-done { color:#4f351e; }.season-progress li.is-done::before { background:#a3271c; border-color:#7b2119; }.season-progress li.is-now { color:#9a251c; font-weight:700; }.season-progress li.is-now::before { background:#d4a932; box-shadow:0 0 0 3px rgba(212,169,50,.16); }
+.season-actions { display:flex; flex-wrap:wrap; gap:6px; }.season-actions button { font-size:.72rem; padding:5px 8px; }.season-actions .gilt-button { min-width:138px; }
+
 /* ------------------------------------------------------------ responsive: landscape tablets and narrow screens */
 
 @media (max-width: 1100px) {
@@ -578,6 +587,7 @@ h1, h2, h3, h4, p { margin: 0; }
   .ribbon { flex: none; }
   .leaf { width: 100%; }
   .calendar-key .red { display: none; }
+  .season-nav { margin:0 12px; }.season-progress { justify-content:flex-start; }.season-progress li { flex:0 0 auto; }
   .turn-page strong { font-size: 1.3rem; }
 }
 

@@ -1,0 +1,641 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-31T05:05:05.585Z",
+  "title": "Design System: RIFTBALL — World Chronicle",
+  "extensions": {
+    "colorMeta": {
+      "desk": {
+        "role": "neutral",
+        "displayName": "Scriptorium Desk",
+        "canonical": "oklch(19.2% 0.019 55)",
+        "tonalRamp": [
+          "#0f0a07",
+          "#2a221d",
+          "#483d36",
+          "#665b54",
+          "#8a7d76",
+          "#afa29a",
+          "#d3c8c1",
+          "#f6ece7"
+        ]
+      },
+      "desk-2": {
+        "role": "neutral",
+        "displayName": "Desk Oak",
+        "canonical": "oklch(23.8% 0.030 54)",
+        "tonalRamp": [
+          "#120904",
+          "#2e2118",
+          "#4d3c31",
+          "#6b594e",
+          "#8f7c70",
+          "#b4a093",
+          "#d8c7bc",
+          "#faebe2"
+        ]
+      },
+      "leather": {
+        "role": "neutral",
+        "displayName": "Binding Leather",
+        "canonical": "oklch(28.3% 0.081 27)",
+        "tonalRamp": [
+          "#1d0202",
+          "#3f1411",
+          "#642c28",
+          "#864b44",
+          "#ac6d66",
+          "#d39189",
+          "#f4bab3",
+          "#ffe2db"
+        ]
+      },
+      "leather-2": {
+        "role": "neutral",
+        "displayName": "Leather Shadow",
+        "canonical": "oklch(21.0% 0.058 27)",
+        "tonalRamp": [
+          "#180504",
+          "#381a17",
+          "#5b332f",
+          "#7b514c",
+          "#a0736e",
+          "#c79791",
+          "#e9bfba",
+          "#ffe5e1"
+        ]
+      },
+      "oxblood": {
+        "role": "secondary",
+        "displayName": "Oxblood Banner",
+        "canonical": "oklch(32.9% 0.100 27)",
+        "tonalRamp": [
+          "#200000",
+          "#440e0c",
+          "#6b2622",
+          "#8d453e",
+          "#b46860",
+          "#dc8c83",
+          "#fcb6ae",
+          "#ffded7"
+        ]
+      },
+      "vellum": {
+        "role": "neutral",
+        "displayName": "Vellum",
+        "canonical": "oklch(91.8% 0.040 88)",
+        "tonalRamp": [
+          "#100a01",
+          "#2b2310",
+          "#493f26",
+          "#675d43",
+          "#8a7f65",
+          "#afa488",
+          "#d4cab2",
+          "#f6eedb"
+        ]
+      },
+      "vellum-2": {
+        "role": "neutral",
+        "displayName": "Vellum Shade",
+        "canonical": "oklch(88.0% 0.051 87)",
+        "tonalRamp": [
+          "#110a00",
+          "#2d2209",
+          "#4b3e1e",
+          "#6a5c3c",
+          "#8d7f5d",
+          "#b2a381",
+          "#d7c9ac",
+          "#f8eed6"
+        ]
+      },
+      "vellum-3": {
+        "role": "neutral",
+        "displayName": "Vellum Edge",
+        "canonical": "oklch(82.7% 0.060 85)",
+        "tonalRamp": [
+          "#130900",
+          "#2f2202",
+          "#4e3d16",
+          "#6d5b34",
+          "#917e56",
+          "#b6a279",
+          "#d9c9a6",
+          "#fbedd1"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Iron-Gall Ink",
+        "canonical": "oklch(24.5% 0.027 54)",
+        "tonalRamp": [
+          "#110905",
+          "#2d211a",
+          "#4c3c32",
+          "#6a5a4f",
+          "#8e7c71",
+          "#b3a095",
+          "#d7c7bd",
+          "#f9ece3"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Faded Ink",
+        "canonical": "oklch(39.3% 0.041 62)",
+        "tonalRamp": [
+          "#130802",
+          "#302012",
+          "#503b29",
+          "#6f5946",
+          "#937b68",
+          "#b89f8b",
+          "#dcc6b4",
+          "#fcebdd"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ghost Ink",
+        "canonical": "oklch(51.3% 0.049 69)",
+        "tonalRamp": [
+          "#140800",
+          "#31200c",
+          "#513b22",
+          "#70593f",
+          "#947b60",
+          "#ba9f84",
+          "#ddc6ae",
+          "#feebd8"
+        ]
+      },
+      "rubric": {
+        "role": "primary",
+        "displayName": "Rubric Red",
+        "canonical": "oklch(47.3% 0.162 30)",
+        "tonalRamp": [
+          "#2a0000",
+          "#540000",
+          "#800000",
+          "#a62a1e",
+          "#cf5242",
+          "#f97866",
+          "#ffa796",
+          "#ffd4c5"
+        ]
+      },
+      "lapis": {
+        "role": "secondary",
+        "displayName": "Lapis Ground",
+        "canonical": "oklch(37.3% 0.110 263)",
+        "tonalRamp": [
+          "#000729",
+          "#092050",
+          "#1e3c79",
+          "#3b5b9b",
+          "#5c7fc2",
+          "#7fa4ea",
+          "#abcbff",
+          "#d5efff"
+        ]
+      },
+      "verdigris": {
+        "role": "tertiary",
+        "displayName": "Verdigris",
+        "canonical": "oklch(48.2% 0.071 169)",
+        "tonalRamp": [
+          "#001108",
+          "#002d1f",
+          "#074b39",
+          "#2e6b57",
+          "#538e79",
+          "#77b39d",
+          "#a5d8c4",
+          "#d1f9e9"
+        ]
+      },
+      "murex": {
+        "role": "tertiary",
+        "displayName": "Murex Purple",
+        "canonical": "oklch(38.0% 0.117 316)",
+        "tonalRamp": [
+          "#170020",
+          "#360f43",
+          "#572768",
+          "#774689",
+          "#9c69af",
+          "#c28dd6",
+          "#e4b7f6",
+          "#ffdfff"
+        ]
+      },
+      "sable": {
+        "role": "neutral",
+        "displayName": "Sable",
+        "canonical": "oklch(26.3% 0.013 52)",
+        "tonalRamp": [
+          "#0e0a08",
+          "#28231f",
+          "#463e3a",
+          "#645c57",
+          "#877e79",
+          "#aca29d",
+          "#d1c9c4",
+          "#f3ede9"
+        ]
+      },
+      "gold": {
+        "role": "tertiary",
+        "displayName": "Burnished Gold",
+        "canonical": "oklch(70.3% 0.130 81)",
+        "tonalRamp": [
+          "#1c0300",
+          "#3d1a00",
+          "#613400",
+          "#825300",
+          "#a77600",
+          "#cd9b35",
+          "#eec375",
+          "#ffe9ad"
+        ]
+      },
+      "gold-hi": {
+        "role": "tertiary",
+        "displayName": "Gold Highlight",
+        "canonical": "oklch(86.3% 0.126 92)",
+        "tonalRamp": [
+          "#180700",
+          "#361f00",
+          "#583a00",
+          "#785900",
+          "#9c7c00",
+          "#c1a139",
+          "#e4c978",
+          "#ffedae"
+        ]
+      },
+      "gold-deep": {
+        "role": "tertiary",
+        "displayName": "Gold Shadow",
+        "canonical": "oklch(47.6% 0.091 75)",
+        "tonalRamp": [
+          "#190600",
+          "#391d00",
+          "#5b3700",
+          "#7b5516",
+          "#a0783d",
+          "#c69d61",
+          "#e8c493",
+          "#ffeac2"
+        ]
+      },
+      "rubric-paper": {
+        "role": "neutral",
+        "displayName": "Rubric Paper",
+        "canonical": "oklch(95.9% 0.035 89)",
+        "tonalRamp": [
+          "#0f0b02",
+          "#2a2313",
+          "#473f2a",
+          "#655d47",
+          "#898069",
+          "#ada48d",
+          "#d2cab6",
+          "#f5eede"
+        ]
+      },
+      "leaf-white": {
+        "role": "neutral",
+        "displayName": "Leaf White",
+        "canonical": "oklch(96.8% 0.041 90)",
+        "tonalRamp": [
+          "#100b01",
+          "#2a2310",
+          "#483f26",
+          "#665d43",
+          "#8a8065",
+          "#aea488",
+          "#d3cab2",
+          "#f5eedb"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Folio titles of every spread; blackletter, balanced; a word may turn rubric red."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "Scores and great ratings on pigment fields, in Leaf White with a Gold Highlight dash."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page heads in rubric red; the Turn the Page label; contest tabs."
+      },
+      "title-lead": {
+        "displayName": "Lead Title",
+        "purpose": "The lead story headline beside the historiated initial."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Story, tiding, athlete and gift headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Reading text with old-style figures; lead body 1.2rem/1.6 to 62ch; subtitles italic to 58ch."
+      },
+      "rubric": {
+        "displayName": "Rubric",
+        "purpose": "Real small caps for labels, ranks, datelines, ribbon names and button text. Never tracked uppercase."
+      },
+      "data": {
+        "displayName": "Data",
+        "purpose": "Ledger cells, scores in lists, records, keys; lining tabular figures."
+      }
+    },
+    "textures": [
+      {
+        "name": "--tex-vellum",
+        "purpose": "Fine fractal noise on every vellum surface."
+      },
+      {
+        "name": "--tex-fibre",
+        "purpose": "Long paper fibre streaks on the page and slips."
+      },
+      {
+        "name": "--tex-wood",
+        "purpose": "Oak grain on the desk."
+      },
+      {
+        "name": "--tex-leather",
+        "purpose": "Grain on the binding and the closed-book cover."
+      },
+      {
+        "name": "--leaf",
+        "purpose": "Specular-lit burnished gold leaf under a 172deg highlight band; only on now, next and honours."
+      },
+      {
+        "name": "--tooling",
+        "purpose": "Gilt tooled border-image around the binding."
+      },
+      {
+        "name": "--boss",
+        "purpose": "Brass corner bosses at the four binding corners."
+      },
+      {
+        "name": "--deckle",
+        "purpose": "Deckled left and right page edges."
+      },
+      {
+        "name": "--vine",
+        "purpose": "Verdigris vine with gold and red berries down each outer margin at 55% opacity."
+      }
+    ],
+    "shadows": [
+      {
+        "name": "book-on-desk",
+        "value": "0 2px 0 #6e2a22 inset, 0 -3px 0 #1a0504 inset, 0 40px 80px rgba(0,0,0,0.6), 0 12px 24px rgba(0,0,0,0.45)",
+        "purpose": "The codex binding only."
+      },
+      {
+        "name": "laid-on",
+        "value": "0 2px 4px rgba(50,30,10,0.3)",
+        "purpose": "Miniatures and seals resting on the page."
+      },
+      {
+        "name": "laid-on-lift",
+        "value": "0 10px 18px rgba(50,30,10,0.38)",
+        "purpose": "Miniature hover."
+      },
+      {
+        "name": "illumination",
+        "value": "0 0 0 1.5px #2b1d14, 0 10px 22px rgba(30,20,10,0.35)",
+        "purpose": "Pigment fields: arch, scoreboard, Grand Rift, lead miniature."
+      },
+      {
+        "name": "hanging-silk",
+        "value": "drop-shadow(0 4px 3px rgba(0,0,0,0.45))",
+        "purpose": "Ribbons (filter)."
+      },
+      {
+        "name": "hanging-tab",
+        "value": "drop-shadow(0 8px 12px rgba(0,0,0,0.5))",
+        "purpose": "Turn the Page tab group (filter)."
+      },
+      {
+        "name": "loose-slip",
+        "value": "0 14px 30px rgba(0,0,0,0.5)",
+        "purpose": "Marginal notes; the turn menu and scriptorium modal go deeper (0 18px 40px / 0 30px 60px)."
+      },
+      {
+        "name": "gilt",
+        "value": "0 0 0 1px rgba(255,236,170,0.45) inset, 0 3px 6px rgba(70,45,10,0.35)",
+        "purpose": "Gilt button at rest; hover deepens to 0 6px 12px rgba(70,45,10,0.4)."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Default easing for lifts, ribbons, ink-in, seals."
+      },
+      {
+        "name": "leaf-turn",
+        "value": "880ms cubic-bezier(0.45, 0.05, 0.25, 1)",
+        "purpose": "A half-page leaf rotates -180deg on Y over the spread on navigation and when advancing time."
+      },
+      {
+        "name": "ink-in",
+        "value": "760ms ease-out, 180ms delay; blur(3px) and opacity 0 to sharp",
+        "purpose": "New folio content and new contest moments writing on."
+      },
+      {
+        "name": "ribbon-lower",
+        "value": "420ms ease-out; height 78 to 88px hover, 104px open",
+        "purpose": "Ribbon hover and open state."
+      },
+      {
+        "name": "unroll",
+        "value": "320ms ease-out; clip-path inset reveal downward",
+        "purpose": "Turn menu unrolling from the tab."
+      },
+      {
+        "name": "seal-crack",
+        "value": "600ms ease-out; halves translate ±14px, rotate ±12–14deg, fade",
+        "purpose": "Breaking a wax seal to reveal a result."
+      },
+      {
+        "name": "glint",
+        "value": "5.5s ease-in-out infinite",
+        "purpose": "Gold glint across legendary and generational frames."
+      },
+      {
+        "name": "score-in",
+        "value": "520ms ease-out; scale 1.5 in gold-hi to rest",
+        "purpose": "A score digit changing."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "animations and transitions to 1ms; leaf turn hidden",
+        "purpose": "prefers-reduced-motion: reduce."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide",
+        "value": "1300px"
+      },
+      {
+        "name": "recto-stack",
+        "value": "1250px"
+      },
+      {
+        "name": "tablet-landscape",
+        "value": "1100px"
+      },
+      {
+        "name": "single-page",
+        "value": "900px"
+      },
+      {
+        "name": "narrow",
+        "value": "600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Gilt Button",
+      "kind": "button",
+      "refersTo": "button-gilt",
+      "description": "The one next action per view. Burnished leaf.",
+      "html": "<button class=\"ds-gilt\">Read the challenge</button>",
+      "css": ".ds-gilt { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:46px; padding:10px 26px; border:1px solid #5a3e0c; border-radius:3px; background: linear-gradient(172deg, rgba(255,246,205,.75) 0%, rgba(255,238,180,.15) 38%, rgba(120,80,15,0) 55%, rgba(90,58,10,.32) 100%), linear-gradient(180deg, #f6dc8a, var(--gold, #c8962e) 48%, #a87a22); color:#2b1a08; font-family:'Alegreya SC', serif; font-weight:700; font-size:1.08rem; text-shadow:0 1px 0 rgba(255,240,190,.6); box-shadow:0 0 0 1px rgba(255,236,170,.45) inset, 0 3px 6px rgba(70,45,10,.35); cursor:pointer; transition: transform 180ms cubic-bezier(.16,1,.3,1), box-shadow 180ms, filter 180ms; } .ds-gilt:hover { transform:translateY(-1px); filter:brightness(1.06); box-shadow:0 0 0 1px rgba(255,236,170,.45) inset, 0 6px 12px rgba(70,45,10,.4); } .ds-gilt:active { transform:translateY(1px); } .ds-gilt:focus-visible { outline:2.5px solid var(--lapis, #1f3d7a); outline-offset:3px; }"
+    },
+    {
+      "name": "Ink Button",
+      "kind": "button",
+      "refersTo": "button-ink",
+      "description": "Every secondary action: outlined in faded ink, fills with ink on hover; danger variant in rubric.",
+      "html": "<button class=\"ds-ink\">From the start</button> <button class=\"ds-ink ds-ink-danger\">Burn the archive</button>",
+      "css": ".ds-ink { display:inline-flex; align-items:center; gap:8px; min-height:42px; padding:8px 18px; border:1.5px solid var(--ink-2, #56412f); border-radius:3px; background:rgba(255,250,236,.4); color:var(--ink, #2b1d14); font-family:'Alegreya SC', serif; font-weight:700; font-size:1rem; cursor:pointer; transition: background 160ms, color 160ms, border-color 160ms; } .ds-ink:hover { background:var(--ink, #2b1d14); color:var(--vellum, #efe3c6); } .ds-ink:focus-visible { outline:2.5px solid var(--lapis, #1f3d7a); outline-offset:3px; } .ds-ink-danger { border-color:var(--rubric, #a3271c); color:var(--rubric, #a3271c); } .ds-ink-danger:hover { background:var(--rubric, #a3271c); color:#fbf1d8; }"
+    },
+    {
+      "name": "Rubricated Choice",
+      "kind": "chip",
+      "refersTo": "choice-option",
+      "description": "Segmented options under a rubric label (pace, filters).",
+      "html": "<div class=\"ds-choice\"><span class=\"ds-choice-label\">Pace</span><div class=\"ds-choice-row\"><button>½</button><button class=\"is-on\">1×</button><button>2×</button><button>4×</button></div></div>",
+      "css": ".ds-choice { display:flex; flex-direction:column; gap:6px; background:var(--vellum, #efe3c6); padding:12px; } .ds-choice-label { font-family:'Alegreya SC', serif; font-weight:700; font-size:.92rem; color:var(--rubric, #a3271c); } .ds-choice-row { display:flex; gap:4px; } .ds-choice-row button { min-height:38px; padding:6px 14px; border:1px solid rgba(43,29,20,.35); border-radius:2px; background:rgba(255,252,240,.4); font-family:'Alegreya SC', serif; font-weight:700; font-size:.98rem; color:var(--ink-2, #56412f); cursor:pointer; transition: background 160ms, color 160ms, border-color 160ms; } .ds-choice-row button:hover { border-color:var(--ink, #2b1d14); color:var(--ink, #2b1d14); } .ds-choice-row button.is-on { background:var(--ink, #2b1d14); color:var(--vellum, #efe3c6); border-color:var(--ink, #2b1d14); } .ds-choice-row button:focus-visible { outline:2.5px solid var(--lapis, #1f3d7a); outline-offset:3px; }"
+    },
+    {
+      "name": "Seek Field",
+      "kind": "input",
+      "refersTo": "seek-input",
+      "description": "Search written on a ruled line: italic text, rubric caret, rubric underline on focus.",
+      "html": "<label class=\"ds-seek\"><span>Seek an athlete</span><input placeholder=\"a name, a house…\"></label>",
+      "css": ".ds-seek { display:flex; flex-direction:column; gap:6px; background:var(--vellum, #efe3c6); padding:12px; } .ds-seek span { font-family:'Alegreya SC', serif; font-weight:700; font-size:.92rem; color:var(--rubric, #a3271c); } .ds-seek input { min-height:44px; padding:8px 4px; border:0; border-bottom:2px solid var(--ink-2, #56412f); background:transparent; font-family:Alegreya, serif; font-size:1.2rem; font-style:italic; color:var(--ink, #2b1d14); caret-color:var(--rubric, #a3271c); } .ds-seek input::placeholder { color:var(--ink-3, #7a6248); } .ds-seek input:focus { outline:none; border-bottom-color:var(--rubric, #a3271c); }"
+    },
+    {
+      "name": "Silk Ribbons",
+      "kind": "nav",
+      "refersTo": "ribbon",
+      "description": "Section navigation: silk bookmarks hanging from the masthead; the open one hangs longest.",
+      "html": "<nav class=\"ds-ribbons\"><a href=\"#\" class=\"ds-ribbon is-open\" style=\"--silk:#a3271c\"><b>Chronicle</b><small>news</small></a><a href=\"#\" class=\"ds-ribbon\" style=\"--silk:#1f3d7a\"><b>Tourneys</b><small>competitions</small></a><a href=\"#\" class=\"ds-ribbon\" style=\"--silk:#2f6b57\"><b>Bestiary</b><small>athletes</small></a><a href=\"#\" class=\"ds-ribbon\" style=\"--silk:#5a2a6b\"><b>The Lists</b><small>matches</small></a></nav>",
+      "css": ".ds-ribbons { display:flex; gap:10px; padding:0 8px 20px; background:#2a1b11; align-items:flex-start; } .ds-ribbon { position:relative; display:flex; flex-direction:column; align-items:center; width:100px; height:78px; padding:12px 4px 0; text-decoration:none; color:#f8eed6; background: repeating-linear-gradient(90deg, rgba(255,255,255,.07) 0 1px, transparent 1px 3px), linear-gradient(90deg, rgba(0,0,0,.28), transparent 22%, transparent 78%, rgba(0,0,0,.32)), var(--silk); clip-path:polygon(0 0,100% 0,100% 100%,50% 80%,0 100%); filter:drop-shadow(0 4px 3px rgba(0,0,0,.45)); transition: height 420ms cubic-bezier(.16,1,.3,1); } .ds-ribbon b { font-family:'Alegreya SC', serif; font-weight:700; font-size:1rem; line-height:1.05; text-shadow:0 1px 1px rgba(0,0,0,.5); } .ds-ribbon small { font-family:'Alegreya Sans', sans-serif; font-size:.78rem; margin-top:4px; color:rgba(255,244,220,.88); } .ds-ribbon:hover { height:88px; } .ds-ribbon.is-open { height:104px; } .ds-ribbon.is-open::after { content:''; position:absolute; left:18%; right:18%; top:46px; height:2px; background:#f0cf6a; } .ds-ribbon:focus-visible { outline:none; height:96px; } .ds-ribbon:focus-visible b { text-decoration:underline; text-decoration-color:#f0cf6a; text-underline-offset:4px; }"
+    },
+    {
+      "name": "Turn the Page Tab",
+      "kind": "custom",
+      "refersTo": "turn-tab",
+      "description": "The signature control: a dog-eared vellum tab hanging at the masthead top right; a leather Further tab opens longer jumps.",
+      "html": "<div class=\"ds-turn\"><button class=\"ds-turn-more\">Further</button><button class=\"ds-turn-page\"><strong>Turn the page</strong><small>play week 5</small></button></div>",
+      "css": ".ds-turn { display:inline-flex; align-items:stretch; filter:drop-shadow(0 8px 12px rgba(0,0,0,.5)); } .ds-turn-more { border:0; padding:0 16px; border-radius:0 0 0 4px; background:linear-gradient(180deg,#4a1512,#2e0b09); color:#f3e3bd; font-family:'Alegreya SC', serif; font-weight:700; font-size:.98rem; cursor:pointer; transition: background 160ms; } .ds-turn-more:hover { background:linear-gradient(180deg,#6e211b,#3a0f0c); } .ds-turn-page { position:relative; display:block; padding:18px 30px 14px 16px; border:0; text-align:left; cursor:pointer; background:linear-gradient(135deg,#fbf0d2,#efe3c6 50%,#d8c49a); clip-path:polygon(0 0,100% 0,100% calc(100% - 24px),calc(100% - 24px) 100%,0 100%); transition: transform 220ms cubic-bezier(.16,1,.3,1); } .ds-turn-page::after { content:''; position:absolute; bottom:0; right:0; width:24px; height:24px; background:linear-gradient(315deg, transparent 50%, #c9ae7c 50%, #ead9b2); } .ds-turn-page strong { display:block; font-family:'Grenze Gotisch', serif; font-weight:700; font-size:1.45rem; line-height:1; color:#a3271c; } .ds-turn-page small { display:block; font-family:'Alegreya Sans', sans-serif; font-size:.88rem; color:#56412f; margin-top:3px; } .ds-turn-page:hover { transform:translateY(-2px); } .ds-turn button:focus-visible { outline:2.5px solid #1f3d7a; outline-offset:3px; }"
+    },
+    {
+      "name": "Ruled Ledger",
+      "kind": "card",
+      "refersTo": "ledger-cell",
+      "description": "Tables ruled in faint red; rubric small-caps heads; lining tabular figures.",
+      "html": "<table class=\"ds-ledger\"><thead><tr><th>House</th><th class=\"n\">W</th><th class=\"n\">Pts</th></tr></thead><tbody><tr><td>Liches</td><td class=\"n\">4</td><td class=\"n strong\">12</td></tr><tr><td>Scoundrels</td><td class=\"n\">4</td><td class=\"n strong\">12</td></tr><tr><td>Titans</td><td class=\"n\">3</td><td class=\"n strong\">9</td></tr></tbody></table>",
+      "css": ".ds-ledger { width:100%; border-collapse:collapse; background:var(--vellum, #efe3c6); color:var(--ink, #2b1d14); font-family:'Alegreya Sans', sans-serif; font-size:1rem; font-variant-numeric:lining-nums tabular-nums; } .ds-ledger th { text-align:left; font-family:'Alegreya SC', serif; font-weight:700; font-size:.9rem; color:var(--rubric, #a3271c); padding:8px; border-bottom:1.5px solid var(--rubric, #a3271c); } .ds-ledger td { padding:7px 8px; border-bottom:1px solid rgba(163,39,28,.22); } .ds-ledger .n { text-align:right; } .ds-ledger .strong { font-weight:700; font-size:1.06rem; } .ds-ledger tbody tr { transition: background 140ms; cursor:pointer; } .ds-ledger tbody tr:hover { background:rgba(200,150,46,.16); }"
+    },
+    {
+      "name": "Rarity Miniature",
+      "kind": "card",
+      "refersTo": "miniature",
+      "description": "Portrait frame whose pigment states rarity; legendary and generational frames glint.",
+      "html": "<div class=\"ds-minis\"><span class=\"ds-mini\"></span><span class=\"ds-mini elite\"></span><span class=\"ds-mini legendary\"></span></div>",
+      "css": ".ds-minis { display:flex; gap:18px; padding:16px; background:var(--vellum, #efe3c6); } .ds-mini { position:relative; display:inline-block; width:72px; height:72px; border:2px solid #2b1d14; background:#d8c49a; box-shadow:0 2px 4px rgba(50,30,10,.3); overflow:hidden; transition: box-shadow 260ms; } .ds-mini:hover { box-shadow:0 10px 18px rgba(50,30,10,.38); } .ds-mini.elite { border-color:#1f3d7a; box-shadow:0 0 0 2px #c8962e inset, 0 2px 4px rgba(50,30,10,.3); } .ds-mini.legendary { border:3px solid #c8962e; box-shadow:0 0 0 1px #7a5414, 0 3px 8px rgba(120,80,10,.45); } .ds-mini.legendary::after { content:''; position:absolute; inset:0; background:linear-gradient(115deg, transparent 35%, rgba(255,246,210,.55) 48%, transparent 60%); background-size:260% 100%; animation:ds-glint 5.5s ease-in-out infinite; } @keyframes ds-glint { 0%,62% { background-position:130% 0; } 100% { background-position:-130% 0; } }"
+    },
+    {
+      "name": "Scoreboard Banner",
+      "kind": "custom",
+      "refersTo": "scoreboard",
+      "description": "Oxblood banner with gold borders carrying the contest score in blackletter numerals.",
+      "html": "<div class=\"ds-sb\"><b>Shadows</b><div class=\"ds-sb-mid\"><span class=\"ds-sb-score\">0<i>–</i>2</span><small>Minute 13</small></div><b>Bonebreakers</b></div>",
+      "css": ".ds-sb { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; gap:18px; padding:22px 40px; color:#f5ead0; background: radial-gradient(ellipse 40% 90% at 50% 50%, rgba(240,207,106,.22), transparent 70%), linear-gradient(180deg,#6e1f18,#4a1210); border-top:4px solid #c8962e; border-bottom:4px solid #c8962e; box-shadow:0 0 0 1.5px #2b1d14, 0 14px 26px rgba(40,15,5,.35); } .ds-sb > b { font-family:'Grenze Gotisch', serif; font-weight:700; font-size:1.8rem; line-height:1; } .ds-sb > b:last-child { text-align:right; } .ds-sb-mid { display:flex; flex-direction:column; align-items:center; gap:4px; } .ds-sb-score { font-family:'Grenze Gotisch', serif; font-weight:900; font-size:4.6rem; line-height:.95; color:#fff4d6; font-variant-numeric:lining-nums; } .ds-sb-score i { font-style:normal; color:#f0cf6a; margin:0 10px; } .ds-sb small { font-family:'Alegreya SC', serif; font-weight:700; font-size:1rem; color:#fff4d6; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Illuminated Codex",
+    "overview": "The whole game is one book. A dark oak desk under a warm candle pool holds an oxblood leather binding with brass corner bosses and a tooled gilt border; inside it lies a two-page vellum spread with deckled edges, foxing, a shaded gutter and vine borders in the outer margins. Every section (Chronicle, Tourneys, Bestiary, Armorial, the Lists, Rolls, Annals) is another spread of that same book, chosen by a silk ribbon hanging from the masthead, and time advances by turning the leaf. Nothing floats on a dashboard; everything is written, rubricated, illuminated or bound.\n\nPigments own whole regions rather than accenting small ones: a lapis field fills the contest-to-come arch and the Grand Rift bracket, an oxblood banner carries the scoreboard, verdigris and murex wash the trait and spark panels. Text is iron-gall ink on vellum; rubrics (headings, labels, ranks, meta) are red. Burnished gold leaf is kept for \"now, next\" and honours. The voice of the type matches the voice of the writing: blackletter for what a scribe would letter large, calligraphic humanist text for reading, small caps for rubrics, and a quiet humanist sans only where numbers need to line up.\n\nDensity is a reading book's, not a terminal's. Long stories run at 58–62ch, ledgers are ruled in faint red rather than boxed, and stat tiles are replaced by two-column ruled ledgers. The interface refuses the dark sidebar dashboard of framed panels and card grids.",
+    "keyCharacteristics": [
+      "One continuous object: desk, binding, vellum spread, gutter, ribbons, turn tab.",
+      "Pigment fields (lapis, oxblood, verdigris, murex) own whole regions; small accents stay ink and rubric.",
+      "Burnished leaf marks only the present, the next action and honours.",
+      "Blackletter display, Alegreya text, Alegreya SC rubrics, Alegreya Sans for figures.",
+      "Ruled red lines instead of boxes; old-style figures in prose, lining tabular figures in ledgers.",
+      "Motion is physical: leaf turns, ink writing on, ribbons lowering, seals cracking, a gold glint on honours."
+    ],
+    "rules": [
+      {
+        "name": "The Leaf Is Earned Rule",
+        "body": "Burnished leaf appears only on the present (current calendar week), the next action (the gilt button) and honours (great ratings, gilt seals, legendary and generational frames). Flat gold may draw lines and letter on pigment fields; leaf may not decorate.",
+        "section": "colors"
+      },
+      {
+        "name": "The Pigment Owns The Region Rule",
+        "body": "A pigment is a ground, not a sprinkle. Lapis, oxblood, verdigris and murex fill a whole miniature, banner or panel, with light text on top or a translucent wash (8–10% fill, 40–50% edge) behind ink. Never tint small chips in five colours.",
+        "section": "colors"
+      },
+      {
+        "name": "The Ink And Rubric Rule",
+        "body": "On vellum, text is ink; anything that labels, ranks, dates or heads is rubric red. Do not introduce a third text colour for emphasis.",
+        "section": "colors"
+      },
+      {
+        "name": "The Real Small Caps Rule",
+        "body": "Labels get the Alegreya SC cut, not `text-transform: uppercase` with letter-spacing. The build has no tracked uppercase anywhere.",
+        "section": "typography"
+      },
+      {
+        "name": "The Two Figure Styles Rule",
+        "body": "Prose uses old-style figures; anything that is counted, compared or aligned uses lining tabular figures in Alegreya Sans.",
+        "section": "typography"
+      },
+      {
+        "name": "The Written Or Laid Rule",
+        "body": "Text, ledgers and rules written on the vellum carry no shadow (lettering on silk and leaf may take a soft 1px emboss). Only objects that would physically sit on a page (miniatures, seals, slips, illuminations) cast one.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do put every section inside the same book: desk, binding, vellum spread, ribbons, turn tab.",
+      "Do fill whole regions with a pigment (lapis, oxblood, verdigris, murex) and set Leaf White or Gold Highlight on top.",
+      "Do keep burnished leaf for the current week, the next action and honours.",
+      "Do set labels in Alegreya SC 700 rubric red, and figures in Alegreya Sans with lining tabular numerals.",
+      "Do rule ledgers with faint red lines (1px at 20–25%, header 1.5px solid rubric).",
+      "Do move like objects: leaf turns (880ms, cubic-bezier(0.45, 0.05, 0.25, 1)), ink writing on (blur-to-sharp, 760ms), ribbons lowering (420ms), seals cracking (600ms), all collapsing under reduced motion."
+    ],
+    "donts": [
+      "Don't build a dark sidebar dashboard, framed panels or grids of bordered cards.",
+      "Don't use `text-transform: uppercase` with letter-spacing for labels; use the real small caps cut.",
+      "Don't put burnished leaf on decoration, ordinary buttons or headings.",
+      "Don't use white or grey surfaces, cool greys or blue-black shadows; every surface is vellum, leather, oak or pigment.",
+      "Don't round corners past 3px on page objects; shape comes from silhouettes (swallowtails, dog-ears, arches, banners).",
+      "Don't cast shadows from text, rules or ledgers written on the vellum; only laid-on objects cast."
+    ]
+  }
+}

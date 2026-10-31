@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import { ABILITY_EFFECTS, PHILOSOPHY_PROFILES, TRAIT_EFFECTS, advanceOneWeek, createWorld, getPlayer, getTeam, simulateWeeks, sortedStandings, teamRoster } from './engine';
 import type { World } from './types';
 
-test('Founding a world creates 80 clubs, eight divisions and 1,200 unique athletes',()=>{
+test('Founding a world creates 48 elemental clubs and 720 unique athletes',()=>{
  const w=createWorld(987654);
- assert.equal(w.teams.length,80);assert.equal(w.players.length,1200);assert.equal(new Set(w.players.map(p=>p.id)).size,1200);
- assert.equal(w.matches.filter(m=>m.phase==='league').length,720);
- for(let r=0;r<4;r++)for(const d of [0,1] as const){assert.equal(sortedStandings(w,r,d).length,10);}
+ assert.equal(w.teams.length,48);assert.equal(w.players.length,720);assert.equal(new Set(w.players.map(p=>p.id)).size,720);
+ assert.equal(w.matches.filter(m=>m.phase==='league').length,528);
+ for(let r=0;r<4;r++)assert.equal(sortedStandings(w,r,0).length,12);
  for(const t of w.teams)assert.equal(teamRoster(w,t).length,15);
  const games=new Map<string,number>();
  for(const m of w.matches){const key=[m.home,m.away].sort().join('/');games.set(key,(games.get(key)??0)+1);}
@@ -20,32 +20,32 @@ test('Matches are deterministic for the same world seed',()=>{
  assert.deepEqual(result(first),result(second));
 });
 
-test('A full season has regional and world champions and advances into the next season',()=>{
- const w=createWorld(2026);for(let i=0;i<26;i++)advanceOneWeek(w);
+test('A full season has national and world champions and advances into the next season',()=>{
+ const w=createWorld(2026);for(let i=0;i<30;i++)advanceOneWeek(w);
  assert.equal(w.season,2);assert.equal(w.week,1);
  assert.equal(w.trophies.filter(t=>t.competition==='GRAND RIFT CHAMPIONSHIP').length,1);
  assert.equal(w.trophies.filter(t=>t.competition.endsWith('CHAMPIONS')).length,4);
- assert.equal(w.players.length,1200);
- assert.equal(w.teams.filter(t=>t.division===0).length,40);
+ assert.equal(w.players.length,720);
+ assert.equal(w.teams.filter(t=>t.division===0).length,48);
  assert.ok(w.matches.some(m=>m.season===2&&m.week===1));
 });
 
 test('Ten years preserves rosters, histories, unique athlete IDs and valid championships',()=>{
- const w=createWorld(2026);for(let i=0;i<260;i++)advanceOneWeek(w);
+ const w=createWorld(2026);for(let i=0;i<300;i++)advanceOneWeek(w);
  assert.equal(w.season,11);assert.equal(w.week,1);
  assert.equal(w.trophies.filter(t=>t.competition==='GRAND RIFT CHAMPIONSHIP').length,10);
- assert.equal(w.teams.length,80);assert.equal(w.players.length,1200);
- assert.ok(w.totalGames>=7390);
- assert.equal(new Set(w.players.map(p=>p.id)).size,1200);
+ assert.equal(w.teams.length,48);assert.equal(w.players.length,720);
+ assert.ok(w.totalGames>=5400);
+ assert.equal(new Set(w.players.map(p=>p.id)).size,720);
  const allRosterIds=w.teams.flatMap(t=>t.roster);
- assert.equal(allRosterIds.length,1200);assert.equal(new Set(allRosterIds).size,1200);
+ assert.equal(allRosterIds.length,720);assert.equal(new Set(allRosterIds).size,720);
  assert.deepEqual([...allRosterIds].sort(),w.players.map(p=>p.id).sort());
  assert.ok(w.retired.length>150);
  for(const t of w.teams){assert.equal(t.roster.length,15);assert.equal(t.record.w+t.record.d+t.record.l,0);}
 });
 
 test('Scoring and player injuries remain within POC calibration limits',()=>{
- const w=createWorld(763);for(let i=0;i<18;i++)advanceOneWeek(w);
+ const w=createWorld(763);for(let i=0;i<22;i++)advanceOneWeek(w);
  const games=w.matches.filter(m=>m.phase==='league'&&m.homeScore!==null);
  const avg=games.reduce((n,m)=>n+(m.homeScore??0)+(m.awayScore??0),0)/games.length;
  assert.ok(avg>20&&avg<55,`average score: ${avg}`);
@@ -79,7 +79,7 @@ test('No region wins more than 40% of world titles across 5 seeds x 30 seasons',
 test('MVPs span at least 4 roles and every season has positional awards',()=>{
  const roles=new Set<string>();
  for(const {world} of runLong()){
-  const mvps=world.awards.filter(a=>a.award==='MVP');
+  const mvps=world.awards.filter(a=>a.award==='Golden Gargoyle');
   assert.equal(mvps.length,30);
   for(const a of mvps)roles.add(getPlayer(world,a.playerId)!.role);
   for(const name of ['Best Bastion','Best Breaker','Best Runner','Best Thrower','Best Raider','Best Trickster'])assert.equal(world.awards.filter(a=>a.award===name).length,30);
@@ -91,15 +91,15 @@ test('MVPs span at least 4 roles and every season has positional awards',()=>{
 test('Rivalries are mutual, regional and nearly all distinct, and heat responds to meetings',()=>{
  const w=createWorld(2026);
  for(const t of w.teams){const r=getTeam(w,t.rival);assert.equal(r.rival,t.id);assert.equal(r.region,t.region);assert.notEqual(r.id,t.id);assert.equal(r.rivalHeat,t.rivalHeat);}
- assert.ok(new Set(w.teams.map(t=>t.rival)).size>=76);
+ assert.ok(new Set(w.teams.map(t=>t.rival)).size>=48);
  const before=w.teams.reduce((s,t)=>s+t.rivalHeat,0);
- for(let i=0;i<18;i++)advanceOneWeek(w);
+ for(let i=0;i<22;i++)advanceOneWeek(w);
  assert.ok(w.teams.reduce((s,t)=>s+t.rivalHeat,0)>before);
  assert.ok(w.teams.some(t=>t.rivalRecord.w+t.rivalRecord.d+t.rivalRecord.l>=2));
 });
 
 test('Home advantage is small: league home win rate stays between 45% and 58%',()=>{
- const w=createWorld(4242);for(let i=0;i<18;i++)advanceOneWeek(w);
+ const w=createWorld(4242);for(let i=0;i<22;i++)advanceOneWeek(w);
  const games=w.matches.filter(m=>m.phase==='league'&&m.homeScore!==null);
  const rate=games.filter(m=>m.homeScore!>m.awayScore!).length/games.length;
  assert.ok(rate>.45&&rate<.58,`home win rate ${rate}`);
@@ -113,7 +113,7 @@ test('Every trait, ability and philosophy is described, and every club uses a kn
 });
 
 test('Spark abilities and penalties happen in real matches and name what happened',()=>{
- const w=createWorld(5);for(let i=0;i<18;i++)advanceOneWeek(w);
+ const w=createWorld(5);for(let i=0;i<22;i++)advanceOneWeek(w);
  const events=w.matches.filter(m=>m.homeScore!==null).flatMap(m=>m.events);
  const sparks=events.filter(e=>e.kind==='spark');
  const used=new Set<string>();
@@ -123,7 +123,7 @@ test('Spark abilities and penalties happen in real matches and name what happene
 });
 
 test('Iron Will athletes are injured less often than Reckless ones',()=>{
- const w=createWorld(77);for(let i=0;i<18;i++)advanceOneWeek(w);
+ const w=createWorld(77);for(let i=0;i<22;i++)advanceOneWeek(w);
  const rate=(trait:string)=>{const ps=w.players.filter(p=>p.trait===trait);return ps.reduce((s,p)=>s+p.stats.injuries,0)/ps.length;};
  assert.ok(rate('Iron Will')<rate('Reckless'),`Iron Will ${rate('Iron Will')} vs Reckless ${rate('Reckless')}`);
 });
@@ -170,9 +170,9 @@ test('Pass 3 substitutes healthy bench athletes, tracks contributions, and prese
 });
 
 test('Pass 3 season archives survive offseason and report fields are optional for legacy saves',()=>{
- const w=createWorld(613);for(let i=0;i<52;i++)advanceOneWeek(w);
+ const w=createWorld(613);for(let i=0;i<60;i++)advanceOneWeek(w);
  assert.deepEqual(w.seasonArchive?.map(a=>a.season),[1,2]);
- assert.equal(w.seasonArchive?.[0].standings.length,80);
+ assert.equal(w.seasonArchive?.[0].standings.length,48);
  const historic=w.matches.find(m=>m.season===1&&m.phase==='grand-final')!;assert.ok(historic);
  delete historic.report;
  assert.equal(historic.homeScore!==null,true);

@@ -24,7 +24,7 @@ export function Tourneys() {
     <div className="spread tourneys">
       <section className="across">
         <h1 className="folio-title">The Book of Tourneys</h1>
-        <p className="folio-sub">Four realms. Eight leagues. One unforgiving road to the Grand Rift, paved with the teeth of the unsuccessful.</p>
+        <p className="folio-sub">Four elemental countries. Forty-eight clubs. One unforgiving road to the World Cup, paved with the teeth of the unsuccessful.</p>
         <GrandRift />
       </section>
 
@@ -39,8 +39,8 @@ export function Tourneys() {
           ))}
         </div>
         <div className="table-controls">
-          <Choice label="League" value={division} onChange={setDivision} options={[{ value: 0, label: 'Premier' }, { value: 1, label: 'Challenger' }]} />
-          <p className="aside-note">Year {roman(w.season)} · eighteen rounds, home and away</p>
+          <Choice label="National league" value={division} onChange={setDivision} options={[{ value: 0, label: 'Twelve clubs' }]} />
+          <p className="aside-note">Year {roman(w.season)} · twenty-two rounds, home and away</p>
         </div>
         <div className="table-scroll">
           <table className="ledger standings">
@@ -84,7 +84,7 @@ export function Tourneys() {
         </div>
 
         <h2 className="page-head small spaced">The Regional Playoffs</h2>
-        <p className="aside-note">Weeks 19 and 20 decide the champion of {realmName(region)}.</p>
+        <p className="aside-note">Weeks 23 and 24 decide the national champion of {realmName(region)}.</p>
         <div className="challenges">
           {playoffs.length ? playoffs.map((m) => <ChallengeRow key={m.id} m={m} showPhase />) : <Blank>The playoff draw is made when the eighteenth round is done.</Blank>}
         </div>
@@ -103,18 +103,21 @@ export function Tourneys() {
 }
 
 export function ChallengeRow({ m, showPhase = false }: { m: Match; showPhase?: boolean }) {
-  const { team, go } = useGame();
+  const { team, go, world, resolveFixture, busy, locked } = useGame();
   const h = team(m.home);
   const a = team(m.away);
   if (!h || !a) return null;
   const done = m.homeScore !== null;
   return (
-    <button type="button" className={`challenge ${done ? 'is-done' : ''}`} onClick={() => go({ kind: 'contest', id: m.id })}>
+    <div className={`challenge ${done ? 'is-done' : ''}`}>
+      <button type="button" className="challenge-main" onClick={() => go({ kind: 'contest', id: m.id })}>
       <span className={`challenge-side ${m.winner === h.id ? 'is-winner' : ''}`}><Shield team={h} size={30} /><span>{h.nickname}</span></span>
       <span className="challenge-score">{done ? `${m.homeScore} – ${m.awayScore}` : 'v.'}</span>
       <span className={`challenge-side is-away ${m.winner === a.id ? 'is-winner' : ''}`}><span>{a.nickname}</span><Shield team={a} size={30} /></span>
       {showPhase && <span className="challenge-phase">{PHASE_NAME[m.phase]} · week {m.week}</span>}
-    </button>
+      </button>
+      {!done && m.season === world.season && m.week === world.week && <span className="challenge-actions"><button type="button" className="gilt-button" disabled={busy || locked} onClick={() => go({ kind: 'contest', id: m.id })}>Watch</button><button type="button" className="ink-button" disabled={busy || locked} onClick={() => void resolveFixture(m.id)}>Quick result</button></span>}
+    </div>
   );
 }
 
@@ -123,7 +126,7 @@ export function ChallengeRow({ m, showPhase = false }: { m: Match; showPhase?: b
 function GrandRift() {
   const { world: w, team, go } = useGame();
   const stage = (p: Match['phase']) => w.matches.filter((m) => m.season === w.season && m.phase === p);
-  const qf = stage('world-quarter');
+  const qf = stage('world-group');
   const sf = stage('world-semi');
   const final = stage('grand-final')[0];
   const reign = w.trophies.filter((t) => t.competition === 'GRAND RIFT CHAMPIONSHIP').at(-1);
@@ -144,23 +147,23 @@ function GrandRift() {
   return (
     <div className="grand-rift">
       <div className="rift-head">
-        <h2>The Grand Rift</h2>
-        <p>Four realm champions and four wildcards meet in weeks 21 to 23. One house is crowned champion of the world; the rest are crowned with ice packs.</p>
+        <h2>The World Cup</h2>
+        <p>Four national champions and four wildcards meet in weeks 25 to 27. One house is crowned champion of the world; the rest are crowned with ice packs.</p>
         {!qf.length && <p className="rift-projected-note">Until the realms are settled, the heralds pencil in the field as it stands today.</p>}
       </div>
       <div className="bracket">
         <div className="bracket-col">
-          <span className="bracket-round">Quarterfinals · week 21</span>
+          <span className="bracket-round">World Cup groups · week 25</span>
           {qfSlot(0)}
           {qfSlot(3)}
         </div>
         <div className="bracket-col is-semi">
-          <span className="bracket-round">Semifinal · week 22</span>
+          <span className="bracket-round">Semifinal · week 26</span>
           {slot(sf[0], 'Awaiting the quarterfinals')}
         </div>
         <div className="bracket-heart">
           <RiftCrown size={168} />
-          <span className="bracket-round is-final">The Final · week 23</span>
+          <span className="bracket-round is-final">World Final · week 27</span>
           {slot(final, 'Awaiting the semifinals')}
           <div className="reigning">
             {reigning ? <>
@@ -171,11 +174,11 @@ function GrandRift() {
           </div>
         </div>
         <div className="bracket-col is-semi">
-          <span className="bracket-round">Semifinal · week 22</span>
+          <span className="bracket-round">Semifinal · week 26</span>
           {slot(sf[1], 'Awaiting the quarterfinals')}
         </div>
         <div className="bracket-col">
-          <span className="bracket-round">Quarterfinals · week 21</span>
+          <span className="bracket-round">World Cup groups · week 25</span>
           {qfSlot(1)}
           {qfSlot(2)}
         </div>
@@ -197,8 +200,25 @@ function GrandRift() {
           );
         })}
       </div>
+      <WorldCupGroups matches={qf} />
     </div>
   );
+}
+
+function WorldCupGroups({ matches }: { matches: Match[] }) {
+  const { team, go } = useGame();
+  if (!matches.length) return null;
+  const standings = (group: number) => {
+    const rows = new Map<string, { id:string; p:number; d:number }>();
+    matches.filter(m => m.group === group).forEach(m => {
+      [m.home, m.away].forEach(id => { if (!rows.has(id)) rows.set(id, { id, p:0, d:0 }); });
+      if (m.homeScore === null) return;
+      const h=rows.get(m.home)!, a=rows.get(m.away)!, hs=m.homeScore, as=m.awayScore ?? 0; h.d+=hs-as; a.d+=as-hs;
+      if(m.homeScore>m.awayScore!)h.p+=3; else if(m.homeScore<m.awayScore!)a.p+=3; else {h.p++;a.p++;}
+    });
+    return [...rows.values()].sort((a,b)=>b.p-a.p||b.d-a.d);
+  };
+  return <section className="world-groups"><h3>World Cup group standings</h3><div>{[0,1].map(group => <article key={group}><strong>Group {group === 0 ? 'A' : 'B'}</strong><ol>{standings(group).map((r,i) => {const t=team(r.id); return <li key={r.id} className={i < 2 ? 'is-through' : ''}><button type="button" onClick={()=>go({kind:'house',id:r.id})}>{t?.nickname}</button><span>{r.p} pts · {r.d >= 0 ? '+' : ''}{r.d}</span></li>;})}</ol></article>)}</div><p className="aside-note">Top two in each group advance to the World Cup semifinals. Open any fixture above to Watch/Simulate or take a Quick Result.</p></section>;
 }
 
 function ProjectedMatch({ a, b }: { a: Team; b: Team }) {

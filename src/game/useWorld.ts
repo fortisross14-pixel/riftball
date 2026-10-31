@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { advanceOneWeek, createWorld } from '../engine';
+import { advanceOneWeek, createWorld, resolveMatch } from '../engine';
 import { deleteSave, exportSave, loadSave, SaveConflict, saveWorld, validateImport } from '../storage';
 import type { World } from '../types';
 
@@ -93,6 +93,21 @@ export function useWorld() {
     }
   }, [world, conflict]);
 
+  const resolveFixture = useCallback(async (id: string) => {
+    if (jobRef.current || !world || conflict) return false;
+    jobRef.current = true;
+    try {
+      const w = structuredClone(world) as World;
+      resolveMatch(w, id);
+      setWorld(w);
+      setNotice('The contest is written into the chronicle. Its replay and official ledger are now preserved.');
+      return true;
+    } catch (e) {
+      setNotice(`The fixture could not be resolved: ${e instanceof Error ? e.message : 'unknown error'}`);
+      return false;
+    } finally { jobRef.current = false; }
+  }, [world, conflict]);
+
   const refreshLatest = useCallback(async () => {
     try {
       const stored = await loadSave();
@@ -137,5 +152,5 @@ export function useWorld() {
 
   const exportWorld = useCallback(() => { if (world) exportSave(world); }, [world]);
 
-  return { world, save, conflict, busy, notice, setNotice, advance, refreshLatest, newUniverse, importFile, exportWorld };
+  return { world, save, conflict, busy, notice, setNotice, advance, resolveFixture, refreshLatest, newUniverse, importFile, exportWorld };
 }

@@ -32,24 +32,25 @@ function fieldX(e: MatchEvent, m: Match) {
 }
 
 export function ContestFolio({ id }: { id: string }) {
-  const { world: w, team, go, advance, busy, locked } = useGame();
+  const { world: w, team, go, resolveFixture, busy, locked } = useGame();
+  const [quick, setQuick] = useState(false);
   const m = w.matches.find((x) => x.id === id);
   if (!m) return <div className="spread"><section className="page verso"><h1 className="folio-title">A torn page</h1><Blank>This contest is not recorded. Older seasons keep only their title contests in full.</Blank></section><section className="page recto" /></div>;
   const home = team(m.home);
   const away = team(m.away);
   if (!home || !away) return <Blank>One of these houses has vanished from the chronicle.</Blank>;
-  if (m.homeScore === null) return <ChallengePreview m={m} home={home} away={away} canPlay={m.season === w.season && m.week === w.week} onPlay={() => advance(1)} disabled={busy || locked} />;
-  return <Replay key={m.id} m={m} home={home} away={away} onHouse={(tid) => go({ kind: 'house', id: tid })} />;
+  if (m.homeScore === null) return <ChallengePreview m={m} home={home} away={away} canPlay={m.season === w.season && m.week === w.week} onWatch={() => void resolveFixture(m.id)} onQuick={() => { setQuick(true); void resolveFixture(m.id); }} disabled={busy || locked} />;
+  return <Replay key={`${m.id}-${quick ? 'quick' : 'watch'}`} m={m} home={home} away={away} initiallyRevealed={quick} onHouse={(tid) => go({ kind: 'house', id: tid })} />;
 }
 
 /* ------------------------------------------------------------ the replay */
 
 type Tab = 'contest' | 'ledger' | 'drives';
 
-function Replay({ m, home, away }: { m: Match; home: Team; away: Team; onHouse: (id: string) => void }) {
+function Replay({ m, home, away, initiallyRevealed }: { m: Match; home: Team; away: Team; initiallyRevealed?: boolean; onHouse: (id: string) => void }) {
   const { world: w } = useGame();
   const events = m.events;
-  const [index, setIndex] = useState(-1);
+  const [index, setIndex] = useState(initiallyRevealed ? m.events.length : -1);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState(1);
   const [tab, setTab] = useState<Tab>('contest');
@@ -494,7 +495,7 @@ function Drivebook({ m, home, away }: { m: Match; home: Team; away: Team }) {
 
 /* ------------------------------------------------------------ a contest not yet fought */
 
-function ChallengePreview({ m, home, away, canPlay, onPlay, disabled }: { m: Match; home: Team; away: Team; canPlay: boolean; onPlay: () => void; disabled: boolean }) {
+function ChallengePreview({ m, home, away, canPlay, onWatch, onQuick, disabled }: { m: Match; home: Team; away: Team; canPlay: boolean; onWatch: () => void; onQuick: () => void; disabled: boolean }) {
   const { world: w } = useGame();
   const sides: [Team, Player[]][] = [[home, lineup(w, home)], [away, lineup(w, away)]];
   return (
@@ -502,8 +503,8 @@ function ChallengePreview({ m, home, away, canPlay, onPlay, disabled }: { m: Mat
       <section className="across contest-top">
         <Scoreboard m={m} home={home} away={away} score={[0, 0]} state="challenge" />
         <div className="challenge-call">
-          <p>Let the mayhem begin. Compare the houses, then turn the page to see what happens on the field.</p>
-          {canPlay ? <button type="button" className="gilt-button" disabled={disabled} onClick={onPlay}>Turn the page and play week {m.week}</button> : <p className="aside-note">This contest is set for week {m.week}.</p>}
+          <p>Choose how this fixture enters the chronicle. Both paths use the same match engine and preserve the same official statistics.</p>
+          {canPlay ? <div className="season-actions"><button type="button" className="gilt-button" disabled={disabled} onClick={onWatch}>Watch / Simulate Match</button><button type="button" className="ink-button" disabled={disabled} onClick={onQuick}>Quick Result</button></div> : <p className="aside-note">This contest is set for week {m.week}.</p>}
         </div>
       </section>
       {sides.map(([t, list], i) => {

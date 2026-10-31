@@ -54,12 +54,13 @@ export default function App() {
       team: (id) => teams.get(id),
       player: (id) => players.get(id),
       advance: (n) => { void game.advance(n); },
+      resolveFixture: game.resolveFixture,
       busy: !!game.busy,
       locked: game.conflict,
       importFile: game.importFile,
       newUniverse: game.newUniverse,
     };
-  }, [game.world, game.busy, game.conflict, go, game.advance, game.importFile, game.newUniverse]);
+  }, [game.world, game.busy, game.conflict, go, game.advance, game.resolveFixture, game.importFile, game.newUniverse]);
 
   if (!ctx) return <ClosedBook />;
   const w = ctx.world;
@@ -93,6 +94,7 @@ export default function App() {
           <span className="boss boss-bl" aria-hidden="true" /><span className="boss boss-br" aria-hidden="true" />
           <div className="book">
             <Headband world={w} save={game.save} onColophon={() => go({ kind: 'section', section: 'colophon' })} />
+            <SeasonNavigator world={w} busy={!!game.busy || game.conflict} onAdvance={(n) => void game.advance(n)} />
             <main id="folio" className="folio-stage" key={key}>
               <Page route={route} />
             </main>
@@ -149,7 +151,7 @@ function Headband({ world, save, onColophon }: { world: World; save: string; onC
       </div>
       <Calendar world={world} />
       <div className="headband-meta">
-        <span className="running-head">Year {roman(world.season)} · {world.week <= 18 ? `Round ${world.week}` : stageOf(world.week)}</span>
+        <span className="running-head">Year {roman(world.season)} · {world.week <= 22 ? `Round ${world.week}` : stageOf(world.week)}</span>
         <button type="button" className="colophon-link" onClick={onColophon}>
           <i className={`save-mark save-${save}`} aria-hidden="true" />{SAVE_TEXT[save] ?? save}
           <span className="colophon-word">· Colophon</span>
@@ -159,21 +161,39 @@ function Headband({ world, save, onColophon }: { world: World; save: string; onC
   );
 }
 
-/** A Book of Hours calendar: 26 weeks, playoffs written as red-letter days. */
+/** A Book of Hours calendar: 30 weeks, finals written as red-letter days. */
 function Calendar({ world }: { world: World }) {
   return (
-    <div className="calendar" aria-label={`Week ${world.week} of 26, ${stageOf(world.week)}`}>
+    <div className="calendar" aria-label={`Week ${world.week} of 30, ${stageOf(world.week)}`}>
       <ol>
-        {Array.from({ length: 26 }, (_, i) => {
+        {Array.from({ length: 30 }, (_, i) => {
           const wk = i + 1;
           const cls = wk < world.week ? 'is-past' : wk === world.week ? 'is-now' : '';
-          const kind = wk <= 18 ? 'league' : wk <= 23 ? 'red-letter' : 'winter';
+          const kind = wk <= 22 ? 'league' : wk <= 27 ? 'red-letter' : 'winter';
           return <li key={wk} className={`${cls} ${kind}`} title={`Week ${wk}`}><span>{wk === world.week ? roman(wk) : ''}</span></li>;
         })}
       </ol>
-      <div className="calendar-key"><span>League</span><span className="red">Red-letter weeks: the playoffs and the Grand Rift</span><span>Winter</span></div>
+      <div className="calendar-key"><span>National leagues</span><span className="red">National finals &amp; World Cup</span><span>Awards, market &amp; new season</span></div>
     </div>
   );
+}
+
+/** Persistent, forward-only season map. Jumps stop before the target fixtures are resolved. */
+function SeasonNavigator({ world, busy, onAdvance }: { world: World; busy: boolean; onAdvance: (n: number) => void }) {
+  const stages = [
+    ['National League', 1], ['National Finals', 24], ['World Cup', 25], ['Semifinals', 26], ['World Final', 27], ['Awards', 28], ['Market', 29], ['New Season', 30],
+  ] as const;
+  const jump = (week: number) => Math.max(0, week - world.week);
+  const actions = [
+    { label: 'Simulate Next Week', n: 1 }, { label: 'Simulate 4 Weeks', n: 4 },
+    { label: 'Go to National Finals', n: jump(24) }, { label: 'Go to World Cup', n: jump(25) },
+    { label: 'Go to World Cup Semifinals', n: jump(26) }, { label: 'Go to World Cup Final', n: jump(27) },
+    { label: 'Advance Through Offseason', n: jump(30) + 1 }, { label: 'Advance Full Year', n: Math.max(1, 31 - world.week) },
+  ].filter((a, i) => i < 2 || a.n > 0);
+  return <div className="season-nav" aria-label="Season progress and simulation controls">
+    <ol className="season-progress">{stages.map(([label, at]) => <li key={label} className={world.week >= at ? 'is-done' : (world.week >= at - 1 ? 'is-now' : '')}>{label}</li>)}</ol>
+    <div className="season-actions">{actions.map((a) => <button key={a.label} type="button" className={a.label.includes('Next') ? 'gilt-button' : 'ink-button'} disabled={busy} onClick={() => onAdvance(a.n)}>{a.label}</button>)}</div>
+  </div>;
 }
 
 function TurnCorner({ world, busy, locked, onAdvance }: { world: World; busy: boolean; locked: boolean; onAdvance: (n: number) => void }) {
@@ -188,9 +208,8 @@ function TurnCorner({ world, busy, locked, onAdvance }: { world: World; busy: bo
     return () => { document.removeEventListener('pointerdown', off); document.removeEventListener('keydown', esc); };
   }, [open]);
   const options = [
-    { n: 4, label: 'Four weeks', note: 'a month of contests' },
-    { n: 27 - world.week, label: "To the season's end", note: 'crown this year’s champion' },
-    { n: 26, label: 'A full year', note: 'one turn of the calendar' },
+    { n: 4, label: 'Simulate 4 weeks', note: 'a month of contests' },
+    { n: Math.max(1, 31 - world.week), label: 'Advance full year', note: 'one turn of the calendar' },
     { n: 260, label: 'A decade', note: 'a new generation of legends' },
   ];
   const disabled = busy || locked;

@@ -8,6 +8,7 @@ export type Game = {
   team: (id: string) => Team | undefined;
   player: (id: string) => Player | undefined;
   advance: (weeks: number) => void;
+  resolveFixture: (id: string) => Promise<boolean>;
   busy: boolean;
   locked: boolean;
   importFile: (f: File) => Promise<boolean>;
@@ -25,17 +26,21 @@ export const PHASE_NAME: Record<Match['phase'], string> = {
   league: 'League round',
   'regional-semi': 'Regional semifinal',
   'regional-final': 'Regional final',
-  'world-quarter': 'Grand Rift quarterfinal',
+  'world-group': 'World Cup group stage',
   'world-semi': 'Grand Rift semifinal',
   'grand-final': 'The Grand Rift Final',
 };
 
 export function stageOf(week: number): string {
-  if (week <= 18) return 'The League Rounds';
-  if (week <= 20) return 'The Regional Playoffs';
-  if (week <= 23) return 'The Grand Rift';
-  if (week === 24) return 'The Feast of Honours';
-  return 'The Long Winter';
+  if (week <= 22) return 'National League';
+  if (week === 23) return 'National Semifinals';
+  if (week === 24) return 'National Finals';
+  if (week === 25) return 'World Cup Groups';
+  if (week === 26) return 'World Cup Semifinals';
+  if (week === 27) return 'World Cup Final';
+  if (week === 28) return 'Awards';
+  if (week === 29) return 'The Market';
+  return 'New Season';
 }
 
 export const nfmt = (v: number) => new Intl.NumberFormat('en-US').format(v);

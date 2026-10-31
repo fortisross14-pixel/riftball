@@ -1,4 +1,5 @@
-import type { Storyline } from '../types';
+import { useState } from 'react';
+import type { SeasonStats, Storyline } from '../types';
 import { RECORD_LABEL } from '../chronicle';
 import { nfmt, useGame } from '../game/context';
 import { Shield } from '../art/Heraldry';
@@ -13,7 +14,8 @@ const STORY_KIND: Record<Storyline['kind'], string> = {
 export function Annals() {
   const { world: w, team, player } = useGame();
   const crowns = w.trophies.filter((t) => t.competition === 'GRAND RIFT CHAMPIONSHIP').slice().reverse();
-  const greats = w.players.concat(w.retired).sort((a, b) => b.career.breaches - a.career.breaches || b.rating - a.rating).slice(0, 10);
+  const [legendScope, setLegendScope] = useState<'career' | 'season'>('career');
+  const greats = w.players.concat(w.retired).sort((a, b) => b.fame - a.fame || b.career.breaches - a.career.breaches).slice(0, 10);
   const careerRecords = w.records.filter((r) => r.scope === 'career');
   const seasonRecords = w.records.filter((r) => r.scope === 'season');
   const sagas = w.storylines.filter((s) => s.status === 'active').sort((a, b) => b.lastSeason - a.lastSeason).slice(0, 8);
@@ -70,17 +72,20 @@ export function Annals() {
 
       <section className="page recto">
         <h2 className="page-head">The Hall of Legends</h2>
-        <p className="aside-note">The greatest breach scorers who ever lived, the retired included.</p>
+        <p className="aside-note">Legacy is separate from talent: crowns, great performances, awards and records all leave their mark.</p>
+        <div className="roll-controls compact"><button type="button" className={legendScope === 'career' ? 'gilt-button' : 'ink-button'} onClick={() => setLegendScope('career')}>All-time leaders</button><button type="button" className={legendScope === 'season' ? 'gilt-button' : 'ink-button'} onClick={() => setLegendScope('season')}>This season’s records</button></div>
         <ol className="legends">
           {greats.map((p, i) => (
             <li key={p.id} className={i === 0 ? 'is-first' : ''}>
               <span className="legend-rank">{roman(i + 1)}</span>
               <Miniature player={p} size={i === 0 ? 76 : 48} />
               <span><AthleteName player={p} /><small>{p.race} {p.role.toLowerCase()}{p.retired ? ', retired' : ''}</small></span>
-              <strong>{nfmt(p.career.breaches)}<small>breaches</small></strong>
+              <strong>{nfmt(p.fame)}<small>legacy</small></strong>
             </li>
           ))}
         </ol>
+
+        <LegendBoards scope={legendScope} />
 
         <h2 className="page-head small spaced">Sagas Still Being Written</h2>
         {sagas.length ? (
@@ -96,4 +101,21 @@ export function Annals() {
       </section>
     </div>
   );
+}
+
+function LegendBoards({ scope }: { scope: 'career' | 'season' }) {
+  const { world: w, player, team, go } = useGame();
+  const key = scope === 'career' ? 'career' : 'stats';
+  const boards: { label: string; stat: keyof SeasonStats }[] = [
+    { label: 'Breaches', stat: 'breaches' }, { label: 'Points', stat: 'gates' }, { label: 'Passing yards', stat: 'passingYards' }, { label: 'Rushing yards', stat: 'rushingYards' },
+    { label: 'Assists', stat: 'assists' }, { label: 'Blocks', stat: 'blocks' }, { label: 'Tackles', stat: 'tackles' }, { label: 'Interceptions', stat: 'interceptions' },
+    { label: 'Knockouts', stat: 'knockouts' }, { label: 'Match MVPs', stat: 'mvp' },
+  ];
+  const pool = scope === 'career' ? w.players.concat(w.retired) : w.players;
+  return <div className="legend-grid" aria-label={`${scope} Hall of Legends leaderboards`}>
+    {boards.map((b) => {
+      const leaders = pool.slice().sort((a, z) => z[key][b.stat] - a[key][b.stat] || z.fame - a.fame).slice(0, 3);
+      return <section key={b.stat}><h3>{b.label}</h3><ol>{leaders.map((p) => <li key={p.id}><button type="button" onClick={() => go({ kind: 'athlete', id: p.id })}><span>{p.name}</span><b>{nfmt(p[key][b.stat])}</b></button><small>{team(p.teamId)?.nickname ?? 'Retired'}</small></li>)}</ol></section>;
+    })}
+  </div>;
 }

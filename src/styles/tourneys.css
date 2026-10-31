@@ -82,8 +82,11 @@ button.bracket-match:hover { transform: translateY(-2px); box-shadow: 0 8px 16px
 .table-key li { display: flex; align-items: center; gap: 7px; }
 
 .challenges { display: flex; flex-direction: column; }
-.challenge { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; width: 100%; padding: 9px 6px; border: 0; border-bottom: 1px solid rgba(163, 39, 28, 0.2); background: none; text-align: left; transition: background 140ms; }
+.challenge { width: 100%; padding: 6px; border: 0; border-bottom: 1px solid rgba(163, 39, 28, 0.2); background: none; text-align: left; transition: background 140ms; }
+.challenge-main { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; width: 100%; padding: 3px 0; border:0; background:transparent; color:inherit; text-align:left; cursor:pointer; }
 .challenge:hover { background: rgba(200, 150, 46, 0.14); }
+.challenge-actions { display:flex; justify-content:center; gap:6px; padding:5px 0 1px; }.challenge-actions button { font-size:.72rem; padding:4px 7px; }
+.world-groups { margin-top:20px; border-top:1px solid rgba(163,39,28,.28); padding-top:12px; }.world-groups h3 { margin:0 0 8px; font-family:var(--face-rubric); color:var(--rubric); text-transform:uppercase; }.world-groups > div { display:grid; grid-template-columns:1fr 1fr; gap:16px; }.world-groups article { background:rgba(104,75,31,.06); padding:8px; }.world-groups ol { list-style:none; padding:0; margin:5px 0 0; }.world-groups li { display:flex; justify-content:space-between; border-top:1px solid rgba(163,39,28,.15); padding:3px 0; font-size:.82rem; }.world-groups li.is-through { border-left:3px solid var(--gold-deep); padding-left:5px; }.world-groups button { background:transparent; border:0; padding:0; cursor:pointer; color:var(--ink); font:inherit; }.world-groups button:hover { color:var(--rubric); text-decoration:underline; }.world-groups li span { font-family:var(--face-data); }
 .challenge-phase { grid-column: 1 / -1; font-family: var(--face-rubric); font-weight: 700; font-size: 0.85rem; color: var(--rubric); }
 .challenge-side { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 700; }
 .challenge-side > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -5,8 +5,8 @@ import { REGIONS } from './types';
 import type { Match, NewsKind, Player, RecordEntry, RecordStat, Story, StoryBadge, Storyline, StorylineKind, Team, World } from './types';
 import { addStory, getPlayer, getTeam, impactScore, lineup, retireAge, teamRating } from './engine';
 
-export const RECORD_STATS:RecordStat[]=['breaches','tackles','interceptions','knockouts','assists','distance','gates'];
-export const RECORD_LABEL:Record<RecordStat,string>={breaches:'Breaches',tackles:'tackles',interceptions:'interceptions',knockouts:'knockouts',assists:'assists',distance:'metres gained',gates:'gate shots'};
+export const RECORD_STATS:RecordStat[]=['breaches','tackles','interceptions','knockouts','assists','distance','rushingYards','passingYards','mvp','gates'];
+export const RECORD_LABEL:Record<RecordStat,string>={breaches:'Breaches',tackles:'tackles',interceptions:'interceptions',knockouts:'knockouts',assists:'assists',distance:'carrying yards',rushingYards:'rushing yards',passingYards:'passing yards',mvp:'Match MVPs',gates:'gate shots'};
 const WORLD_TITLE='GRAND RIFT CHAMPIONSHIP';
 const MAX_STORYLINES=600;
 
@@ -119,7 +119,7 @@ function upsets(w:World,fixtures:Match[]){
   const winner=getTeam(w,m.winner),loser=getTeam(w,m.winner===m.home?m.away:m.home);
   const gap=teamRating(w,loser)-teamRating(w,winner);
   if(gap<3.5)continue;
-  const home=getTeam(w,m.home),stage=m.phase==='grand-final'?'Grand Final':m.phase.startsWith('world')?'world playoffs':'regional playoffs';
+  const home=getTeam(w,m.home),stage=m.phase==='grand-final'?'Grand Final':m.phase.startsWith('world')?'World Cup':'national playoffs';
   const line=openStoryline(w,`upset:${m.id}`,'upset',[winner.id,loser.id],`the shock in ${home.city}`,{gap:Math.round(gap*10)/10,matchId:m.id,winner:winner.id,loser:loser.id,phase:m.phase});
   line.status='resolved';
   tell(w,line,'UPSET','result',`UPSET! ${winner.nickname.toUpperCase()} STUN ${loser.nickname.toUpperCase()}`,

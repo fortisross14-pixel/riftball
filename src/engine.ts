@@ -2,17 +2,21 @@ import { ATTR_KEYS, EMPTY_RECORD, EMPTY_STATS, RACES, REGIONS, ROLES } from './t
 import { chronicleOffseason, chronicleWeek, rebuildRecords } from './chronicle';
 import type { Attributes, Match, MatchEvent, Player, Race, Rarity, Role, SeasonStats, StatKey, Story, Team, World, MatchTeamStats, MatchPlayerStats, MatchDrive, MatchReport } from './types';
 
+/** A 30-week Chronicle calendar. These numbers are intentionally exported so UI and jump controls cannot drift from the engine. */
+export const SEASON = { LEAGUE_END:22, NATIONAL_SEMI:23, NATIONAL_FINAL:24, WORLD_GROUPS:25, WORLD_SEMI:26, WORLD_FINAL:27, AWARDS:28, MARKET:29, NEW_SEASON:30 } as const;
+
+/** Twelve permanent clubs per elemental country.  Names are deliberately authored, not procedural. */
 const CITIES = [
- ['Coppergate','Anvilford','Hammerfall','Ironhollow','Stonewatch','Rustmoor','Blackforge','Kragspire','Ashvault','Grimpeak','Embercross','Brasshaven','Grudgebrook','Mournrock','Cinderwall','Boulderkeep','Redhammer','Steelhollow','Mithrengard','Thundertop'],
- ['Silvermoon','Eldergrove','Highbloom','Sunmere','Willowcrest','Starfall','Brightvale','Rosewarden','Goldleaf','Dawnreach','Mistral','Windspire','Violetmere','Thornfield','Ivorygate','Larkhaven','Greenmantle','Moonwillow','Amberden','Faycrest'],
- ['Mudhaven','Brineport','Redfen','Ratsmouth','Bramblewick','Cutlass Bay','Slymarsh','Scupperton','Driftbarrow','Whistledock','Crogport','Fangwater',"Smuggler's Rest",'Skullhaven','Blister Bay','Snapwick','Rotterdamn','Crowsnest','Filthwater','Gutterrock'],
- ['Gloomspire','Nightshade','Gravecourt','Duskhaven','Boneharbor','Blackveil','Dreadmoor','Hollowmere','Cryptfall','Wraithwick','Deadwood','Ashenwake','Ghostfen','Mournhaven','Palecrest','Wyrmrest','Shadowfen','Grimwater','Tombstone','Netherhold']
+ ['Stonehaven','Ironroot','Deepmount','Oakridge','Granitefall','Mossvale','Thornwall','Copperhollow','Pinewatch','Valebarrow','Runestone','Boulderwake'],
+ ['Emberfall','Ashforge','Cinderpeak','Moltenreach','Charspire','Brimstone','Searhaven','Furnace Gate','Scoriavale','Red Caldera','Coalwatch','Flintmarch'],
+ ['Skyreach','Galecrest','Cloudspire','Stormwind','High Aerie','Zephyrhold','Thunderrest','Mistwatch','Kitehaven','Tempest Vale','Whisperpeak','Sunsail'],
+ ['Deepwell','Riverrun','Coralhaven','Stormbay','Silverbrook','Tidecross','Pearlport','Cascadia','Bluewake','Lakeward','Seafall','Mistral Isle']
 ];
 const NICKNAMES = [
- ['Crushers','Anvils','Maulers','Hammers','Ironclads','Wreckers','Titans','Grinders','Breakers','Brawlers','Forged','Warhounds','Stompers','Bruisers','Juggernauts','Earthshakers','Ironjaws','Bulldozers','Ravagers','Thunderlords'],
- ['Arrows','Stags','Sentinels','Comets','Phoenix','Spires','Whisperers','Sovereigns','Blades','Eagles','Starweavers','Wanderers','Fletchers','Wardens','Luminaries','Valkyries','Enchanters','Foxes','Dancers','Sunriders'],
- ['Mudskippers','Cutthroats','Marauders','Misfits','Bandits','Pirates','Swindlers','Scoundrels','Rat Kings','Looters','Scallywags','Fangtooths','Smugglers','Rogues','Salty Dogs','Firecrackers','Sharks','Crows','Maggots','Knaves'],
- ['Revenants','Spectres','Gravediggers','Banshees','Phantoms','Wraiths','Reapers','Liches','Nightmares','Ghouls','Bonebreakers','Shadows','Haunters','Deathknells','Pale Riders','Hexers','Shrouds','Watchers','Ghostwalkers','Undying']
+ ['Titans','Hammers','Wardens','Guardians','Quarrymen','Stags','Bramblebacks','Miners','Sentinels','Badgers','Monoliths','Rams'],
+ ['Inferno','Blazers','Flames','Dragons','Salamanders','Forgers','Phoenix','Sparks','Basalts','Volcanos','Firebrands','Anvils'],
+ ['Falcons','Tempests','Eagles','Zephyrs','Kestrels','Skyriders','Thunderheads','Gusts','Ospreys','Cyclones','Cloudrunners','Windriders'],
+ ['Cascade','Waters','Tides','Mariners','Rapids','Leviathans','Nautilus','Undertow','Breakers','Herons','Driftwood','Seastars']
 ];
 const FIRST:Record<Race,string[]> = {
  Human:['Gareth','Helena','Cedric','Mara','Rowan','Cassian','Elsa','Tobias','Vera','Bran','Kaela','Dorian','Valen','Alric'],
@@ -106,7 +110,8 @@ const clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n));
 const rid=(w:World,prefix:string)=>`${prefix}-${++w.serial}`;
 const grade=(r:number):Rarity => r<.003?'Generational':r<.02?'Legendary':r<.09?'Extraordinary':r<.27?'Elite':r<.57?'Professional':'Ordinary';
 const boost:Record<Rarity,number>={Ordinary:-5,Professional:0,Elite:5,Extraordinary:9,Legendary:13,Generational:17};
-const RACE_WEIGHTS=[[1,4,1,4,1,2,1,1,1],[3,1,5,1,1,0,1,0,2],[3,2,2,0,5,1,2,0,3],[2,1,1,1,2,0,1,6,1]];
+// Country-specific demographics. Every one of the nine races remains eligible in all four realms.
+const RACE_WEIGHTS=[[4,2,2,4,1,2,1,1,2],[3,3,1,2,1,2,3,1,1],[3,1,5,1,2,1,1,1,4],[4,1,2,1,3,2,3,1,2]];
 function drawRace(w:World, region:number):Race { const arr=RACE_WEIGHTS[region]; const total=arr.reduce((a,b)=>a+b,0); let p=random(w)*total; for(let i=0;i<arr.length;i++){p-=arr[i];if(p<0)return RACES[i];}return 'Human'; }
 export function positionRating(attrs:Attributes,role:Role):number { const weights=ROLE_WEIGHT[role]; let total=0,weight=0; Object.entries(weights).forEach(([key,v])=>{ total+=attrs[key as StatKey]*v;weight+=v;});return Math.round(total/weight); }
 // Age curve: everyone grows until PEAK_AGE (or earlier if their race declines sooner),
@@ -142,7 +147,7 @@ function createPlayer(w:World,team:Team,role:Role,newProspect=false):Player {
  const attrs={} as Attributes;
  for(const key of ATTR_KEYS)attrs[key]=clamp(Math.round(base+int(w,-15,15)+(MOD[race][key]||0)+(ROLE_WEIGHT[role][key]?int(w,3,13):0)),13,99);
  const rating=positionRating(attrs,role); const potential=clamp(Math.round(rating+ageGap(race,age)),rating,99);
- return {id:rid(w,'p'),name:`${pick(w,FIRST[race])} ${pick(w,LAST[race])}`,race,role,teamId:team.id,age,level:newProspect?1:int(w,1,7),xp:0,rating,rarity,potential,attrs,trait:pick(w,TRAITS),ability:pick(w,ABILITIES),injury:0,careerWear:0,stats:EMPTY_STATS(),career:EMPTY_STATS(),titles:0,championships:0,portrait:int(w,1,6),seasons:0};
+ return {id:rid(w,'p'),name:`${pick(w,FIRST[race])} ${pick(w,LAST[race])}`,race,role,teamId:team.id,age,level:newProspect?1:int(w,1,7),xp:0,rating,rarity,potential,attrs,trait:pick(w,TRAITS),ability:pick(w,ABILITIES),injury:0,careerWear:0,stats:EMPTY_STATS(),career:EMPTY_STATS(),titles:0,championships:0,fame:0,portrait:int(w,1,6),seasons:0};
 }
 // One offseason of the age curve. Academy quality speeds up young players' growth.
 function ageCurve(w:World,p:Player){
@@ -157,38 +162,39 @@ function ageCurve(w:World,p:Player){
 }
 function seedSchedule(w:World){
  for (const team of w.teams){team.record=EMPTY_RECORD();team.form=[];}
- for(let r=0;r<4;r++)for(let d=0;d<2;d++){
-  const teams=w.teams.filter(t=>t.region===r&&t.division===d).map(t=>t.id);
+ for(let r=0;r<4;r++){
+  const teams=w.teams.filter(t=>t.region===r&&t.division===0).map(t=>t.id);
   let rotation=[...teams];
-  for(let round=0;round<9;round++){
-   for(let k=0;k<5;k++){
-    const a=rotation[k],b=rotation[9-k];
+  const n=rotation.length;
+  for(let round=0;round<n-1;round++){
+   for(let k=0;k<n/2;k++){
+    const a=rotation[k],b=rotation[n-1-k];
     const first=round%2===0?a:b,second=round%2===0?b:a;
     w.matches.push({id:rid(w,'m'),season:w.season,week:round+1,home:first,away:second,homeScore:null,awayScore:null,phase:'league',region:r,events:[],seed:int(w,1,999999999)});
-    w.matches.push({id:rid(w,'m'),season:w.season,week:round+10,home:second,away:first,homeScore:null,awayScore:null,phase:'league',region:r,events:[],seed:int(w,1,999999999)});
+    w.matches.push({id:rid(w,'m'),season:w.season,week:round+n,home:second,away:first,homeScore:null,awayScore:null,phase:'league',region:r,events:[],seed:int(w,1,999999999)});
    }
-   rotation=[rotation[0],rotation[9],...rotation.slice(1,9)];
+   rotation=[rotation[0],rotation[n-1],...rotation.slice(1,n-1)];
   }
  }
 }
 export function createWorld(seed=2026):World {
- const w:World={version:2,seed,rng:seed>>>0,season:1,week:1,teams:[],players:[],matches:[],news:[],trophies:[],awards:[],storylines:[],records:[],retired:[],history:[],serial:0,totalGames:0,lastUpdated:Date.now()};
- for(let region=0;region<4;region++)for(let i=0;i<20;i++){
+ const w:World={version:3,seed,rng:seed>>>0,season:1,week:1,teams:[],players:[],matches:[],news:[],trophies:[],awards:[],storylines:[],records:[],retired:[],history:[],serial:0,totalGames:0,lastUpdated:Date.now()};
+ for(let region=0;region<4;region++)for(let i=0;i<12;i++){
   const city=CITIES[region][i],nickname=NICKNAMES[region][i],colors=PALETTE[region][i%5];
-  const team:Team={id:rid(w,'t'),name:`${city} ${nickname}`,city,nickname,initials:(city.slice(0,2)+nickname.slice(0,1)).toUpperCase(),region,division:i<10?0:1,colors,philosophy:pick(w,PHILOSOPHIES).toUpperCase(),power:int(w,45,85),fanbase:int(w,32,94),academy:int(w,35,90),budget:int(w,15,85),roster:[],record:EMPTY_RECORD(),historyTitles:0,worldTitles:0,rival:'',rivalHeat:0,rivalRecord:{w:0,d:0,l:0},form:[]};
+  const team:Team={id:rid(w,'t'),name:`${city} ${nickname}`,city,nickname,initials:(city.slice(0,2)+nickname.slice(0,1)).toUpperCase(),region,division:0,colors,philosophy:pick(w,PHILOSOPHIES).toUpperCase(),power:int(w,45,85),fanbase:int(w,32,94),academy:int(w,35,90),budget:int(w,15,85),roster:[],record:EMPTY_RECORD(),historyTitles:0,worldTitles:0,rival:'',rivalHeat:0,rivalRecord:{w:0,d:0,l:0},form:[]};
   w.teams.push(team);
   for(const role of [...ROLES,'Bastion','Breaker','Runner','Thrower','Raider','Trickster','Bastion','Breaker','Runner'] as Role[]){
    const player=createPlayer(w,team,role); team.roster.push(player.id);w.players.push(player);
   }
  }
  // Mutual rival pairs: shuffle each regional division and pair neighbours. Pairs persist across promotion and relegation.
- for(let r=0;r<4;r++)for(const d of [0,1]){
-  const pool=w.teams.filter(t=>t.region===r&&t.division===d);
+ for(let r=0;r<4;r++){
+  const pool=w.teams.filter(t=>t.region===r&&t.division===0);
   for(let i=pool.length-1;i>0;i--){const j=int(w,0,i);[pool[i],pool[j]]=[pool[j],pool[i]];}
   for(let i=0;i+1<pool.length;i+=2){const a=pool[i],b=pool[i+1],heat=int(w,20,50);a.rival=b.id;b.rival=a.id;a.rivalHeat=heat;b.rivalHeat=heat;}
  }
  seedSchedule(w);
- addStory(w,'roundup','A NEW ERA OF ABSOLUTE MAYHEM',`Welcome to Year One. Eighty clubs across ${REGIONS.length} regions begin the first recorded Riftball season. The medical guild advises everyone to remain extremely calm.`,undefined,undefined,undefined,5);
+ addStory(w,'roundup','A NEW ERA OF ABSOLUTE MAYHEM',`Welcome to Year One. Forty-eight clubs across the four elemental countries begin the first recorded Riftball season. The medical guild advises everyone to remain extremely calm.`,undefined,undefined,undefined,5);
  addStory(w,'scandal','REFEREES REQUEST HAZARD PAY',`The Riftball Authority has confirmed that all match officials will receive protective armor, a whistle, and exactly one emergency teleportation voucher.`,undefined,undefined,undefined,1);
  return w;
 }
@@ -368,8 +374,7 @@ export function simulateMatch(w:World,m:Match){
      if(!power&&random(w)<bigChance){gain+=int(w,10,25)+(has(carrier,'Showboat')?int(w,3,8):0);event(m,minute,'bigplay',attack.id,carrier,`${carrier.name} bursts through for ${gain} metres!`,score[0],score[1],x+gain);}
     }
     x+=gain;teamStat(side,'yards',gain);matchDrive.yards+=gain;pStat(carrier,'yards',gain);addStat(carrier,'distance',gain);
-    if(isPass){teamStat(side,'passesCompleted');teamStat(side,'passingYards',gain);pStat(passer,'passesCompleted');pStat(passer,'passingYards',gain);pStat(carrier,'catches');addStat(passer,'passes');}
-    else{teamStat(side,'rushingYards',gain);if(gain>=5){addStat(blocker,'blocks');teamStat(side,'blocks');pStat(blocker,'blocks');}}
+    if(isPass){teamStat(side,'passesCompleted');teamStat(side,'passingYards',gain);pStat(passer,'passesCompleted');pStat(passer,'passingYards',gain);pStat(carrier,'catches');addStat(passer,'passes');addStat(passer,'passingYards',gain);} else {addStat(carrier,'rushingYards',gain);teamStat(side,'rushingYards',gain);if(gain>=5){addStat(blocker,'blocks');teamStat(side,'blocks');pStat(blocker,'blocks');}}
     if(x>=90){
      score[side]+=5;teamStat(side,'breaches');pStat(carrier,'breaches');matchDrive.result='breach';matchDrive.scorerId=carrier.id;addStat(carrier,'breaches');addXp(carrier,12);
      if(isPass){pStat(passer,'assists');addStat(passer,'assists');addXp(passer,6);event(m,minute,'breach',attack.id,carrier,`BREACH! ${passer.name} finds ${carrier.name} in the end zone. Five points!`,score[0],score[1],95);}
@@ -423,21 +428,35 @@ export function simulateMatch(w:World,m:Match){
  for(const entry of Object.values(report.players)){
   entry.impact=entry.breaches*12+entry.assists*7+entry.gates*5+entry.yards*.045+entry.passingYards*.025+entry.tackles*.7+entry.blocks*.35+entry.interceptions*9+entry.knockouts*5+entry.sparks*3-entry.turnovers*6;
  }
+ const matchMvp=Object.values(report.players).sort((a,b)=>b.impact-a.impact)[0];
+ if(matchMvp){ const p=getPlayer(w,matchMvp.playerId); if(p){ addStat(p,'mvp'); p.fame+=2+(m.phase==='league'?0:3); m.mvpId=p.id; } }
  report.winner=m.winner;
 }
 export function sortedStandings(w:World,region:number,division:0|1):Team[]{return w.teams.filter(t=>t.region===region&&t.division===division).sort((a,b)=>b.record.pts-a.record.pts||(b.record.pf-b.record.pa)-(a.record.pf-a.record.pa)||b.record.pf-a.record.pf||a.name.localeCompare(b.name));}
 function makeKnockout(w:World,week:number,home:Team,away:Team,phase:Match['phase'],region=-1){w.matches.push({id:rid(w,'m'),season:w.season,week,home:home.id,away:away.id,homeScore:null,awayScore:null,phase,region,events:[],seed:int(w,1,99999999)});}
 function matchesIn(w:World,week:number,phase?:Match['phase']){return w.matches.filter(m=>m.season===w.season&&m.week===week&&(!phase||m.phase===phase));}
-function setupRegional(w:World){for(let region=0;region<4;region++){const standings=sortedStandings(w,region,0);makeKnockout(w,19,standings[0],standings[3],'regional-semi',region);makeKnockout(w,19,standings[1],standings[2],'regional-semi',region);}}
-function setupRegionalFinals(w:World){for(let r=0;r<4;r++){const semis=matchesIn(w,19).filter(m=>m.region===r);if(semis.length===2)makeKnockout(w,20,getTeam(w,semis[0].winner!),getTeam(w,semis[1].winner!),'regional-final',r);}}
-function setupWorldQuarter(w:World){
- const champions=matchesIn(w,20,'regional-final').map(m=>getTeam(w,m.winner!));
+function setupRegional(w:World){for(let region=0;region<4;region++){const standings=sortedStandings(w,region,0);makeKnockout(w,SEASON.NATIONAL_SEMI,standings[0],standings[3],'regional-semi',region);makeKnockout(w,SEASON.NATIONAL_SEMI,standings[1],standings[2],'regional-semi',region);}}
+function setupRegionalFinals(w:World){for(let r=0;r<4;r++){const semis=matchesIn(w,SEASON.NATIONAL_SEMI).filter(m=>m.region===r);if(semis.length===2)makeKnockout(w,SEASON.NATIONAL_FINAL,getTeam(w,semis[0].winner!),getTeam(w,semis[1].winner!),'regional-final',r);}}
+function setupWorldGroups(w:World){
+ const champions=matchesIn(w,SEASON.NATIONAL_FINAL,'regional-final').map(m=>getTeam(w,m.winner!));
  for(const t of champions){t.historyTitles++; w.trophies.push({season:w.season,competition:`${REGIONS[t.region]} CHAMPIONS`,teamId:t.id});}
  const others=w.teams.filter(t=>t.division===0&&!champions.some(c=>c.id===t.id)).sort((a,b)=>b.record.pts-a.record.pts||b.record.pf-b.record.pf);
  const extras:Team[]=[];for(const t of others){if(extras.some(e=>e.region===t.region))continue;extras.push(t);if(extras.length===4)break;}
  const entrants=[...champions,...extras].sort((a,b)=>b.record.pts-a.record.pts||b.record.pf-a.record.pf);
- for(let i=0;i<4;i++)makeKnockout(w,21,entrants[i],entrants[7-i],'world-quarter');
- champions.forEach(c=>addStory(w,'championship',`${c.nickname.toUpperCase()} CROWNED REGIONAL CHAMPIONS`,`${c.name} claim the ${REGIONS[c.region]} crown and punch their ticket to the Grand Rift. The city declares three days of celebratory property damage.`,c.id,undefined,undefined,4));
+ for(let group=0;group<2;group++){
+  const pool=entrants.slice(group*4,group*4+4), pairings:[[number,number],[number,number],[number,number],[number,number],[number,number],[number,number]]=[[0,1],[2,3],[0,2],[1,3],[0,3],[1,2]];
+  for(const [a,b] of pairings){ const m:Match={id:rid(w,'m'),season:w.season,week:SEASON.WORLD_GROUPS,home:pool[a].id,away:pool[b].id,homeScore:null,awayScore:null,phase:'world-group',region:-1,group,events:[],seed:int(w,1,99999999)}; w.matches.push(m); }
+ }
+ champions.forEach(c=>addStory(w,'championship',`${c.nickname.toUpperCase()} CROWNED NATIONAL CHAMPIONS`,`${c.name} claim the ${REGIONS[c.region]} crown and punch their ticket to the World Cup. The city declares three days of celebratory property damage.`,c.id,undefined,undefined,4));
+}
+function setupWorldSemis(w:World){
+ const all=matchesIn(w,SEASON.WORLD_GROUPS,'world-group');
+ const qualify=(group:number)=>{
+  const matches=all.filter(m=>m.group===group), rows=new Map<string,{id:string;p:number;d:number}>();
+  for(const m of matches){for(const id of [m.home,m.away])if(!rows.has(id))rows.set(id,{id,p:0,d:0});const h=rows.get(m.home)!,a=rows.get(m.away)!;h.d+=(m.homeScore??0)-(m.awayScore??0);a.d+=(m.awayScore??0)-(m.homeScore??0);if(m.homeScore!>m.awayScore!)h.p+=3;else if(m.homeScore!<m.awayScore!)a.p+=3;else{h.p++;a.p++;}}
+  return [...rows.values()].sort((a,b)=>b.p-a.p||b.d-a.d).slice(0,2).map(r=>getTeam(w,r.id));
+ };
+ const [a1,a2]=qualify(0),[b1,b2]=qualify(1); if(a1&&a2&&b1&&b2){makeKnockout(w,SEASON.WORLD_SEMI,a1,b2,'world-semi');makeKnockout(w,SEASON.WORLD_SEMI,b1,a2,'world-semi');}
 }
 function setupFromPrevious(w:World,previousWeek:number,phase:Match['phase'],nextPhase:Match['phase']){const winners=matchesIn(w,previousWeek,phase).map(m=>getTeam(w,m.winner!));for(let i=0;i<winners.length;i+=2)if(winners[i+1])makeKnockout(w,previousWeek+1,winners[i],winners[i+1],nextPhase);}
 function pickHeadline(w:World,weekly:Match[]){
@@ -477,8 +496,8 @@ function annualAwards(w:World){
  // MVP: the positional score is capped, because run-heavy or pass-heavy schemes inflate some roles' volume stats.
  // Once a player clearly leads their position, team success and overall quality decide it.
  const mvpScore=(p:Player)=>Math.min(z.get(p.id)!,3)+winShare(p)*2+(p.rating-60)*.04;
- const give=(p:Player,award:string)=>w.awards.push({season:w.season,award,playerId:p.id,teamId:p.teamId});
- const mvp=eligible.reduce((best,p)=>mvpScore(p)>mvpScore(best)?p:best);addStat(mvp,'mvp');give(mvp,'MVP');
+ const give=(p:Player,award:string)=>{w.awards.push({season:w.season,award,playerId:p.id,teamId:p.teamId});p.fame+=(award==='MVP'?18:award==='Rookie of the Year'?9:7);};
+ const mvp=eligible.reduce((best,p)=>mvpScore(p)>mvpScore(best)?p:best);give(mvp,'Golden Gargoyle');
  addStory(w,'milestone',`${mvp.name.toUpperCase()} NAMED WORLD MVP`,`${mvp.name}, the ${mvp.race.toLowerCase()} ${mvp.role.toLowerCase()} of the ${getTeam(w,mvp.teamId).name}, takes the season's highest individual honor. The trophy is insured against biting.`,mvp.teamId,mvp.id,undefined,5);
  const winners:string[]=[];
  for(const role of ROLES){const best=ranked.find(p=>p.role===role);if(best){give(best,POSITION_AWARD[role]);winners.push(`${POSITION_AWARD[role]}: ${best.name}`);}}
@@ -502,8 +521,7 @@ function offseason(w:World){
  // Promotion/relegation after the completed season.
  for(let r=0;r<4;r++){
   const top=sortedStandings(w,r,0),bottom=sortedStandings(w,r,1);
-  const relegated=top[9],promoted=bottom[0];relegated.division=1;promoted.division=0;
-  const playoffTop=top[8],playoffLower=bottom[1];const strength=teamRating(w,playoffTop)-teamRating(w,playoffLower)+int(w,-16,16);if(strength<0){playoffTop.division=1;playoffLower.division=0;}
+  // Elemental countries now have one twelve-club national league; identities never move division.
  }
  // Contract moves between clubs and rookie arrival.
  const movements=int(w,30,55);
@@ -521,31 +539,33 @@ function offseason(w:World){
   if(p.age>=ageThreshold&&random(w)<.15+Math.max(0,p.age-ageThreshold)*.11)expired.push(p);
   p.stats=EMPTY_STATS();
  }
- for(const p of expired){p.retired=true;w.retired.push(p);w.players=w.players.filter(x=>x.id!==p.id);const t=getTeam(w,p.teamId);t.roster=t.roster.filter(id=>id!==p.id);if(p.career.breaches>35||p.championships>=2)if(!w.storylines.some(s=>s.id===`lastdance:${p.id}`&&s.status==='active'))addStory(w,'milestone',`FAREWELL TO ${p.name.toUpperCase()}`,`${p.name} retires after ${p.seasons} seasons, ${p.career.breaches} Breaches and ${p.championships} world titles. The retirement speech was briefly interrupted by a goblin with a trumpet.`,t.id,p.id,undefined,3);}
+ for(const p of expired){p.retired=true;p.hallOfLegends=p.fame>=85||p.championships>=2||p.career.breaches>=55;w.retired.push(p);w.players=w.players.filter(x=>x.id!==p.id);const t=getTeam(w,p.teamId);t.roster=t.roster.filter(id=>id!==p.id);if(p.hallOfLegends) addStory(w,'milestone',`${p.name.toUpperCase()} ENTERS THE HALL OF LEGENDS`,`${p.name} retires with a legacy score of ${p.fame}, ${p.career.breaches} Breaches and ${p.championships} world titles. The portrait is hung where future generations can be suitably intimidated.`,t.id,p.id,undefined,5);else if(p.career.breaches>35||p.championships>=2)addStory(w,'milestone',`FAREWELL TO ${p.name.toUpperCase()}`,`${p.name} retires after ${p.seasons} seasons, ${p.career.breaches} Breaches and ${p.championships} world titles. The retirement speech was briefly interrupted by a goblin with a trumpet.`,t.id,p.id,undefined,3);}
  chronicleOffseason(w,expired);
  for(const t of w.teams){const count=Math.max(0,15-t.roster.length);for(let i=0;i<count;i++){const role=ROLES.filter(role=>teamRoster(w,t).filter(p=>p.role===role).length<2)[0]||pick(w,ROLES);const p=createPlayer(w,t,role,true);w.players.push(p);t.roster.push(p.id);}}
  // Compact long-term history, keep recent seasons full and all finals.
  w.matches=w.matches.filter(m=>m.season>=w.season-2||m.phase==='grand-final'||m.phase==='regional-final');
  w.news=w.news.slice(0,450);
 }
+/** Resolve a single fixture without advancing the calendar: used by Watch Match and Quick Result. */
+export function resolveMatch(w:World,id:string):World { const m=w.matches.find(x=>x.id===id); if(!m) throw new Error('That fixture is not in this chronicle.'); if(m.season!==w.season||m.week!==w.week) throw new Error('Only current fixtures may be resolved directly.'); simulateMatch(w,m); w.lastUpdated=Date.now(); return w; }
 export function advanceOneWeek(w:World):World {
  const week=w.week;for(const p of w.players)if(p.injury>0)p.injury--;const fixtures=matchesIn(w,week);
  for(const m of fixtures)simulateMatch(w,m);
- if(week<=23&&fixtures.length)pickHeadline(w,fixtures);
- if(week===18)setupRegional(w);
- if(week===19)setupRegionalFinals(w);
- if(week===20)setupWorldQuarter(w);
- if(week===21)setupFromPrevious(w,21,'world-quarter','world-semi');
- if(week===22)setupFromPrevious(w,22,'world-semi','grand-final');
- if(week===23){const final=matchesIn(w,23,'grand-final')[0];if(final?.winner){const winner=getTeam(w,final.winner);winner.worldTitles++;for(const p of teamRoster(w,winner))p.championships++;w.trophies.push({season:w.season,competition:'GRAND RIFT CHAMPIONSHIP',teamId:winner.id,runnerUpId:final.home===winner.id?final.away:final.home});w.history.unshift({season:w.season,teamId:winner.id,description:`World champions · ${winner.name}`});}}
- if(week===24)annualAwards(w);
+ if(week<=SEASON.WORLD_FINAL&&fixtures.length)pickHeadline(w,fixtures);
+ if(week===SEASON.LEAGUE_END)setupRegional(w);
+ if(week===SEASON.NATIONAL_SEMI)setupRegionalFinals(w);
+ if(week===SEASON.NATIONAL_FINAL)setupWorldGroups(w);
+ if(week===SEASON.WORLD_GROUPS)setupWorldSemis(w);
+ if(week===SEASON.WORLD_SEMI)setupFromPrevious(w,SEASON.WORLD_SEMI,'world-semi','grand-final');
+ if(week===SEASON.WORLD_FINAL){const final=matchesIn(w,SEASON.WORLD_FINAL,'grand-final')[0];if(final?.winner){const winner=getTeam(w,final.winner);winner.worldTitles++;for(const p of teamRoster(w,winner)){p.championships++;p.fame+=25;}w.trophies.push({season:w.season,competition:'GRAND RIFT CHAMPIONSHIP',teamId:winner.id,runnerUpId:final.home===winner.id?final.away:final.home});w.history.unshift({season:w.season,teamId:winner.id,description:`World champions · ${winner.name}`});}}
+ if(week===SEASON.AWARDS)annualAwards(w);
  chronicleWeek(w,week,fixtures);
- if(week===25){
+ if(week===SEASON.MARKET){
   w.seasonArchive??=[];
   w.seasonArchive.push({season:w.season,leaders:[...w.players].sort((a,b)=>b.stats.breaches-a.stats.breaches).slice(0,30).map(p=>({playerId:p.id,teamId:p.teamId,breaches:p.stats.breaches,tackles:p.stats.tackles,interceptions:p.stats.interceptions,passes:p.stats.passes,yards:p.stats.distance})),standings:w.teams.map(t=>({teamId:t.id,division:t.division,region:t.region,w:t.record.w,d:t.record.d,l:t.record.l,pf:t.record.pf,pa:t.record.pa,pts:t.record.pts}))});
   if(w.seasonArchive.length>40)w.seasonArchive.shift();
   offseason(w);addStory(w,'roundup',`YEAR ${w.season} CLOSES — A NEW WORLD AWAITS`,`Contracts have changed hands, some heroes have retired, and the league claims to have repaired most of the stadiums. The next season approaches.`,undefined,undefined,undefined,3);}
- if(week===26){w.season++;w.week=1;seedSchedule(w);addStory(w,'roundup',`YEAR ${w.season} IS HERE`,`Eighty clubs. Four regions. One world championship. The accountants have approved a fresh season of extremely expensive violence.`,undefined,undefined,undefined,3);}
+ if(week===SEASON.NEW_SEASON){w.season++;w.week=1;seedSchedule(w);addStory(w,'roundup',`YEAR ${w.season} IS HERE`,`Forty-eight clubs. Four elemental countries. One world championship. The accountants have approved a fresh season of extremely expensive violence.`,undefined,undefined,undefined,3);}
  else w.week++;
  w.lastUpdated=Date.now();return w;
 }
@@ -561,6 +581,7 @@ export function normalizeWorld(w:World):World{
  if(!w.version||w.version<2){w.storylines??=[];if(!w.records)rebuildRecords(w);w.version=2;}
  w.storylines??=[];if(!w.records)rebuildRecords(w);
  for(const t of w.teams){t.rivalHeat??=30;t.rivalRecord??={w:0,d:0,l:0};}
- for(const p of [...w.players,...w.retired]){p.stats.blocks??=0;p.career.blocks??=0;}
+ for(const p of [...w.players,...w.retired]){p.stats.blocks??=0;p.career.blocks??=0;p.stats.rushingYards??=p.stats.distance??0;p.career.rushingYards??=p.career.distance??0;p.stats.passingYards??=0;p.career.passingYards??=0;p.fame??=(p.championships??0)*25+(p.career?.mvp??0)*2;p.hallOfLegends??=false;}
+ w.version=3;
  return w;
 }
