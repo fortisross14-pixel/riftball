@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { advanceOneWeek, createWorld, simulateWeeks, sortedStandings, teamRoster } from './engine';
+import { advanceOneWeek, createWorld, getPlayer, getTeam, simulateWeeks, sortedStandings, teamRoster } from './engine';
+import type { World } from './types';
 
 test('Founding a world creates 80 clubs, eight divisions and 1,200 unique athletes',()=>{
  const w=createWorld(987654);
@@ -50,4 +51,56 @@ test('Scoring and player injuries remain within POC calibration limits',()=>{
  assert.ok(avg>20&&avg<55,`average score: ${avg}`);
  assert.ok(w.players.filter(p=>p.injury>0).length<250);
  assert.ok(games.every(m=>m.homeScore!==null&&m.awayScore!==null&&m.homeScore>=0&&m.awayScore>=0));
+});
+
+// Long-run balance: five worlds simulated for 30 seasons each, shared by the tests below.
+const LONG_SEEDS=[2026,1,2,3,4];
+let longRuns:{seed:number;startRating:number;world:World}[]|undefined;
+const meanRating=(w:World)=>w.players.reduce((s,p)=>s+p.rating,0)/w.players.length;
+function runLong(){
+ if(!longRuns)longRuns=LONG_SEEDS.map(seed=>{const world=createWorld(seed),startRating=meanRating(world);while(world.season<=30)advanceOneWeek(world);return {seed,startRating,world};});
+ return longRuns;
+}
+
+test('Mean rating stays within 2 points of year one across 30 seasons',()=>{
+ for(const {seed,startRating,world} of runLong()){
+  const end=meanRating(world);
+  assert.ok(Math.abs(end-startRating)<=2,`seed ${seed}: ${startRating.toFixed(1)} -> ${end.toFixed(1)}`);
+ }
+});
+
+test('No region wins more than 40% of world titles across 5 seeds x 30 seasons',()=>{
+ const titles=[0,0,0,0];let total=0;
+ for(const {world} of runLong())for(const t of world.trophies.filter(t=>t.competition==='GRAND RIFT CHAMPIONSHIP')){titles[getTeam(world,t.teamId).region]++;total++;}
+ assert.equal(total,150);
+ assert.ok(Math.max(...titles)<=total*.4,`titles by region: ${titles.join('/')}`);
+});
+
+test('MVPs span at least 4 roles and every season has positional awards',()=>{
+ const roles=new Set<string>();
+ for(const {world} of runLong()){
+  const mvps=world.awards.filter(a=>a.award==='MVP');
+  assert.equal(mvps.length,30);
+  for(const a of mvps)roles.add(getPlayer(world,a.playerId)!.role);
+  for(const name of ['Best Bastion','Best Breaker','Best Runner','Best Thrower','Best Raider','Best Trickster'])assert.equal(world.awards.filter(a=>a.award===name).length,30);
+  assert.equal(world.awards.filter(a=>a.award==='Rookie of the Year').length,29);
+ }
+ assert.ok(roles.size>=4,`MVP roles: ${[...roles].join(', ')}`);
+});
+
+test('Rivalries are mutual, regional and nearly all distinct, and heat responds to meetings',()=>{
+ const w=createWorld(2026);
+ for(const t of w.teams){const r=getTeam(w,t.rival);assert.equal(r.rival,t.id);assert.equal(r.region,t.region);assert.notEqual(r.id,t.id);assert.equal(r.rivalHeat,t.rivalHeat);}
+ assert.ok(new Set(w.teams.map(t=>t.rival)).size>=76);
+ const before=w.teams.reduce((s,t)=>s+t.rivalHeat,0);
+ for(let i=0;i<18;i++)advanceOneWeek(w);
+ assert.ok(w.teams.reduce((s,t)=>s+t.rivalHeat,0)>before);
+ assert.ok(w.teams.some(t=>t.rivalRecord.w+t.rivalRecord.d+t.rivalRecord.l>=2));
+});
+
+test('Home advantage is small: league home win rate stays between 45% and 58%',()=>{
+ const w=createWorld(4242);for(let i=0;i<18;i++)advanceOneWeek(w);
+ const games=w.matches.filter(m=>m.phase==='league'&&m.homeScore!==null);
+ const rate=games.filter(m=>m.homeScore!>m.awayScore!).length/games.length;
+ assert.ok(rate>.45&&rate<.58,`home win rate ${rate}`);
 });

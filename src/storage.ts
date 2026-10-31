@@ -1,4 +1,5 @@
 import type { World } from './types';
+import { normalizeWorld } from './engine';
 const DB_NAME='riftball-chronicle-v1';
 const STORE='worlds';
 const KEY='main';
@@ -9,7 +10,7 @@ const openDB=()=>new Promise<IDBDatabase>((resolve,reject)=>{
  request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
 });
 export async function loadSave():Promise<{world:World;revision:number}|null>{
- const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly');const req=tx.objectStore(STORE).get(KEY);req.onsuccess=()=>resolve(req.result??null);req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close();});
+ const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly');const req=tx.objectStore(STORE).get(KEY);req.onsuccess=()=>{const found=req.result as {world:World;revision:number}|undefined;if(found)normalizeWorld(found.world);resolve(found??null);};req.onerror=()=>reject(req.error);tx.oncomplete=()=>db.close();});
 }
 export async function saveWorld(world:World,knownRevision:number):Promise<number>{
  const db=await openDB();return new Promise((resolve,reject)=>{
@@ -24,5 +25,5 @@ export function validateImport(input:unknown):World{
  if(typeof input!=='object'||input===null)throw new Error('Invalid save file');
  const item=input as {format?:string;world?:World};const w=item.world;
  if(item.format!=='riftball-world-v1'||!w||w.version!==1||!Array.isArray(w.teams)||w.teams.length!==80||!Array.isArray(w.players)||!Array.isArray(w.matches)||!Array.isArray(w.news)||!Array.isArray(w.trophies)||!Number.isInteger(w.rng)||!Number.isInteger(w.season)||!Number.isInteger(w.week)||w.week<1||w.week>26)throw new Error('This is not a compatible Riftball v1 save.');
- return w;
+ return normalizeWorld(w);
 }
