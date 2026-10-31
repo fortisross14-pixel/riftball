@@ -1,0 +1,111 @@
+{
+  "title": "Choose the visual world for RIFTBALL",
+  "question": "The roll assigned The Tapestry Hall. Keep it, take the alternate, or re-roll.",
+  "options": [
+    {
+      "id": "assigned",
+      "kind": "assigned",
+      "label": "The Tapestry Hall",
+      "kicker": "THE ROLL",
+      "lineage": "Angers Apocalypse and Bayeux narrative tapestries, hung from iron rods in a timber great hall",
+      "thesis": "The world is woven: every week becomes a scene stitched into the hall's tapestries.",
+      "palette": ["#7d2420", "#22406a", "#e2b13c", "#3d5c3c", "#2b1d14", "#e6d6b3"],
+      "materials": ["dyed wool weave", "embroidered borders", "iron rods and rings", "dark timber beams", "bronze plaques", "wax seals"],
+      "viewport": "Heraldic banners hang from an iron rod as the navigation; the week's stories are one woven frieze, scenes alternating madder red and woad blue, Latin-style captions above each; a 26-row woven season band shows woven, current and bare warp weeks.",
+      "risk": "Woven texture done timidly reads as a brown theme; it must be saturated red and blue fields, not beige.",
+      "raised": [
+        {"from": "wayfinding-cartography-signage-terminal-yellow-wayfinding", "raise": "Weld-gold thread is reserved for 'now and next' only: the current week, the Weave action, the followed path."},
+        {"from": "luxury-fashion-flagship", "raise": "Each screen holds one monumental woven centrepiece; everything around it stays quiet."},
+        {"from": "rivers-tides-ocean-depths-mesophotic-deep-dive", "raise": "The 26-week season loom is one ruling axis that every screen positions itself against."},
+        {"from": "galaxies-nebulae-deep-time-accretion-disk-threshold", "raise": "Matches carry an explicit threshold vocabulary: sealed, unfolding, revealed, with the wax seal as the irreversible step."},
+        {"from": "hand-drawn-zine-explainer", "raise": "Stitch-on motion: threads draw themselves in as state changes, already drawn under reduced motion."},
+        {"from": "scientific-notation-particle-detector-event-display", "raise": "In the arena, selecting an athlete isolates their thread through the match and dims everyone else."}
+      ],
+      "html": ".impeccable/mocks/decision/tapestry.html",
+      "comp": ".impeccable/mocks/decision/assigned.png"
+    },
+    {
+      "id": "model-pick",
+      "kind": "pick",
+      "label": "The Illuminated Codex",
+      "kicker": "IMPECCABLE’S PICK",
+      "lineage": "Illuminated manuscripts and monastic chronicles",
+      "thesis": "The game is one great open book; every screen is a folio, ribbons are the navigation.",
+      "palette": ["#eadcbc", "#8e2a24", "#22406a", "#c9a04a", "#2a1d14"],
+      "materials": ["vellum", "gold leaf", "rubricated ink", "historiated initials", "silk ribbon bookmarks"],
+      "viewport": "A two-page spread on a dark desk: the week's lead story with a historiated initial on the left, tidings on the right, ribbon bookmarks as the sections.",
+      "risk": "The most familiar destination for medieval UI, and a cream-parchment ground that every model reaches for first.",
+      "html": ".impeccable/mocks/decision/codex.html",
+      "comp": ".impeccable/mocks/decision/model-pick.png"
+    },
+    {
+      "id": "c-wayfinding", "kind": "challenger", "catalogId": "wayfinding-cartography-signage-terminal-yellow-wayfinding",
+      "label": "Terminal Wayfinding", "verdict": "declined", "lineage": "Airport overhead sign bands",
+      "thesis": "Every screen a decision point with one yellow band telling you where next.",
+      "palette": ["#ffd200", "#111111", "#ffffff"], "materials": ["enamel sign panels", "pictograms"],
+      "viewport": "Yellow bands listing clubs and fixtures as gates.", "risk": "Breaks the pinned medieval world entirely.",
+      "case": "Clear navigation, but players do not see a fantasy sport in an airport.",
+      "kept": "One reserved signal colour used only for where you are and what comes next."
+    },
+    {
+      "id": "c-fashion", "kind": "challenger", "catalogId": "luxury-fashion-flagship",
+      "label": "Fashion Flagship", "verdict": "declined", "lineage": "Luxury lookbook sites",
+      "thesis": "Athletes as looks, one at a time, in vast white space.",
+      "palette": ["#f2efe8", "#111111", "#8a7a5c"], "materials": ["matte negative space", "full-bleed imagery"],
+      "viewport": "One athlete portrait full-screen with a giant serif name.", "risk": "Sparse where the game needs dense statistics.",
+      "case": "Elegant but loses both the medieval world and the data depth.",
+      "kept": "One monumental centrepiece per screen, quiet around it."
+    },
+    {
+      "id": "c-accretion", "kind": "challenger", "catalogId": "galaxies-nebulae-deep-time-accretion-disk-threshold",
+      "label": "Accretion Threshold", "verdict": "declined", "lineage": "Black-hole renders",
+      "thesis": "The Rift as a gravitational well pulling clubs toward the crown.",
+      "palette": ["#000000", "#9fc4ff", "#ff6a3d", "#e8b54a"], "materials": ["shader light", "concentric rings"],
+      "viewport": "A glowing disk with clubs orbiting the Grand Rift.", "risk": "Sci-fi, not medieval.",
+      "case": "Striking but contradicts the pinned fantasy world.",
+      "kept": "Explicit threshold states for results: sealed, unfolding, revealed."
+    },
+    {
+      "id": "c-dive", "kind": "challenger", "catalogId": "rivers-tides-ocean-depths-mesophotic-deep-dive",
+      "label": "Deep Dive", "verdict": "declined", "lineage": "Technical dive profiles",
+      "thesis": "Descend through the season like depth stages.",
+      "palette": ["#0b1d33", "#5fd3e0", "#f2f2f2"], "materials": ["marine snow", "dive-computer digits"],
+      "viewport": "A vertical season axis descending through weeks.", "risk": "No connection to fantasy sport.",
+      "case": "Loses audience identification and clarity.",
+      "kept": "One ruling axis, the season, that every screen positions against."
+    },
+    {
+      "id": "c-zine", "kind": "challenger", "catalogId": "hand-drawn-zine-explainer",
+      "label": "Hand-drawn Zine", "verdict": "declined", "lineage": "Marker-drawn explainers",
+      "thesis": "The rules of Riftball sketched like a friend's napkin.",
+      "palette": ["#f6f0dc", "#111111", "#ffe14d", "#ff6fae"], "materials": ["marker ink", "highlighter"],
+      "viewport": "Doodled pitch diagram with mascot callouts.", "risk": "Too casual for a premium fantasy game.",
+      "case": "Funny, matching the voice, but not a premium video game.",
+      "kept": "Draw-on motion tied to state changes."
+    },
+    {
+      "id": "c-detector", "kind": "challenger", "catalogId": "scientific-notation-particle-detector-event-display",
+      "label": "Event Display", "verdict": "declined", "lineage": "Collider event displays",
+      "thesis": "Each match as a frozen collision of tracks.",
+      "palette": ["#05070a", "#ffd23f", "#43c6ff", "#e5383b"], "materials": ["detector rings", "energy bars"],
+      "viewport": "Match events as tracks curling out of kickoff.", "risk": "Reads as a physics tool.",
+      "case": "Clever for replays only; loses the world everywhere else.",
+      "kept": "Select one athlete to isolate their thread through the match, dimming the rest."
+    }
+  ],
+  "reroll": {"registers": ["safer", "bolder"]},
+  "buildPath": {"value": "code", "toggle": false},
+  "canon": true,
+  "canonCard": {
+    "kind": "canon",
+    "label": "The category standard",
+    "thesis": "Classic fantasy RPG chrome: dark carved panels with gold trim, executed impeccably.",
+    "palette": ["#15161a", "#2a2b31", "#b08a3e", "#d8c9a3"],
+    "materials": ["carved stone panels", "gold filigree trim", "glowing buttons"],
+    "viewport": "Sidebar of framed buttons, framed panels in a grid, gold headings.",
+    "risk": "Looks like every fantasy game menu; close to a dark dashboard.",
+    "html": ".impeccable/mocks/decision/canon.html",
+    "comp": ".impeccable/mocks/decision/canon.png"
+  },
+  "steer": true
+}

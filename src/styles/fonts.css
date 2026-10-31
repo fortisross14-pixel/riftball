@@ -1,0 +1,13 @@
+@import '@fontsource/grenze-gotisch/latin-500.css';
+@import '@fontsource/grenze-gotisch/latin-700.css';
+@import '@fontsource/grenze-gotisch/latin-900.css';
+@import '@fontsource/alegreya/latin-400.css';
+@import '@fontsource/alegreya/latin-400-italic.css';
+@import '@fontsource/alegreya/latin-700.css';
+@import '@fontsource/alegreya/latin-800.css';
+@import '@fontsource/alegreya-sc/latin-500.css';
+@import '@fontsource/alegreya-sc/latin-700.css';
+@import '@fontsource/alegreya-sans/latin-400.css';
+@import '@fontsource/alegreya-sans/latin-500.css';
+@import '@fontsource/alegreya-sans/latin-700.css';
+:root { --face-display: 'Grenze Gotisch', serif; --face-text: 'Alegreya', serif; --face-rubric: 'Alegreya SC', serif; --face-data: 'Alegreya Sans', sans-serif; }

@@ -32,7 +32,7 @@ The production output is in `dist/`. `vite.config.ts` uses `base: './'` for GitH
 - See **match scores, generated event logs, spoiler-safe match replays, complete new-match box scores, possession journals** and a schematic 2D pitch with ball location tracking.
 - Explore a Chronicle feed, club rosters, league standings, player rankings, champions, and historical career records.
 - **Persistent IndexedDB saves** and JSON export/import; an open tab detects competing saves and offers to reload the newest version.
-- Fully offline after first install (web font may fall back to system fonts).
+- Fully offline: fonts and artwork are bundled locally.
 
 ## Recommended first five minutes
 
@@ -66,14 +66,15 @@ The export includes full World state; do not upload personal data into narrative
 
 ## Key files
 
-- `src/engine.ts` — world generator, match/season engine, progression, league rules.
+- `src/engine.ts`, `src/chronicle.ts` — world generator, match/season engine, storylines, records (authoritative).
 - `src/types.ts` — world, club, player, match, event, news, award types.
-- `src/App.tsx` — game navigation, controls and state management.
-- `src/MatchCenterV3.tsx` — broadcast hub, spoiler-safe replay, roster view, player performance tables.
-- `src/Statistics.tsx` — official box scores, possession journal, leaderboards, historical season archive.
-- `src/components.tsx` — club shields, fantasy portraits, rarity chips and common components.
 - `src/storage.ts` — IndexedDB storage, save conflicts, JSON import/export.
-- `src/styles.css` — self-contained responsive premium dark UI.
+- `src/game/` — the game state hook (saves, cross-tab protection, simulation), hash routing, shared context.
+- `src/ui/App.tsx` — the codex shell: binding, silk ribbon navigation, Book-of-Hours calendar, page turn, Turn the Page control.
+- `src/screens/` — Chronicle, Tourneys (competitions + Grand Rift), Bestiary (athletes), Armorial (clubs), The Lists (matches), contest folio (replay, ledger, drivebook), Rolls (statistics), Annals (history), Colophon (saves).
+- `src/art/` — vector artwork: race portraits (`Portrait.tsx`), heraldry with ~80 charges and generated blazons (`Heraldry.tsx`, `charges.tsx`), ornaments, realm landscapes, the wax seal.
+- `src/art/registry.ts` — drop painted PNG/WebP portraits or crests into `src/art/raster/portraits` or `src/art/raster/crests` to replace the vector art; naming rules are documented in the file.
+- `src/styles/` — self-hosted fonts (Grenze Gotisch, Alegreya family) and the codex styles. Fully offline.
 - `src/engine.test.ts` — seeded simulation and long-run invariants.
 
 ## Next versions
