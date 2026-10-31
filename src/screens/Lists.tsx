@@ -3,12 +3,13 @@ import type { Match } from '../types';
 import { REGIONS } from '../types';
 import { currentStage, upcoming } from '../engine';
 import { PHASE_NAME, useGame } from '../game/context';
-import { roman } from '../art/hash';
 import { Blank, Choice, Pick } from '../ui/bits';
 import { ChallengeRow, realmName } from './Tourneys';
 import { FeaturedContestCard } from './parts/FeaturedContestCard';
+import { ES } from '../i18n/es';
 
 const PHASES = Object.keys(PHASE_NAME) as Match['phase'][];
+const T = ES.matches;
 
 export function Lists() {
   const { world: w, team, advance, busy, locked } = useGame();
@@ -27,35 +28,35 @@ export function Lists() {
   return (
     <div className="spread lists">
       <section className="page verso">
-        <h1 className="folio-title">The Lists</h1>
-        <p className="folio-sub">Where every contest is fought, sealed and replayed. The carnage is real; the referees are insured.</p>
+        <h1 className="folio-title">{T.title}</h1>
+        <p className="folio-sub">{T.sub}</p>
         {featured && <FeaturedContestCard m={featured} />}
 
-        <h2 className="page-head spaced">Challenges of Week {w.week}</h2>
-        <p className="aside-note">Year {roman(w.season)}. These contests are played when you turn the page.</p>
+        <h2 className="page-head spaced">{T.thisWeek(w.week)}</h2>
+        <p className="aside-note">{T.thisWeekNote(w.season)}</p>
         {byPhase.length ? byPhase.map(({ p, list }) => (
           <div key={p} className="phase-group">
-            <h3 className="phase-title">{PHASE_NAME[p]} <small>{list.length} {list.length === 1 ? 'contest' : 'contests'}</small></h3>
+            <h3 className="phase-title">{PHASE_NAME[p]} <small>{T.count(list.length)}</small></h3>
             {list.slice(0, p === 'league' ? 12 : 8).map((m) => <ChallengeRow key={m.id} m={m} />)}
-            {p === 'league' && list.length > 12 && <p className="aside-note">…and {list.length - 12} more league contests across the realms.</p>}
+            {p === 'league' && list.length > 12 && <p className="aside-note">{T.moreLeague(list.length - 12)}</p>}
           </div>
-        )) : <Blank>No contests are scheduled this week. The athletes are recovering, or pretending to.</Blank>}
-        {next.length > 0 && currentStage(w).kind === 'league' && <button type="button" className="gilt-button spaced-button" disabled={busy || locked} onClick={() => advance(1)}>Play this week's contests</button>}
+        )) : <Blank>{T.none}</Blank>}
+        {next.length > 0 && currentStage(w).kind === 'league' && <button type="button" className="gilt-button spaced-button" disabled={busy || locked} onClick={() => advance(1)}>{T.play}</button>}
       </section>
 
       <section className="page recto">
-        <h2 className="page-head">The Archive of Contests</h2>
+        <h2 className="page-head">{T.archive}</h2>
         <div className="archive-filters">
-          <Choice label="Years" compact value={scope} onChange={(v) => { setScope(v); setShown(30); }} options={[{ value: 'season', label: 'This year' }, { value: 'all', label: 'All kept years' }]} />
-          <Pick label="Competition" value={phase} onChange={(v) => { setPhase(v); setShown(30); }} options={[{ value: 'all', label: 'Every competition' }, ...PHASES.map((p) => ({ value: p, label: PHASE_NAME[p] }))]} />
-          <Pick label="Realm" value={region} onChange={(v) => { setRegion(v); setShown(30); }} options={[{ value: -1, label: 'All realms' }, ...REGIONS.map((_, i) => ({ value: i, label: realmName(i) }))]} />
+          <Choice label={T.years} compact value={scope} onChange={(v) => { setScope(v); setShown(30); }} options={[{ value: 'season', label: T.thisYear }, { value: 'all', label: T.allYears }]} />
+          <Pick label={T.competition} value={phase} onChange={(v) => { setPhase(v); setShown(30); }} options={[{ value: 'all', label: T.allCompetitions }, ...PHASES.map((p) => ({ value: p, label: PHASE_NAME[p] }))]} />
+          <Pick label={ES.common.country} value={region} onChange={(v) => { setRegion(v); setShown(30); }} options={[{ value: -1, label: ES.common.allCountries }, ...REGIONS.map((_, i) => ({ value: i, label: realmName(i) }))]} />
         </div>
-        <p className="found-count">{completed.length} {completed.length === 1 ? 'contest' : 'contests'} recorded</p>
+        <p className="found-count">{T.recorded(completed.length)}</p>
         <div className="archive-list">
           {completed.slice(0, shown).map((m) => <ChallengeRow key={m.id} m={m} showPhase />)}
-          {!completed.length && <Blank>No recorded contests match. Older years keep only their title contests in full.</Blank>}
+          {!completed.length && <Blank>{T.noneFound}</Blank>}
         </div>
-        {completed.length > shown && <div className="more-leaves"><button type="button" className="ink-button" onClick={() => setShown((n) => n + 30)}>Unroll {Math.min(30, completed.length - shown)} more</button></div>}
+        {completed.length > shown && <div className="more-leaves"><button type="button" className="ink-button" onClick={() => setShown((n) => n + 30)}>{ES.common.more(Math.min(30, completed.length - shown))}</button></div>}
       </section>
     </div>
   );

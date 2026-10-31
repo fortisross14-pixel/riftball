@@ -4,7 +4,6 @@ import { useWorld } from '../game/useWorld';
 import { routeKey, useRoute, type Route, type Section } from '../game/route';
 import { GameContext, stageOf, type Game } from '../game/context';
 import { ArtDefs, Hourglass, Quill } from '../art/Ornament';
-import { roman } from '../art/hash';
 import type { World } from '../types';
 import { SEASON, currentStage, isStageComplete, pendingFixtures } from '../engine';
 import { ES } from '../i18n/es';
@@ -21,17 +20,17 @@ import { Annals } from '../screens/Annals';
 import { Colophon } from '../screens/Colophon';
 import { StageScreen } from '../screens/Stage';
 
-const RIBBONS: { section: Section; name: string; gloss: string; silk: string }[] = [
-  { section: 'chronicle', name: 'Chronicle', gloss: 'news', silk: 'var(--vermilion)' },
-  { section: 'tourneys', name: 'Tourneys', gloss: 'competitions', silk: 'var(--lapis)' },
-  { section: 'bestiary', name: 'Bestiary', gloss: 'athletes', silk: 'var(--verdigris)' },
-  { section: 'armorial', name: 'Armorial', gloss: 'clubs', silk: 'var(--gold-deep)' },
-  { section: 'lists', name: 'The Lists', gloss: 'matches', silk: 'var(--murex)' },
-  { section: 'rolls', name: 'Rolls', gloss: 'statistics', silk: 'var(--oxblood)' },
-  { section: 'annals', name: 'Annals', gloss: 'history', silk: 'var(--sable)' },
+// Six main sections; Ajustes sits behind the gear in the header.
+const RIBBONS: { section: Section; name: string; silk: string }[] = [
+  { section: 'chronicle', name: ES.nav.chronicle, silk: 'var(--vermilion)' },
+  { section: 'tourneys', name: ES.nav.tourneys, silk: 'var(--lapis)' },
+  { section: 'bestiary', name: ES.nav.athletes, silk: 'var(--verdigris)' },
+  { section: 'armorial', name: ES.nav.clubs, silk: 'var(--gold-deep)' },
+  { section: 'rolls', name: ES.nav.stats, silk: 'var(--oxblood)' },
+  { section: 'annals', name: ES.nav.history, silk: 'var(--sable)' },
 ];
 
-const SECTION_OF: Record<Route['kind'], Section | null> = { section: null, athlete: 'bestiary', house: 'armorial', contest: 'lists' };
+const SECTION_OF: Record<Route['kind'], Section | null> = { section: null, athlete: 'bestiary', house: 'armorial', contest: 'tourneys' };
 
 export default function App() {
   const game = useWorld();
@@ -88,15 +87,15 @@ export default function App() {
   if (game.legacy) return <LegacyBook onExport={game.exportLegacy} onFresh={() => { if (window.confirm(ES.confirm.legacyFresh)) void game.startFresh(); }} />;
   if (!ctx) return <ClosedBook />;
   const w = ctx.world;
-  const active = route.kind === 'section' ? route.section : SECTION_OF[route.kind];
+  const active = route.kind === 'section' ? (route.section === 'lists' ? 'tourneys' : route.section) : SECTION_OF[route.kind];
 
   return (
     <GameContext.Provider value={ctx}>
       <ArtDefs />
       <div className="desk">
-        <a className="skip" href="#folio">Skip to the page</a>
+        <a className="skip" href="#folio">{ES.common.skip}</a>
         <div className="masthead">
-        <nav className="ribbons" aria-label="Sections of the chronicle">
+        <nav className="ribbons" aria-label={ES.nav.label}>
           {RIBBONS.map((r) => (
             <a
               key={r.section}
@@ -107,8 +106,7 @@ export default function App() {
               onClick={(e) => { e.preventDefault(); go({ kind: 'section', section: r.section }); }}
             >
               <span className="ribbon-name">{r.name}</span>
-              <span className="ribbon-gloss">{r.gloss}</span>
-            </a>
+                          </a>
           ))}
         </nav>
         </div>
@@ -130,15 +128,15 @@ export default function App() {
       </div>
       {game.notice && (
         <aside className="marginal-note" role="status">
-          <span className="nb">Nota bene</span>
+          <span className="nb">{ES.common.noticeLabel}</span>
           <p>{game.notice}</p>
-          <button type="button" onClick={() => game.setNotice('')} aria-label="Cerrar nota">Cerrar</button>
+          <button type="button" onClick={() => game.setNotice('')} aria-label={ES.common.closeNotice}>{ES.common.close}</button>
         </aside>
       )}
       {game.conflict && (
         <div className="conflict-slip" role="alert">
-          <p><strong>Another tab has written in this book.</strong> The quill is stayed so nothing is overwritten.</p>
-          <button type="button" onClick={() => void game.refreshLatest()}>Read the newest copy</button>
+          <p><strong>{ES.conflict.body}</strong> {ES.conflict.detail}</p>
+          <button type="button" onClick={() => void game.refreshLatest()}>{ES.conflict.refresh}</button>
         </div>
       )}
       {newSeason !== null && <NewSeasonCard season={newSeason} onClose={() => setNewSeason(null)} />}
@@ -230,43 +228,46 @@ function ControlBar({ world, busy, locked, onAdvance, onSimulate, onEvent }: { w
   );
 }
 
-const SAVE_TEXT: Record<string, string> = {
-  loading: 'Opening the archive', saving: 'The ink is drying', saved: 'Kept safe in the archive', new: 'A fresh chronicle',
-  unavailable: 'The archive is unavailable', conflict: 'Stayed by another tab',
-};
-
 function Headband({ world, save, onColophon }: { world: World; save: string; onColophon: () => void }) {
   return (
     <header className="headband">
       <div className="headband-title">
-        <span className="wordmark">Riftball</span>
-        <span className="wordmark-sub">the World Chronicle</span>
+        <span className="wordmark">{ES.appName}</span>
+        <span className="wordmark-sub">{ES.appSub}</span>
       </div>
       <Calendar world={world} />
       <div className="headband-meta">
-        <span className="running-head">Year {roman(world.season)} · {world.week <= 22 ? `Round ${world.week}` : stageOf(world.week)}</span>
-        <button type="button" className="colophon-link" onClick={onColophon}>
-          <i className={`save-mark save-${save}`} aria-hidden="true" />{SAVE_TEXT[save] ?? save}
-          <span className="colophon-word">· Colophon</span>
+        <span className="running-head">{ES.headband.when(world.season, world.week <= 22 ? ES.headband.round(world.week) : stageOf(world.week))}</span>
+        <button type="button" className="colophon-link" onClick={onColophon} aria-label={ES.settings.open}>
+          <i className={`save-mark save-${save}`} aria-hidden="true" />{ES.save[save] ?? save}
+          <span className="colophon-word"><Gear /> {ES.nav.settings}</span>
         </button>
       </div>
     </header>
   );
 }
 
+function Gear() {
+  return (
+    <svg className="gear" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3.5h-4l-.4 2.5a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.6a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 1.7 1l.4 2.5h4l.4-2.5a7.4 7.4 0 0 0 1.7-1l2.4 1 2-3.4-2-1.6ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z" transform="translate(-1 0)" />
+    </svg>
+  );
+}
+
 /** A Book of Hours calendar: 30 weeks, finals written as red-letter days. */
 function Calendar({ world }: { world: World }) {
   return (
-    <div className="calendar" aria-label={`Week ${world.week} of 30, ${stageOf(world.week)}`}>
+    <div className="calendar" aria-label={ES.headband.calendar(world.week, stageOf(world.week))}>
       <ol>
         {Array.from({ length: 30 }, (_, i) => {
           const wk = i + 1;
           const cls = wk < world.week ? 'is-past' : wk === world.week ? 'is-now' : '';
           const kind = wk <= 22 ? 'league' : wk <= 27 ? 'red-letter' : 'winter';
-          return <li key={wk} className={`${cls} ${kind}`} title={`Week ${wk}`}><span>{wk === world.week ? roman(wk) : ''}</span></li>;
+          return <li key={wk} className={`${cls} ${kind}`} title={ES.headband.weekTitle(wk)}><span>{wk === world.week ? wk : ''}</span></li>;
         })}
       </ol>
-      <div className="calendar-key"><span>National leagues</span><span className="red">National finals &amp; World Cup</span><span>Awards, market &amp; new season</span></div>
+      <div className="calendar-key"><span>{ES.headband.keyLeague}</span><span className="red">{ES.headband.keyFinals}</span><span>{ES.headband.keyWinter}</span></div>
     </div>
   );
 }
@@ -326,10 +327,10 @@ function ClosedBook() {
       <div className="cover">
         <span className="boss boss-tl" /><span className="boss boss-tr" /><span className="boss boss-bl" /><span className="boss boss-br" />
         <div className="cover-plate">
-          <span className="wordmark">Riftball</span>
-          <span className="wordmark-sub">the World Chronicle</span>
+          <span className="wordmark">{ES.appName}</span>
+          <span className="wordmark-sub">{ES.appSub}</span>
         </div>
-        <p className="cover-note">Unbuckling the clasps…</p>
+        <p className="cover-note">{ES.loading}</p>
       </div>
     </div>
   );

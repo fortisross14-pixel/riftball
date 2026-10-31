@@ -3,6 +3,7 @@ import type { Player, Team } from '../types';
 import { Portrait } from '../art/Portrait';
 import { houseColours, Shield } from '../art/Heraldry';
 import { useGame } from '../game/context';
+import { ES, formLetter } from '../i18n/es';
 
 /** A framed athlete miniature. Rarity sets the frame's pigment. */
 export function Miniature({ player, size = 72, className = '' }: { player: Player; size?: number; className?: string }) {
@@ -17,7 +18,7 @@ export function Miniature({ player, size = 72, className = '' }: { player: Playe
 
 export function HouseName({ team, size = 26, full = false }: { team: Team | undefined; size?: number; full?: boolean }) {
   const { go } = useGame();
-  if (!team) return <span className="house-name is-gone">a house now lost</span>;
+  if (!team) return <span className="house-name is-gone">{ES.common.lostClub}</span>;
   return (
     <a className="house-name" href={`#/house/${team.id}`} onClick={(e) => { e.preventDefault(); go({ kind: 'house', id: team.id }); }}>
       {size > 0 && <Shield team={team} size={size} />}
@@ -28,10 +29,10 @@ export function HouseName({ team, size = 26, full = false }: { team: Team | unde
 
 export function AthleteName({ player, children }: { player: Player | undefined; children?: ReactNode }) {
   const { go } = useGame();
-  if (!player) return <span className="athlete-name is-gone">an athlete lost to history</span>;
+  if (!player) return <span className="athlete-name is-gone">{ES.common.lostAthlete}</span>;
   return (
     <a className="athlete-name" href={`#/athlete/${player.id}`} onClick={(e) => { e.preventDefault(); go({ kind: 'athlete', id: player.id }); }}>
-      {children ?? player.name}
+      {children ?? player.name}{!children && player.nickname ? <small className="athlete-nick"> «{player.nickname}»</small> : null}
     </a>
   );
 }
@@ -67,10 +68,10 @@ export function Pick<T extends string | number>({ label, value, options, onChang
 }
 
 export function FormPips({ team }: { team: Team }) {
-  if (!team.form.length) return <span className="form-pips is-empty">no contests yet</span>;
+  if (!team.form.length) return <span className="form-pips is-empty">{ES.common.noForm}</span>;
   return (
-    <span className="form-pips" aria-label={`Recent form: ${team.form.join(' ')}`}>
-      {team.form.map((f, i) => <i key={i} className={`pip pip-${f.toLowerCase()}`}>{f}</i>)}
+    <span className="form-pips" aria-label={ES.common.formLabel(team.form.map(formLetter).join(' '))}>
+      {team.form.map((f, i) => <i key={i} className={`pip pip-${f.toLowerCase()}`}>{formLetter(f)}</i>)}
     </span>
   );
 }

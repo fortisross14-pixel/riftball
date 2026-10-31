@@ -139,3 +139,10 @@
 
 .new-season h2 { font-size: 3rem; }
 .new-season .gilt-button { margin-top: 16px; font-size: 1.1rem; padding: 10px 26px; }
+
+/* ------------------------------------------------------------ nicknames and the settings gear */
+
+.athlete-nick { font-style: italic; font-weight: 400; color: var(--ink-2); }
+.leaf-nick { display: block; font-style: italic; color: var(--rubric); font-size: 0.92rem; line-height: 1.1; }
+.athlete-nickname { font-family: var(--face-display); font-size: 1.7rem; line-height: 1; color: var(--rubric); margin: -4px 0 6px; }
+.colophon-word .gear { vertical-align: -3px; margin-right: 2px; }

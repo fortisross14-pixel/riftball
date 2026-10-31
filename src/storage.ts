@@ -4,10 +4,10 @@ const DB_NAME='riftball-chronicle-v1';
 const STORE='worlds';
 const KEY='main';
 /** Export file format tag. Older tags are still read when the world inside is a current one. */
-export const SAVE_FORMAT='riftball-world-v4';
-const KNOWN_FORMATS=new Set(['riftball-world-v1','riftball-world-v2','riftball-world-v3',SAVE_FORMAT]);
-/** The oldest world version that can still be loaded (the first 48-club release). */
-export const OLDEST_LOADABLE_VERSION=3;
+export const SAVE_FORMAT='riftball-world-v5';
+const KNOWN_FORMATS=new Set(['riftball-world-v1','riftball-world-v2','riftball-world-v3','riftball-world-v4',SAVE_FORMAT]);
+/** The oldest world version that can still be loaded. Version 5 is the Spanish world: older saves have English names and go to the old-version screen. */
+export const OLDEST_LOADABLE_VERSION=5;
 export class SaveConflict extends Error {constructor(){super('Otra pestaña ha guardado una versión más reciente de este mundo.');}}
 /** A save from an older, incompatible version of the game (the 80-club world). */
 export class LegacySaveError extends Error {constructor(){super('Esta crónica es de una versión antigua del juego y no se puede cargar.');this.name='LegacySaveError';}}
@@ -17,11 +17,11 @@ const openDB=()=>new Promise<IDBDatabase>((resolve,reject)=>{
  request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains(STORE))request.result.createObjectStore(STORE);};
  request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
 });
-/** True when a stored world is too old to load (wrong club count or a pre-48-club version). */
+/** True when a stored world is too old to load: the 80-club format, or any version before the Spanish world. */
 export function isLegacySave(world:unknown):boolean{
  if(isLegacyWorld(world))return true;
  const v=(world as {version?:unknown}).version;
- return typeof v==='number'&&v<OLDEST_LOADABLE_VERSION;
+ return typeof v!=='number'||v<OLDEST_LOADABLE_VERSION;
 }
 export async function loadSave():Promise<LoadedSave|null>{
  const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readonly');const req=tx.objectStore(STORE).get(KEY);req.onsuccess=()=>{

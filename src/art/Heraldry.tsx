@@ -4,6 +4,7 @@ import type { Team } from '../types';
 import { dice } from './hash';
 import { CHARGES, NICKNAME_CHARGE } from './charges';
 import { paintedCrest } from './registry';
+import { ES, filosofia } from '../i18n/es';
 
 const INK = '#2a1a10';
 
@@ -30,11 +31,6 @@ const REALM_COLOURS: Tincture[][] = [
 
 type Division = 'plain' | 'perPale' | 'perFess' | 'perBend' | 'perChevron' | 'quarterly' | 'paly' | 'barry' | 'bendy' | 'chequy' | 'perSaltire' | 'gyronny' | 'chief' | 'bordure';
 const DIVISIONS: Division[] = ['plain', 'perPale', 'perFess', 'perBend', 'perChevron', 'quarterly', 'paly', 'barry', 'bendy', 'chequy', 'perSaltire', 'gyronny', 'chief', 'bordure'];
-const DIVISION_TEXT: Record<Division, string> = {
-  plain: '', perPale: 'Per pale', perFess: 'Per fess', perBend: 'Per bend', perChevron: 'Per chevron', quarterly: 'Quarterly',
-  paly: 'Paly', barry: 'Barry', bendy: 'Bendy', chequy: 'Chequy', perSaltire: 'Per saltire', gyronny: 'Gyronny', chief: '', bordure: '',
-};
-
 export type Arms = {
   colour: Tincture;
   metal: Tincture;
@@ -44,20 +40,24 @@ export type Arms = {
   detailTincture: Tincture;
   fimbriated: boolean;
   shape: number;
-  blazon: string;
 };
 
 const cache = new Map<string, Arms>();
 
-export function armsOf(team: Pick<Team, 'id' | 'nickname' | 'region' | 'name'>): Arms {
-  const key = `${team.id}|${team.nickname}`;
+type ArmsTeam = Pick<Team, 'id' | 'nickname' | 'region' | 'name'> & { artKey?: string };
+/** The authored English nickname at the end of an art key ("kitehaven-ospreys" → "Ospreys"), for the vector fallback. */
+const artNickname = (artKey?: string) => { const last = artKey?.split('-').pop(); return last ? last.charAt(0).toUpperCase() + last.slice(1) : undefined; };
+
+// Arms and house colours come from the stable art key, so renaming or translating a club never changes its colours.
+export function armsOf(team: ArmsTeam): Arms {
+  const key = `${team.id}|${team.artKey ?? team.nickname}`;
   const hit = cache.get(key);
   if (hit) return hit;
-  const d = dice(`arms:${team.name}:${team.id}`);
+  const d = dice(`arms:${team.artKey ?? team.name}:${team.id}`);
   const colour = d.pick(REALM_COLOURS[team.region] ?? REALM_COLOURS[0]);
   const metal: Tincture = d.chance(0.55) ? 'or' : 'argent';
   const division = d.pick(DIVISIONS);
-  const charge = NICKNAME_CHARGE[team.nickname] ?? 'mullet';
+  const charge = NICKNAME_CHARGE[artNickname(team.artKey) ?? ''] ?? NICKNAME_CHARGE[team.nickname] ?? 'mullet';
   const simpleField = division === 'plain' || division === 'chief' || division === 'bordure';
   let chargeTincture: Tincture = metal;
   let detailTincture: Tincture = colour;
@@ -71,23 +71,13 @@ export function armsOf(team: Pick<Team, 'id' | 'nickname' | 'region' | 'name'>):
   } else if (division === 'chief' || division === 'bordure') {
     detailTincture = colour === 'sable' ? 'gules' : 'sable';
   }
-  const t = (x: Tincture) => TINCTURES[x].name;
-  const name = CHARGES[charge]?.name ?? 'a mullet';
-  let field = '';
-  if (division === 'plain') field = t(colour);
-  else if (division === 'chief') field = `${t(colour)}, on a chief ${t(metal)}`;
-  else if (division === 'bordure') field = `${t(colour)}, within a bordure ${t(metal)}`;
-  else field = `${DIVISION_TEXT[division]} ${t(colour)} and ${t(metal)}`;
-  const blazon = division === 'chief'
-    ? `${t(colour)}, ${name} ${t(chargeTincture)}, a chief ${t(metal)}.`
-    : `${field}, ${name} ${t(chargeTincture)}${fimbriated ? ` fimbriated ${t(metal)}` : ''}.`;
-  const arms: Arms = { colour, metal, division, charge, chargeTincture, detailTincture, fimbriated, shape: team.region % 4, blazon };
+  const arms: Arms = { colour, metal, division, charge, chargeTincture, detailTincture, fimbriated, shape: team.region % 4 };
   cache.set(key, arms);
   return arms;
 }
 
 /** House colours for tunics and banners, taken from the arms so a club looks the same everywhere. */
-export function houseColours(team: Pick<Team, 'id' | 'nickname' | 'region' | 'name'>): [string, string] {
+export function houseColours(team: ArmsTeam): [string, string] {
   const a = armsOf(team);
   return [TINCTURES[a.colour].hex, TINCTURES[a.metal].hex];
 }
@@ -131,7 +121,7 @@ type ShieldProps = { team: Pick<Team, 'id' | 'nickname' | 'region' | 'name'> & {
 function ShieldImpl({ team, size = 64, title = false }: ShieldProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const painted = paintedCrest(team.id, team.artKey);
-  if (painted) return <img src={painted} width={size} height={size * 1.2} alt={title ? `Arms of ${team.name}` : ''} className="shield-img" draggable={false} />;
+  if (painted) return <img src={painted} width={size} height={size * 1.2} alt={title ? ES.club.arms(team.name) : ''} className="shield-img" draggable={false} />;
   const arms = armsOf(team);
   const path = SHIELD_PATHS[arms.shape];
   const charge = CHARGES[arms.charge] ?? CHARGES.mullet;
@@ -141,7 +131,7 @@ function ShieldImpl({ team, size = 64, title = false }: ShieldProps) {
   const place = arms.division === 'chief' ? 'translate(22 38) scale(0.56)' : arms.division === 'bordure' ? 'translate(23 26) scale(0.54)' : 'translate(17 22) scale(0.66)';
   const clip = `sh${uid}`;
   return (
-    <svg viewBox="-4 -4 108 128" width={size} height={size * 1.185} className="shield" role={title ? 'img' : undefined} aria-label={title ? `Arms of ${team.name}: ${arms.blazon}` : undefined} aria-hidden={title ? undefined : true}>
+    <svg viewBox="-4 -4 108 128" width={size} height={size * 1.185} className="shield" role={title ? 'img' : undefined} aria-label={title ? ES.club.arms(team.name) : undefined} aria-hidden={title ? undefined : true}>
       <defs><clipPath id={clip}><path d={path} /></clipPath></defs>
       <g clipPath={`url(#${clip})`}>
         <Field arms={arms} />
@@ -160,15 +150,8 @@ function ShieldImpl({ team, size = 64, title = false }: ShieldProps) {
 
 export const Shield = memo(ShieldImpl, (a, b) => a.team.id === b.team.id && a.size === b.size && a.team.nickname === b.team.nickname);
 
-const MOTTOS: Record<string, string> = {
-  'IRON WALL': 'Nothing Passes, Least of All Time',
-  'SILVER ARROW': 'Faster Than Our Excuses',
-  STAMPEDE: 'Through, Never Around',
-  MISCHIEF: 'It Was Like That When We Got Here',
-  CLOCKWORK: 'Precisely Adequate',
-  SWARM: 'Many Elbows, One Purpose',
-};
-export const mottoOf = (philosophy: string) => MOTTOS[philosophy.toUpperCase()] ?? 'Victory, Eventually';
+/** A club's motto comes with its play style. */
+export const mottoOf = (philosophy: string) => filosofia(philosophy).lema;
 
 /** The full achievement: shield, mantling in house colours, and a motto scroll. */
 export function Achievement({ team, size = 260 }: { team: Team; size?: number }) {
@@ -181,7 +164,7 @@ export function Achievement({ team, size = 260 }: { team: Team; size?: number })
     </g>
   );
   return (
-    <svg viewBox="0 0 300 330" width={size} height={size * 1.1} className="achievement" role="img" aria-label={`The achievement of ${team.name}, motto: ${motto}`}>
+    <svg viewBox="0 0 300 330" width={size} height={size * 1.1} className="achievement" role="img" aria-label={ES.club.achievement(team.name, motto)}>
       {leaf(false)}
       {leaf(true)}
       <g transform="translate(78 44) scale(1.44)">

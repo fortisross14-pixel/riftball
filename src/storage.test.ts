@@ -32,18 +32,17 @@ test('Import accepts current worlds at every week of the calendar, including the
   assert.equal(roundTrip(w).week, 30);
 });
 
-test('Import accepts a previous-release (version 3) 48-club save and gives it stable art keys', () => {
+// Version 5 is the Spanish world. Older 48-club saves (versions 3 and 4) have English names and
+// are sent to the old-version screen instead of being loaded half-translated.
+test('Import rejects 48-club saves from before the Spanish world as old versions', () => {
   const w = createWorld(4403);
-  const old = JSON.parse(JSON.stringify(w)) as World;
-  old.version = 3;
-  delete (old as Partial<World>).stage;
-  for (const t of old.teams) delete (t as Partial<typeof t>).artKey;
-  for (const p of old.players) delete (p as Partial<typeof p>).portraitKey;
-  const back = validateImport({ format: 'riftball-world-v2', world: old });
-  assert.equal(back.version, CURRENT_VERSION);
-  assert.deepEqual(back.teams.map((t) => t.artKey), w.teams.map((t) => t.artKey));
-  assert.deepEqual(back.players.map((p) => p.portraitKey), w.players.map((p) => p.portraitKey));
-  assert.ok(back.stage);
+  for (const version of [3, 4]) {
+    const old = JSON.parse(JSON.stringify(w)) as World;
+    old.version = version;
+    assert.ok(isLegacySave(old), `version ${version} is legacy`);
+    assert.throws(() => validateImport({ format: 'riftball-world-v4', world: old }), LegacySaveError);
+  }
+  assert.equal(validateImport(JSON.parse(serializeWorld(w))).version, CURRENT_VERSION);
 });
 
 test('Import rejects old 80-club saves with a clear legacy error, and rejects junk', () => {

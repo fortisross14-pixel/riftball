@@ -152,7 +152,7 @@
 .arms-text strong { font-family: var(--face-text); font-weight: 800; font-size: 1.28rem; line-height: 1.15; }
 .arms-text em { font-size: 1rem; color: var(--ink-2); }
 .arms-stats { display: flex; flex-wrap: wrap; gap: 4px 16px; font-family: var(--face-data); font-size: 0.92rem; color: var(--ink-2); }
-.arms-stats span:first-child { font-family: var(--face-rubric); font-weight: 700; color: var(--rubric); text-transform: capitalize; }
+.arms-stats span:first-child { font-family: var(--face-rubric); font-weight: 700; color: var(--rubric); }
 .arms-stats b { color: var(--ink); font-size: 1.05rem; }
 
 /* ------------------------------------------------------------ House folio */
@@ -165,7 +165,7 @@
 .blazon span { font-style: normal; font-family: var(--face-rubric); font-weight: 700; color: var(--rubric); }
 .philosophy { margin-top: 26px; padding: 18px 20px; background: rgba(31, 61, 122, 0.08); border: 1px solid rgba(31, 61, 122, 0.4); }
 .philosophy h3 { font-family: var(--face-text); font-size: 1.25rem; font-weight: 400; }
-.philosophy h3 strong { font-family: var(--face-rubric); color: var(--lapis); font-size: 1.35rem; text-transform: capitalize; }
+.philosophy h3 strong { font-family: var(--face-rubric); color: var(--lapis); font-size: 1.35rem; }
 .philosophy p { margin-top: 4px; color: var(--ink-2); }
 .philosophy dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 22px; margin: 14px 0 0; }
 .philosophy dl div { display: grid; grid-template-columns: 96px 1fr; align-items: center; gap: 10px; }

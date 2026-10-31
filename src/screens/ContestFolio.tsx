@@ -8,13 +8,15 @@ import { RoleGlyph, WaxSeal } from '../art/Ornament';
 import { roman } from '../art/hash';
 import { AthleteName, Blank, Choice, HouseName, Miniature } from '../ui/bits';
 import { realmName } from './Tourneys';
+import { ES, filosofia, raza, rol } from '../i18n/es';
+
+const T = ES.contest;
 
 /* ------------------------------------------------------------ event vocabulary */
 
-const KIND_WORD: Record<MatchEvent['kind'], string> = {
-  breach: 'Breach', gate: 'Gate shot', aftershock: 'Aftershock', interception: 'Interception', knockout: 'Knockout', fumble: 'Fumble',
-  bigplay: 'Great run', injury: 'Injury', whistle: 'Whistle', penalty: 'Flag', spark: 'Spark',
-};
+/** The glossary: calm words for lists, loud ones for the arena. */
+const KIND_WORD = ES.termPlain as Record<MatchEvent['kind'], string>;
+const KIND_SHOUT = ES.term as Record<MatchEvent['kind'], string>;
 const KIND_WEIGHT: Record<MatchEvent['kind'], number> = { breach: 8, gate: 4, aftershock: 2, interception: 5, knockout: 4, fumble: 3, bigplay: 3, injury: 2, whistle: 1, penalty: 2, spark: 2 };
 const LOUD = new Set<MatchEvent['kind']>(['breach', 'gate', 'interception', 'knockout', 'fumble', 'spark']);
 
@@ -22,7 +24,7 @@ const LOUD = new Set<MatchEvent['kind']>(['breach', 'gate', 'interception', 'kno
 function attackerOf(e: MatchEvent, m: Match): string {
   const other = e.teamId === m.home ? m.away : m.home;
   if (e.kind === 'interception' || e.kind === 'knockout') return other;
-  if (e.kind === 'penalty' && /swinging|Ten metres/i.test(e.text)) return other;
+  if (e.kind === 'penalty' && /FALTA PERSONAL|swinging|Ten metres/i.test(e.text)) return other;
   return e.teamId;
 }
 /** Field position as a share of the pitch, home end at 0. Home attacks to the right. */
@@ -35,10 +37,10 @@ export function ContestFolio({ id }: { id: string }) {
   const { world: w, team, go, resolveFixture, busy, locked } = useGame();
   const [quick, setQuick] = useState(false);
   const m = w.matches.find((x) => x.id === id);
-  if (!m) return <div className="spread"><section className="page verso"><h1 className="folio-title">A torn page</h1><Blank>This contest is not recorded. Older seasons keep only their title contests in full.</Blank></section><section className="page recto" /></div>;
+  if (!m) return <div className="spread"><section className="page verso"><h1 className="folio-title">{ES.common.tornPage}</h1><Blank>{T.missing}</Blank></section><section className="page recto" /></div>;
   const home = team(m.home);
   const away = team(m.away);
-  if (!home || !away) return <Blank>One of these houses has vanished from the chronicle.</Blank>;
+  if (!home || !away) return <Blank>{T.missingClub}</Blank>;
   if (m.homeScore === null) return <ChallengePreview m={m} home={home} away={away} canPlay={m.season === w.season && m.week === w.week} onWatch={() => void resolveFixture(m.id)} onQuick={() => { setQuick(true); void resolveFixture(m.id); }} disabled={busy || locked} />;
   return <Replay key={`${m.id}-${quick ? 'quick' : 'watch'}`} m={m} home={home} away={away} initiallyRevealed={quick} onHouse={(tid) => go({ kind: 'house', id: tid })} />;
 }
@@ -99,18 +101,18 @@ function Replay({ m, home, away, initiallyRevealed }: { m: Match; home: Team; aw
       <section className="across contest-top">
         <Scoreboard m={m} home={home} away={away} score={score} state={state} minute={current?.minute} />
         <Arena m={m} home={home} away={away} events={shown} current={current} homeEight={homeEight} awayEight={awayEight} focus={focus} revealed={revealed} />
-        <div className="transport" role="group" aria-label="Replay controls">
+        <div className="transport" role="group" aria-label={T.controls}>
           <div className="transport-buttons">
-            <button type="button" className="ink-button" onClick={() => { setPlaying(false); setIndex(-1); }} disabled={index < 0}>From the start</button>
-            <button type="button" className="ink-button" onClick={() => { setPlaying(false); setIndex((i) => Math.max(-1, i - 1)); }} disabled={index < 0} aria-label="Previous moment">Back</button>
+            <button type="button" className="ink-button" onClick={() => { setPlaying(false); setIndex(-1); }} disabled={index < 0}>{T.fromStart}</button>
+            <button type="button" className="ink-button" onClick={() => { setPlaying(false); setIndex((i) => Math.max(-1, i - 1)); }} disabled={index < 0} aria-label={T.prev}>{T.back}</button>
             <button type="button" className="gilt-button play-button" onClick={() => { if (revealed) setIndex(-1); setPlaying(!playing); }}>
-              {playing ? 'Pause' : revealed ? 'Watch again' : index < 0 ? 'Begin the contest' : 'Play on'}
+              {playing ? T.pause : revealed ? T.again : index < 0 ? T.begin : T.playOn}
             </button>
-            <button type="button" className="ink-button" onClick={() => { setPlaying(false); setIndex((i) => Math.min(events.length, i + 1)); }} disabled={revealed} aria-label="Next moment">Next</button>
-            <Choice label="Pace" compact value={speed} onChange={setSpeed} options={[{ value: 0.5, label: '½' }, { value: 1, label: '1×' }, { value: 2, label: '2×' }, { value: 4, label: '4×' }]} />
+            <button type="button" className="ink-button" onClick={() => { setPlaying(false); setIndex((i) => Math.min(events.length, i + 1)); }} disabled={revealed} aria-label={T.nextLabel}>{T.next}</button>
+            <Choice label={T.pace} compact value={speed} onChange={setSpeed} options={[{ value: 0.5, label: '½' }, { value: 1, label: '1×' }, { value: 2, label: '2×' }, { value: 4, label: '4×' }]} />
           </div>
           <Timeline m={m} index={index} onSeek={(i) => { setPlaying(false); setIndex(i); }} />
-          <div className="balance" aria-label="Balance of the contest">
+          <div className="balance" aria-label={T.balance}>
             <span>{home.nickname}</span>
             <div className="balance-beam">
               <i style={{ width: `${balance.h + balance.a ? (balance.h / (balance.h + balance.a)) * 100 : 50}%`, background: houseColours(home)[0] }} />
@@ -118,20 +120,20 @@ function Replay({ m, home, away, initiallyRevealed }: { m: Match; home: Team; aw
             </div>
             <span>{away.nickname}</span>
           </div>
-          <p className="keys-hint">Space plays or pauses; the arrow keys step through the contest.</p>
+          <p className="keys-hint">{T.keys}</p>
         </div>
       </section>
 
-      <nav className="contest-tabs across" aria-label="Contest views">
-        {([['contest', 'The Contest'], ['ledger', 'The Ledger'], ['drives', 'The Drivebook']] as [Tab, string][]).map(([k, label]) => (
+      <nav className="contest-tabs across" aria-label={T.views}>
+        {([['contest', T.tabs.contest], ['ledger', T.tabs.ledger], ['drives', T.tabs.drives]] as [Tab, string][]).map(([k, label]) => (
           <button key={k} type="button" className={tab === k ? 'is-on' : ''} aria-pressed={tab === k} onClick={() => { setTab(k); setPlaying(false); }}>{label}</button>
         ))}
       </nav>
 
       {tab === 'contest' && <>
         <section className="page verso">
-          <h2 className="page-head">The Chronicle of the Contest</h2>
-          <p className="aside-note">{index < 0 ? 'Nothing is written yet. Begin the contest and the scribe will set down each moment.' : `${shown.length} of ${events.length} moments written${focus ? `, following ${getPlayer(w, focus)?.name ?? 'one athlete'}` : ''}.`}</p>
+          <h2 className="page-head">{T.logTitle}</h2>
+          <p className="aside-note">{index < 0 ? T.logEmpty : T.logCount(shown.length, events.length, focus ? getPlayer(w, focus)?.name ?? T.oneAthlete : undefined)}</p>
           <ol className="contest-log">
             {shown.slice().reverse().map((e, i) => {
               const dim = focus && e.playerId !== focus;
@@ -145,12 +147,12 @@ function Replay({ m, home, away, initiallyRevealed }: { m: Match; home: Team; aw
               );
             })}
           </ol>
-          {revealed && <p className="contest-end">{m.winner ? `Here ends the contest. ${m.winner === m.home ? home.name : away.name} prevail.` : 'Here ends the contest, honours even.'}</p>}
+          {revealed && <p className="contest-end">{m.winner ? T.endWin(m.winner === m.home ? home.name : away.name) : T.endDraw}</p>}
         </section>
         <section className="page recto">
           <Spotlight event={current} m={m} home={home} away={away} />
-          <h2 className="page-head small spaced">The Starting Eights</h2>
-          <p className="aside-note">Choose an athlete to follow their thread through the contest; everyone else fades.</p>
+          <h2 className="page-head small spaced">{T.eights}</h2>
+          <p className="aside-note">{T.eightsNote}</p>
           <div className="eights">
             {[[home, homeEight], [away, awayEight]].map(([t, list]) => (
               <div key={(t as Team).id}>
@@ -161,7 +163,7 @@ function Replay({ m, home, away, initiallyRevealed }: { m: Match; home: Team; aw
                       <button type="button" className={`thread ${focus === p.id ? 'is-on' : ''}`} aria-pressed={focus === p.id} onClick={() => setFocus(focus === p.id ? null : p.id)}>
                         <span className="thread-no">{i + 1}</span>
                         <Miniature player={p} size={40} />
-                        <span><strong>{p.name}</strong><small><RoleGlyph role={p.role} size={14} />{p.role} · {p.rating}</small></span>
+                        <span><strong>{p.name}</strong><small><RoleGlyph role={p.role} size={14} />{rol(p.role)} · {p.rating}</small></span>
                       </button>
                     </li>
                   ))}
@@ -187,23 +189,23 @@ function Scoreboard({ m, home, away, score, state, minute }: { m: Match; home: T
     <header className={`scoreboard is-${state}`}>
       <div className="sb-side">
         <Shield team={home} size={92} title />
-        <div><strong>{home.name}</strong><small>{realmName(home.region)} · home</small></div>
+        <div><strong>{home.name}</strong><small>{realmName(home.region)} · {T.home}</small></div>
       </div>
       <div className="sb-centre">
         {state === 'sealed' ? (
-          <div className="sb-seal"><WaxSeal size={86} /><span>The result lies under seal</span></div>
+          <div className="sb-seal"><WaxSeal size={86} /><span>{T.sealed}</span></div>
         ) : state === 'challenge' ? (
-          <span className="sb-score is-versus">versus</span>
+          <span className="sb-score is-versus">{T.versus}</span>
         ) : (
           <span className="sb-score" aria-live="polite"><b key={`h${score[0]}`}>{score[0]}</b><i>–</i><b key={`a${score[1]}`}>{score[1]}</b></span>
         )}
         <span className="sb-state">
-          {state === 'revealed' ? (winner ? `${winner.nickname} victorious` : 'Honours even') : state === 'unfolding' ? `Minute ${minute ?? 0}` : state === 'sealed' ? 'Spoiler-safe replay' : 'Not yet fought'}
+          {state === 'revealed' ? (winner ? T.winner(winner.nickname) : T.draw) : state === 'unfolding' ? T.minute(minute ?? 0) : state === 'sealed' ? T.spoilerSafe : T.notYet}
         </span>
-        <span className="sb-phase">{PHASE_NAME[m.phase]} · Year {roman(m.season)}, week {m.week}</span>
+        <span className="sb-phase">{PHASE_NAME[m.phase]} · {ES.common.seasonWeek(m.season, m.week)}</span>
       </div>
       <div className="sb-side is-away">
-        <div><strong>{away.name}</strong><small>{realmName(away.region)} · away</small></div>
+        <div><strong>{away.name}</strong><small>{realmName(away.region)} · {T.away}</small></div>
         <Shield team={away} size={92} title />
       </div>
     </header>
@@ -245,7 +247,7 @@ function Arena({ m, home, away, events, current, homeEight, awayEight, focus, re
 
   return (
     <div className="arena-frame">
-      <svg viewBox="0 0 1000 440" className="arena" role="img" aria-label={current ? `${KIND_WORD[current.kind]} at minute ${current.minute}: ${current.text}` : 'The arena before kickoff'}>
+      <svg viewBox="0 0 1000 440" className="arena" role="img" aria-label={current ? T.arenaAt(KIND_WORD[current.kind], current.minute, current.text) : T.arenaBefore}>
         <defs>
           <pattern id="mow" width="86" height="440" patternUnits="userSpaceOnUse"><rect width="43" height="440" fill="#5a8a3f" /><rect x="43" width="43" height="440" fill="#4f7d37" /></pattern>
           <radialGradient id="arena-light" cx="0.5" cy="0.45" r="0.65"><stop offset="0" stopColor="#fff6d0" stopOpacity="0.18" /><stop offset="1" stopColor="#000" stopOpacity="0.28" /></radialGradient>
@@ -307,14 +309,14 @@ function Arena({ m, home, away, events, current, homeEight, awayEight, focus, re
           <g key={`${current.minute}-${current.text.length}-${events.length}`} className={`burst kind-${current.kind}`} transform={`translate(${toX(ball)} ${ballY})`}>
             <g className="burst-inner">
               <path d="M0 -46 L10 -16 L42 -22 L18 0 L42 22 L10 16 L0 46 L-10 16 L-42 22 L-18 0 L-42 -22 L-10 -16 Z" fill={current.kind === 'breach' ? '#f0cf6a' : current.kind === 'knockout' ? '#d4473a' : current.kind === 'spark' ? '#b07aff' : '#efe7d2'} stroke="#1b120c" strokeWidth={2} opacity={0.92} />
-              <text y={-56} textAnchor="middle" fontFamily="var(--face-display)" fontWeight={900} fontSize={30} fill="#fff6dc" stroke="#1b120c" strokeWidth={4} paintOrder="stroke">{KIND_WORD[current.kind]}!</text>
+              <text y={-56} textAnchor="middle" fontFamily="var(--face-display)" fontWeight={900} fontSize={30} fill="#fff6dc" stroke="#1b120c" strokeWidth={4} paintOrder="stroke">{KIND_SHOUT[current.kind]}</text>
             </g>
           </g>
         )}
         <rect x={FIELD.x} y={FIELD.y} width={FIELD.w} height={FIELD.h} fill="url(#arena-light)" pointerEvents="none" />
-        {revealed && <text x={500} y={FIELD.y + 40} textAnchor="middle" fontFamily="var(--face-display)" fontSize={30} fill="#fff6dc" stroke="#1b120c" strokeWidth={4} paintOrder="stroke">Full time</text>}
+        {revealed && <text x={500} y={FIELD.y + 40} textAnchor="middle" fontFamily="var(--face-display)" fontSize={30} fill="#fff6dc" stroke="#1b120c" strokeWidth={4} paintOrder="stroke">{T.fullTime}</text>}
       </svg>
-      <p className="arena-note">The arena shows where each recorded moment happened; athletes are placed in formation around the ball.</p>
+      <p className="arena-note">{T.arenaNote}</p>
     </div>
   );
 }
@@ -324,7 +326,7 @@ function Timeline({ m, index, onSeek }: { m: Match; index: number; onSeek: (i: n
   const pos = n ? Math.max(0, Math.min(n, index + 1)) / n : 0;
   return (
     <div className="timeline">
-      <input type="range" min={-1} max={n} value={index} onChange={(e) => onSeek(Number(e.target.value))} aria-label="Scrub through the contest" aria-valuetext={index < 0 ? 'before kickoff' : index >= n ? 'full time' : `moment ${index + 1} of ${n}`} />
+      <input type="range" min={-1} max={n} value={index} onChange={(e) => onSeek(Number(e.target.value))} aria-label={T.scrub} aria-valuetext={index < 0 ? T.beforeKickoff : index >= n ? T.fullTime : T.momentOf(index + 1, n)} />
       <div className="timeline-track" aria-hidden="true">
         <span className="timeline-fill" style={{ width: `${pos * 100}%` }} />
         {m.events.map((e, i) => LOUD.has(e.kind) && i <= index && (
@@ -341,21 +343,21 @@ function Spotlight({ event, m, home, away }: { event?: MatchEvent; m: Match; hom
   if (!event) {
     return (
       <div className="spotlight is-idle">
-        <h2 className="page-head">The Spotlight</h2>
-        <p className="aside-note">When an athlete does something worth a verse, they appear here.</p>
-        <div className="spotlight-pair"><Shield team={home} size={70} /><span>versus</span><Shield team={away} size={70} /></div>
+        <h2 className="page-head">{T.spotlight}</h2>
+        <p className="aside-note">{T.spotlightIdle}</p>
+        <div className="spotlight-pair"><Shield team={home} size={70} /><span>{T.versus}</span><Shield team={away} size={70} /></div>
       </div>
     );
   }
   const side = event.teamId === m.home ? home : away;
   return (
     <div className={`spotlight kind-${event.kind}`} key={`${event.minute}-${event.text}`}>
-      <h2 className="page-head">The Spotlight</h2>
+      <h2 className="page-head">{T.spotlight}</h2>
       <div className="spotlight-card">
         {p ? <Miniature player={p} size={128} /> : <Shield team={side} size={108} />}
         <div>
           <h3>{p ? <AthleteName player={p} /> : side.name}</h3>
-          <p className="spotlight-who"><span className="spotlight-kind">{KIND_WORD[event.kind]}, minute {event.minute}.</span>{p ? ` ${p.race} ${p.role.toLowerCase()} of ${side.nickname}` : ''}</p>
+          <p className="spotlight-who"><span className="spotlight-kind">{T.spotlightWho(KIND_WORD[event.kind], event.minute)}</span>{p ? T.spotlightOf(rol(p.role), raza(p.race).toLowerCase(), side.nickname) : ''}</p>
           <p className="spotlight-text">{event.text}</p>
         </div>
       </div>
@@ -368,9 +370,9 @@ function Sealed({ onReveal }: { onReveal: () => void }) {
   return (
     <section className="across sealed">
       <WaxSeal size={150} broken={breaking} />
-      <h2 className="page-head">The result lies under seal</h2>
-      <p>The ledger and the drivebook stay sealed until the contest has been watched to its end, or the seal is broken. The league insists this is an anti-spoiler regulation and not an excuse to sell more wax.</p>
-      <button type="button" className="gilt-button" onClick={() => { setBreaking(true); setTimeout(onReveal, 650); }}>Break the seal</button>
+      <h2 className="page-head">{T.sealed}</h2>
+      <p>{T.sealedBody}</p>
+      <button type="button" className="gilt-button" onClick={() => { setBreaking(true); setTimeout(onReveal, 650); }}>{T.breakSeal}</button>
     </section>
   );
 }
@@ -384,33 +386,34 @@ function Ledger({ m, home, away }: { m: Match; home: Team; away: Team }) {
     const count = (tid: string, kind: MatchEvent['kind']) => m.events.filter((e) => e.teamId === tid && e.kind === kind).length;
     return (
       <section className="across ledger-legacy">
-        <h2 className="page-head">The Old Ledger</h2>
-        <p className="aside-note">This contest predates the full ledger. Only its highlights were written down, and missing numbers are not invented.</p>
+        <h2 className="page-head">{T.oldLedger}</h2>
+        <p className="aside-note">{T.oldLedgerNote}</p>
         <DualRows rows={(['breach', 'gate', 'interception', 'knockout', 'fumble', 'penalty', 'spark'] as const).map((k) => [KIND_WORD[k], count(m.home, k), count(m.away, k)])} home={home} away={away} />
       </section>
     );
   }
   const h = r.teams[m.home];
   const a = r.teams[m.away];
+  const R = T.rows;
   const rows: [string, number, number, string?, string?][] = [
-    ['Points', m.homeScore ?? 0, m.awayScore ?? 0], ['Possessions', h.possessions, a.possessions], ['Offensive plays', h.plays, a.plays], ['First downs', h.firstDowns, a.firstDowns],
-    ['Total metres', h.yards, a.yards], ['Rushes', h.runAttempts, a.runAttempts], ['Rushing metres', h.rushingYards, a.rushingYards],
-    ['Passes completed', h.passesCompleted, a.passesCompleted], ['Passes attempted', h.passAttempts, a.passAttempts], ['Passing metres', h.passingYards, a.passingYards],
-    ['Breaches', h.breaches, a.breaches], ['Gates made of attempted', h.gates, a.gates, `${h.gates}/${h.gatesAttempted}`, `${a.gates}/${a.gatesAttempted}`], ['Aftershocks', h.aftershocks, a.aftershocks],
-    ['Turnovers', h.turnovers, a.turnovers], ['Interceptions', h.interceptions, a.interceptions], ['Fumbles lost', h.fumblesLost, a.fumblesLost],
-    ['Tackles', h.tackles, a.tackles], ['Blocks', h.blocks, a.blocks], ['Knockouts', h.knockouts, a.knockouts], ['Penalties', h.penalties, a.penalties],
-    ['Spark charges spent', h.sparks, a.sparks], ['Substitutions', h.substitutions, a.substitutions],
+    [R.points, m.homeScore ?? 0, m.awayScore ?? 0], [R.possessions, h.possessions, a.possessions], [R.plays, h.plays, a.plays], [R.firstDowns, h.firstDowns, a.firstDowns],
+    [R.yards, h.yards, a.yards], [R.runs, h.runAttempts, a.runAttempts], [R.rushYards, h.rushingYards, a.rushingYards],
+    [R.passesCompleted, h.passesCompleted, a.passesCompleted], [R.passAttempts, h.passAttempts, a.passAttempts], [R.passYards, h.passingYards, a.passingYards],
+    [R.breaches, h.breaches, a.breaches], [R.gates, h.gates, a.gates, `${h.gates}/${h.gatesAttempted}`, `${a.gates}/${a.gatesAttempted}`], [R.aftershocks, h.aftershocks, a.aftershocks],
+    [R.turnovers, h.turnovers, a.turnovers], [R.interceptions, h.interceptions, a.interceptions], [R.fumbles, h.fumblesLost, a.fumblesLost],
+    [R.tackles, h.tackles, a.tackles], [R.blocks, h.blocks, a.blocks], [R.knockouts, h.knockouts, a.knockouts], [R.penalties, h.penalties, a.penalties],
+    [R.sparks, h.sparks, a.sparks], [R.subs, h.substitutions, a.substitutions],
   ];
   const performers = Object.values(r.players).sort((x, y) => y.impact - x.impact).slice(0, 8);
   return (
     <>
       <section className="page verso">
-        <h2 className="page-head">The Official Ledger</h2>
-        <p className="aside-note">Counted from every resolved action of the contest, not from highlights.</p>
+        <h2 className="page-head">{T.officialLedger}</h2>
+        <p className="aside-note">{T.officialNote}</p>
         <DualRows rows={rows} home={home} away={away} />
       </section>
       <section className="page recto">
-        <h2 className="page-head">Those Who Shone</h2>
+        <h2 className="page-head">{T.shone}</h2>
         <ol className="performers">
           {performers.map((row) => {
             const p = player(row.playerId);
@@ -419,9 +422,9 @@ function Ledger({ m, home, away }: { m: Match; home: Team; away: Team }) {
               <li key={row.playerId}>
                 <button type="button" onClick={() => go({ kind: 'athlete', id: p.id })}>
                   <Miniature player={p} size={58} />
-                  <span className="perf-name"><strong>{p.name}</strong><small>{p.role} of {row.teamId === m.home ? home.nickname : away.nickname}</small></span>
-                  <span className="perf-impact"><strong>{row.impact.toFixed(1)}</strong><small>impact</small></span>
-                  <span className="perf-line">{row.breaches} br · {row.yards} m · {row.tackles} tkl · {row.interceptions} int</span>
+                  <span className="perf-name"><strong>{p.name}</strong><small>{T.roleOf(rol(p.role), row.teamId === m.home ? home.nickname : away.nickname)}</small></span>
+                  <span className="perf-impact"><strong>{row.impact.toFixed(1)}</strong><small>{T.impact}</small></span>
+                  <span className="perf-line">{T.perfLine(row.breaches, row.yards, row.tackles, row.interceptions)}</span>
                 </button>
               </li>
             );
@@ -457,15 +460,15 @@ function DualRows({ rows, home, away }: { rows: [string, number, number, string?
 
 /* ------------------------------------------------------------ drivebook */
 
-const DRIVE_WORD: Record<string, string> = { breach: 'Breach', gate: 'Gate', miss: 'Missed gate', interception: 'Intercepted', fumble: 'Fumbled', downs: 'Stopped on downs', end: 'Clock ran out', overtime: 'Overtime' };
+const DRIVE_WORD = T.drive;
 
 function Drivebook({ m, home, away }: { m: Match; home: Team; away: Team }) {
   const r = m.report;
-  if (!r) return <section className="across"><Blank>This older contest predates the possession engine. Its highlights remain in the contest view.</Blank></section>;
+  if (!r) return <section className="across"><Blank>{T.noDrives}</Blank></section>;
   return (
     <section className="across drivebook">
-      <h2 className="page-head">The Drivebook</h2>
-      <p className="aside-note">{r.drives.length} possessions. {home.nickname} attack to the right, {away.nickname} to the left.</p>
+      <h2 className="page-head">{T.drivebook}</h2>
+      <p className="aside-note">{T.drivesNote(r.drives.length, home.nickname, away.nickname)}</p>
       <ol className="drives">
         {r.drives.map((d) => {
           const isHome = d.teamId === m.home;
@@ -483,7 +486,7 @@ function Drivebook({ m, home, away }: { m: Match; home: Team; away: Team }) {
                 <i className="drive-path" style={{ left: `${Math.min(s, e)}%`, width: `${Math.max(1.5, Math.abs(e - s))}%`, background: c }} />
                 <i className="drive-start" style={{ left: `${s}%` }} />
               </span>
-              <span className="drive-figs">{d.plays} plays · {d.yards} m · {d.firstDowns} first downs</span>
+              <span className="drive-figs">{T.driveFigs(d.plays, d.yards, d.firstDowns)}</span>
               <strong className="drive-result">{DRIVE_WORD[d.result] ?? d.result}{d.points > 0 ? ` +${d.points}` : ''}</strong>
             </li>
           );
@@ -503,8 +506,8 @@ function ChallengePreview({ m, home, away, canPlay, onWatch, onQuick, disabled }
       <section className="across contest-top">
         <Scoreboard m={m} home={home} away={away} score={[0, 0]} state="challenge" />
         <div className="challenge-call">
-          <p>Choose how this fixture enters the chronicle. Both paths use the same match engine and preserve the same official statistics.</p>
-          {canPlay ? <div className="season-actions"><button type="button" className="gilt-button" disabled={disabled} onClick={onWatch}>Watch / Simulate Match</button><button type="button" className="ink-button" disabled={disabled} onClick={onQuick}>Quick Result</button></div> : <p className="aside-note">This contest is set for week {m.week}.</p>}
+          <p>{T.choose}</p>
+          {canPlay ? <div className="season-actions"><button type="button" className="gilt-button" disabled={disabled} onClick={onWatch}>{T.watch}</button><button type="button" className="ink-button" disabled={disabled} onClick={onQuick}>{T.quick}</button></div> : <p className="aside-note">{T.setFor(m.week)}</p>}
         </div>
       </section>
       {sides.map(([t, list], i) => {
@@ -513,16 +516,16 @@ function ChallengePreview({ m, home, away, canPlay, onWatch, onQuick, disabled }
           <section key={t.id} className={`page ${i === 0 ? 'verso' : 'recto'}`}>
             <h2 className="page-head"><HouseName team={t} size={34} full /></h2>
             <dl className="season-figures">
-              <div><dt>Strength</dt><dd>{Math.round(teamRating(w, t))}</dd></div>
-              <div><dt>Record</dt><dd>{t.record.w}–{t.record.d}–{t.record.l}</dd></div>
-              <div><dt>Crowns</dt><dd>{t.worldTitles}</dd></div>
+              <div><dt>{T.figures.strength}</dt><dd>{Math.round(teamRating(w, t))}</dd></div>
+              <div><dt>{T.figures.record}</dt><dd>{t.record.w}–{t.record.d}–{t.record.l}</dd></div>
+              <div><dt>{T.figures.crowns}</dt><dd>{t.worldTitles}</dd></div>
             </dl>
-            <p className="philosophy-line"><strong>{t.philosophy.toLowerCase()}</strong>: {profile.summary}</p>
+            <p className="philosophy-line"><strong>{filosofia(t.philosophy).nombre}</strong>: {profile.summary}</p>
             <ul className="eight">
               {list.map((p) => (
                 <li key={p.id}>
                   <Miniature player={p} size={56} />
-                  <span><AthleteName player={p} /><small><RoleGlyph role={p.role} size={16} />{p.race} {p.role.toLowerCase()}</small></span>
+                  <span><AthleteName player={p} /><small><RoleGlyph role={p.role} size={16} />{rol(p.role)} {raza(p.race).toLowerCase()}</small></span>
                   <strong>{p.rating}</strong>
                 </li>
               ))}

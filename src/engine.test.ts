@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { ABILITY_EFFECTS, PHILOSOPHY_PROFILES, TRAIT_EFFECTS, advanceOneWeek, advanceWeekAuto, createWorld, getPlayer, getTeam, simulateWeeks, sortedStandings, teamRoster } from './engine';
 import type { World } from './types';
+import { habilidad } from './i18n/es-mundo';
 
 test('Founding a world creates 48 elemental clubs and 720 unique athletes',()=>{
  const w=createWorld(987654);
@@ -68,7 +69,7 @@ test('Spark abilities and penalties happen in real matches and name what happene
  const events=w.matches.filter(m=>m.homeScore!==null).flatMap(m=>m.events);
  const sparks=events.filter(e=>e.kind==='spark');
  const used=new Set<string>();
- for(const e of sparks){const p=getPlayer(w,e.playerId!)!;assert.ok(e.text.startsWith(p.ability.toUpperCase()+'!'),e.text);used.add(p.ability);}
+ for(const e of sparks){const p=getPlayer(w,e.playerId!)!;assert.ok(e.text.startsWith('¡'+habilidad(p.ability).toUpperCase()+'!'),e.text);used.add(p.ability);}
  assert.ok(used.size>=9,`abilities used: ${[...used].join(', ')}`);
  assert.ok(events.some(e=>e.kind==='penalty'));
 });
