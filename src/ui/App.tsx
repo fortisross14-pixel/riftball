@@ -74,6 +74,7 @@ export default function App() {
       advance: (n) => { void game.advance(n); },
       resolveFixture: game.resolveFixture,
       resolveFixtures: game.resolveFixtures,
+      predict: game.predict,
       dismissIntro: game.dismissIntro,
       revealAward: game.revealAward,
       simulateToNextEvent: () => { void game.simulateToNextEvent(); },
@@ -82,7 +83,7 @@ export default function App() {
       importFile: game.importFile,
       newUniverse: game.newUniverse,
     };
-  }, [game.world, game.busy, game.conflict, go, game.advance, game.resolveFixture, game.resolveFixtures, game.dismissIntro, game.revealAward, game.simulateToNextEvent, game.importFile, game.newUniverse]);
+  }, [game.world, game.busy, game.conflict, go, game.advance, game.resolveFixture, game.resolveFixtures, game.predict, game.dismissIntro, game.revealAward, game.simulateToNextEvent, game.importFile, game.newUniverse]);
 
   if (game.legacy) return <LegacyBook onExport={game.exportLegacy} onFresh={() => { if (window.confirm(ES.confirm.legacyFresh)) void game.startFresh(); }} />;
   if (!ctx) return <ClosedBook />;

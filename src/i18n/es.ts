@@ -641,8 +641,122 @@ export const ES = {
     quick: 'Resultado rápido',
     setFor: (week: number) => `Este partido se juega en la semana ${week}.`,
     figures: { strength: 'Fuerza', record: 'Balance', crowns: 'Coronas' },
+    live: {
+      label: 'Partido en directo',
+      exit: 'Salir',
+      exitLabel: 'Salir del partido',
+      toEnd: 'Ir al final',
+      hidden: '–',
+      kickoff: 'Antes del saque',
+      possession: (nick: string) => `Balón: ${nick}`,
+      momentum: 'Inercia del partido',
+      ticker: 'Últimas jugadas',
+      tickerEmpty: 'Pulsa ▶ para empezar. El marcador está oculto hasta entonces.',
+      speed: 'Velocidad',
+      play: 'Reproducir',
+      pause: 'Pausa',
+    },
+    post: {
+      tabs: { summary: 'Resumen', stats: 'Estadísticas', players: 'Jugadores', plays: 'Jugadas' },
+      again: 'Ver otra vez',
+      allMoments: 'Todos los momentos',
+    },
+  },
+  callout: {
+    label: 'Gran jugada',
+    score: (h: number, a: number) => `${h} – ${a}`,
+  },
+
+  /* ---------------------------------------------------------------- matchday: before, during, after */
+  prematch: {
+    title: 'Lo que hay en juego',
+    table: (nick: string, pos: number, pts: number) => `${nick}: ${pos}.º con ${pts} puntos`,
+    knockout: 'Eliminatoria: quien pierda, se va a casa.',
+    final: 'Final: el trofeo espera en el palco.',
+    rivalry: (heat: number) => `Derbi de máxima rivalidad · temperatura ${heat}`,
+    streak: (nick: string, n: number, kind: 'W' | 'L' | 'D') => kind === 'W' ? `${nick} llevan ${n} victorias seguidas` : kind === 'L' ? `${nick} encadenan ${n} derrotas` : `${nick} llevan ${n} empates seguidos`,
+    duel: 'El duelo clave',
+    duelVs: 'contra',
+    prediction: 'Pronóstico',
+    favourite: (nick: string, pct: number) => `${nick} parten como favoritos (${pct} %)`,
+    tossUp: (pct: number) => `Moneda al aire: ${pct} % – ${100 - pct} %`,
+  },
+  predict: {
+    title: 'Tu pronóstico',
+    hint: 'Elige al ganador antes del partido y gana monedas de la Grieta. Apostar por el débil paga más.',
+    pick: (nick: string) => `Gana ${nick}`,
+    picked: (nick: string) => `Has apostado por ${nick}`,
+    reward: (n: number) => `paga ${n} monedas`,
+    won: (n: number) => `¡Acertaste! +${n} monedas`,
+    lost: 'Fallaste. La Grieta se queda tus monedas imaginarias.',
+    tally: (n: number) => `Monedas de la Grieta esta temporada: ${n}`,
+    coins: (n: number) => `${n} monedas de la Grieta`,
+  },
+  post: {
+    winProb: 'Probabilidad de victoria',
+    winProbNote: (home: string) => `Línea arriba: ${home} gana. Línea abajo: gana el rival.`,
+    playOfMatch: 'Jugada del partido',
+    mvp: 'Mejor del partido',
+    loserCoach: (nick: string) => `Entrenador de ${nick}`,
+  },
+  commentators: {
+    grimbaldo: 'El Viejo Grimbaldo',
+    ebano: 'La Profesora Ébano',
   },
 } as const;
+
+/* ------------------------------------------------------------ voices: MVPs, coaches, commentators */
+
+/** After the match, the MVP speaks in the voice of their trait. */
+const MVP_QUOTES: Record<string, readonly string[]> = {
+  'Hot-Headed': ['«El árbitro estaba ciego. Ganamos a pesar de él, que conste.»', '«¿Mejor del partido? Habría sido el doble sin ese árbitro.»'],
+  'Showboat': ['«Hoy la gente ha venido a verme a mí. Y lo entiendo.»', '«Yo, yo y, cuando hizo falta, yo.»'],
+  'Ice-Cold': ['«Partido correcto.»', '«Hicimos lo que había que hacer. Nada más.»'],
+  'Relentless': ['«Podría jugar otro ahora mismo. ¿Alguien se apunta?»', '«Cansado no; con ganas de más.»'],
+  'Undisciplined': ['«Lo de la falta no fue para tanto. Lo de las otras tres, puede.»', '«Sí, me adelanté. Pero luego llegué antes que nadie.»'],
+  'Fan Favorite': ['«¡Esto es para la grada! ¡Os quiero! ¡Os quiero a todos!»', '«Sin vuestros gritos no habría podido. Bueno, sí, pero peor.»'],
+  'Tactician': ['«El plan funcionó en un 87 %. El 13 % restante lo estudiaremos.»', '«Leímos sus jugadas como un libro. Un libro aburrido.»'],
+  'Hard-Nosed': ['«Me han dado por todas partes. Perfecto, así me gusta.»', '«Si duele, es que funciona.»'],
+  'Iron Will': ['«La Dra. Plumilla me dijo que parara. No la escuché. Otra vez.»', '«Un golpe más, un paso más.»'],
+  'Clutch Performer': ['«Los últimos minutos son míos. Siempre lo han sido.»', '«Cuando aprieta, yo aprieto más.»'],
+  'Born Leader': ['«El mérito es del equipo. Del equipo que yo dirijo, eso sí.»', '«Hoy todos han jugado como yo les pedí.»'],
+  'Reckless': ['«No recuerdo el segundo tiempo, pero me cuentan que estuve enorme.»', '«¿Que si me dolió? Pregúntale al otro.»'],
+};
+export const mvpQuote = (trait: string, seed: number | string) => line(MVP_QUOTES[trait] ?? ['«Hemos ganado y ya está.»'], seed);
+
+/** The losing coach, by how badly it went. */
+const COACH_QUOTES = {
+  close: ['«Un detalle. Nos ha faltado un detalle. Y un portazo.»', '«Hemos merecido más. Lo dice el marcador, si lo miras de lado.»', '«Duele, pero la grada se va orgullosa. Y afónica.»'],
+  clear: ['«Hoy no era nuestro día. Mañana tampoco pinta bien.»', '«Vamos a revisar el vídeo. Si lo aguantamos.»', '«Hemos aprendido mucho. Sobre todo a perder.»'],
+  rout: ['«No quiero hablar del partido. Ni de nada. Gracias.»', '«Mis jugadores necesitan descanso. Y un abrazo. Y otro deporte.»', '«El Comisionado ha anunciado una revisión de seguridad. Por mí, que revise todo.»'],
+};
+export const coachQuote = (margin: number, seed: number | string) => line(margin <= 6 ? COACH_QUOTES.close : margin >= 20 ? COACH_QUOTES.rout : COACH_QUOTES.clear, seed);
+
+/** Two voices in the booth: Grimbaldo loves his homeland, Ébano loves numbers. */
+export const GRIMBALDO_HOME = 0;
+const GRIMBALDO = {
+  happy: ['¡ESO ES PEDRAVELO, SEÑORES! ¡ROCA Y CORAZÓN!', '¡Lo sabía! ¡Lo dije en mil novecientos…! Bueno, lo dije.', '¡Que alguien me traiga un pañuelo, que lloro de orgullo!'],
+  sour: ['Bah. Suerte. Pura suerte de forastero.', 'En mis tiempos eso era falta. Y en los de mi abuelo, cárcel.', 'Muy bonito, muy bonito… para quien le guste lo bonito.'],
+  neutral: ['¡Qué jugada! Aunque en Pedravelo la habríamos hecho mejor.', 'Interesante. Muy interesante. ¿Ha terminado ya?', '¡Esto sí es Riftball! Casi tanto como el de antes.'],
+};
+const EBANO: Record<string, readonly string[]> = {
+  breach: ['Brecha número {n} del partido. Marcador: {s}.', 'Cinco puntos en el minuto {m}. Estadísticamente, previsible.'],
+  gate: ['Portazo: dos puntos. El porcentaje de acierto sube.', 'Minuto {m}, dos puntos. Eficaz, no bonito.'],
+  aftershock: ['Réplica convertida. El punto extra cuenta igual que los demás.', 'Uno más. Los pequeños números ganan partidos.'],
+  spark: ['Chispa gastada. Les queda una, como mucho.', 'Uso de habilidad en el minuto {m}. Correcto.'],
+  knockout: ['KO número {n}. La Dra. Plumilla ya va de camino.', 'Placaje de alto impacto. Lo anoto.'],
+  interception: ['Robo. Cambio de posesión en el minuto {m}.', 'Pase interceptado. Ese riesgo no compensaba.'],
+  bigplay: ['Carrera larga. Muy por encima de la media.', 'Ganancia notable. La defensa, notablemente ausente.'],
+};
+export function commentary(kind: string, ctx: { home: boolean; minute: number; score: string; count: number }, seed: number | string) {
+  const g = ctx.home ? GRIMBALDO.happy : line([GRIMBALDO.sour, GRIMBALDO.sour, GRIMBALDO.neutral], `${seed}-mood`);
+  const e = EBANO[kind] ?? ['Anotado.'];
+  return {
+    grimbaldo: line(g, `${seed}-g`),
+    ebano: line(e, `${seed}-e`).replace('{n}', String(ctx.count)).replace('{m}', String(ctx.minute)).replace('{s}', ctx.score),
+  };
+}
+
 
 /** W/D/L as Spanish letters: Ganado, Empatado, Perdido. */
 export const formLetter = (f: string) => (f === 'W' ? 'G' : f === 'D' ? 'E' : f === 'L' ? 'P' : f);

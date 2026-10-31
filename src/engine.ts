@@ -279,6 +279,8 @@ function rivalryResult(w:World,m:Match){
 // Rich match reports are the authoritative source for box scores. Legacy saves keep their highlight archive.
 export const emptyMatchTeamStats=():MatchTeamStats=>({possessions:0,plays:0,firstDowns:0,yards:0,runAttempts:0,rushingYards:0,passAttempts:0,passesCompleted:0,passingYards:0,breaches:0,gatesAttempted:0,gates:0,aftershocks:0,turnovers:0,interceptions:0,fumblesLost:0,tackles:0,blocks:0,knockouts:0,penalties:0,sparks:0,injuries:0,substitutions:0});
 const emptyMatchPlayerStats=(p:Player):MatchPlayerStats=>({playerId:p.id,teamId:p.teamId,plays:0,rushAttempts:0,yards:0,passesAttempted:0,passesCompleted:0,passingYards:0,catches:0,breaches:0,assists:0,gates:0,tackles:0,blocks:0,interceptions:0,knockouts:0,turnovers:0,sparks:0,impact:0});
+/** Only long runs make the match log; shorter gains still count in the statistics. */
+const BIG_PLAY_WRITTEN=25;
 export function simulateMatch(w:World,m:Match){
  if(m.homeScore!==null)return;
  const home=getTeam(w,m.home),away=getTeam(w,m.away),homeLine=lineup(w,home),awayLine=lineup(w,away);
@@ -314,7 +316,7 @@ export function simulateMatch(w:World,m:Match){
  const shape=lines.map((l,s)=>({read:mean(l,'positioning','awareness')+Math.min(3,count(l,'Tactician')*1.5)+profiles[s].defense,wall:mean(l.filter(p=>p.role==='Bastion'||p.role==='Breaker'),'strength','blocking')+profiles[s].defense}));
  // Tempo: fast teams play more drives and tire everyone out.
  const tempo=profiles[0].tempo+profiles[1].tempo;
- const possessions=int(w,12,16)+Math.round(tempo),first=int(w,0,1);const spark=[2,2];let minute=0;
+ const possessions=int(w,12,16)+Math.round(tempo)+0,first=int(w,0,1);const spark=[2,2];let minute=0;
  const fresh=new Set<string>(); // players who used Second Wind
  const spentAbility=new Set<string>(); // one active signature activation per player per match
  const sideOf=(p:Player)=>p.teamId===home.id?0:1;
@@ -345,9 +347,16 @@ export function simulateMatch(w:World,m:Match){
   while(steps<11&&x<90){steps++;minute=Math.round(((drive+steps/12)/possessions)*32);
    // Short yardage and the goal line (x >= 80) are power situations: strength and blocking decide them.
    const power=target-x<=4||x>=80;
+   // Score state keeps games alive. A side 14+ behind gambles: more passes, more long runs, more interceptions.
+   // A side 12+ ahead protects the lead: fewer passes, safer plays, and it tires as the match goes on.
+   // From 17 points the leader sits back outright and the trailing side faces a soft "prevent" defence.
+   // Tuned so about a third of games end within one score (6 points) and about one in ten by 20+ (scripts/margins.ts).
+   const deficit=score[1-side]-score[side],chasing=deficit>=14,cruising=-deficit>=12;
+   const sitBack=Math.abs(deficit)>=17?(deficit>0?.07:-.08):0;
+   const urgency=sitBack+(chasing?.02+.03*fatigue:0),caution=cruising?.06+.03*fatigue:0;
    const routeEdge=(mean(off,'passing','handling')-mean(deff,'awareness','positioning'))/180;
    const blockEdge=(mean(off.filter(p=>p.role==='Bastion'||p.role==='Breaker'),'blocking','strength')-mean(deff,'tackling','strength'))/180;
-   const isPass=random(w)<clamp(plan.pass+routeEdge-blockEdge*.5+(target-x>=9?.06:0),.12,.86)*(power?.6:1);
+   const isPass=random(w)<clamp(plan.pass+routeEdge-blockEdge*.5+(target-x>=9?.06:0)+(chasing?0.12:0)-(cruising?0.2:0),.12,.86)*(power?.6:1);
    const blocker=pick(w,linemen.length?linemen:off);
    const carrier=isPass?pickWeighted(w,off.filter(p=>p!==passer),p=>CATCH[p.role]):pickWeighted(w,off,p=>CARRY[p.role]);
    const defender=pickWeighted(w,deff,p=>isPass?COVER[p.role]:TACKLE[p.role]);
@@ -372,8 +381,8 @@ export function simulateMatch(w:World,m:Match){
    // Distinct tactical matchups: pass rush, route discipline and power fronts matter more than a flat team rating.
    const tacticalEdge=isPass?(plan.pass-defPlan.defense*.045)*.07:(power?(plan.aggression-defPlan.defense*.08):plan.tempo-defPlan.tempo)*.055;
    const lineupShift=off.reduce((sum,p)=>sum+p.rating,0)/off.length-startingLineRating[side];
-   const diff=(attackValue-defenseValue)*.017+(strengths[side]-strengths[1-side])*.009+tacticalEdge+lineupShift*.004;
-   const success=clamp((isPass?.64:power?.7:.72)+diff,.21,.9);
+   const diff=(attackValue-defenseValue)*.017+(strengths[side]-strengths[1-side])*0.015+tacticalEdge+lineupShift*.004;
+   const success=clamp((isPass?.64:power?.7:.72)+diff+urgency-caution,.21,.9);
    // Spark abilities: offence first, then the defence's goal-line stand.
    let forced:'success'|'fail'|undefined,gain=0;
    if(spark[side]>0&&random(w)<.35){
@@ -384,7 +393,7 @@ export function simulateMatch(w:World,m:Match){
    }
    if(!forced&&x>=80&&(defender.ability==='Iron Resolve'&&!spentAbility.has(defender.id))&&spark[1-side]>0&&random(w)<.5){forced='fail';sparkEvent(1-side,defender,EV.ironResolve(defender.name),x);}
    if(isPass&&!forced){
-    const pickRisk=(.02+Math.max(0,defenseValue-attackValue)*.0006)*(.8+plan.aggression*.4)*(has(passer,'Ice-Cold')?.6:1);
+    const pickRisk=(.02+Math.max(0,defenseValue-attackValue)*.0006)*(.8+plan.aggression*.4)*(has(passer,'Ice-Cold')?.6:1)*(chasing?1.35:1);
     if(random(w)<pickRisk){
      const saver=[carrier,passer].find(p=>p.ability==='Sure Hands'&&!spentAbility.has(p.id));
      if(saver&&spark[side]>0){forced='fail';sparkEvent(side,saver,EV.sureHandsPass(saver.name,defender.name),x);}
@@ -398,8 +407,8 @@ export function simulateMatch(w:World,m:Match){
     if(!gain){
      gain=isPass?int(w,3,Math.round(12+plan.aggression*8)):power?int(w,1,6):int(w,3,14);
      // Agile carriers, Showboats and aggressive schemes break more big plays in open space.
-     const bigChance=clamp(.05+(c.agility-60)*.0025,.02,.15)*(.7+plan.aggression*.6)*(has(carrier,'Showboat')?1.6:1);
-     if(!power&&random(w)<bigChance){gain+=int(w,10,25)+(has(carrier,'Showboat')?int(w,3,8):0);event(m,minute,'bigplay',attack.id,carrier,EV.bigplay(carrier.name,gain),score[0],score[1],x+gain);}
+     const bigChance=clamp(.05+(c.agility-60)*.0025,.02,.15)*(.7+plan.aggression*.6)*(has(carrier,'Showboat')?1.6:1)*(chasing?1.5:cruising?0.6:1);
+     if(!power&&random(w)<bigChance){gain+=int(w,10,25)+(has(carrier,'Showboat')?int(w,3,8):0);if(gain>=BIG_PLAY_WRITTEN)event(m,minute,'bigplay',attack.id,carrier,EV.bigplay(carrier.name,gain),score[0],score[1],x+gain);}
     }
     x+=gain;teamStat(side,'yards',gain);matchDrive.yards+=gain;pStat(carrier,'yards',gain);addStat(carrier,'distance',gain);
     if(isPass){teamStat(side,'passesCompleted');teamStat(side,'passingYards',gain);pStat(passer,'passesCompleted');pStat(passer,'passingYards',gain);pStat(carrier,'catches');addStat(passer,'passes');addStat(passer,'passingYards',gain);} else {addStat(carrier,'rushingYards',gain);teamStat(side,'rushingYards',gain);if(gain>=5){addStat(blocker,'blocks');teamStat(side,'blocks');pStat(blocker,'blocks');}}
@@ -459,6 +468,7 @@ export function simulateMatch(w:World,m:Match){
  const matchMvp=Object.values(report.players).sort((a,b)=>b.impact-a.impact)[0];
  if(matchMvp){ const p=getPlayer(w,matchMvp.playerId); if(p){ addStat(p,'mvp'); p.fame+=2+(m.phase==='league'?0:3); m.mvpId=p.id; } }
  report.winner=m.winner;
+ settlePrediction(w,m);
 }
 export function sortedStandings(w:World,region:number,division:0|1):Team[]{return w.teams.filter(t=>t.region===region&&t.division===division).sort((a,b)=>b.record.pts-a.record.pts||(b.record.pf-b.record.pa)-(a.record.pf-a.record.pa)||b.record.pf-a.record.pf||a.name.localeCompare(b.name));}
 function makeKnockout(w:World,week:number,home:Team,away:Team,phase:Match['phase'],region=-1){w.matches.push({id:rid(w,'m'),season:w.season,week,home:home.id,away:away.id,homeScore:null,awayScore:null,phase,region,events:[],seed:int(w,1,99999999)});}
@@ -575,8 +585,37 @@ function offseason(w:World){
  for(const t of w.teams){const count=Math.max(0,15-t.roster.length);for(let i=0;i<count;i++){const role=ROLES.filter(role=>teamRoster(w,t).filter(p=>p.role===role).length<2)[0]||pick(w,ROLES);const p=createPlayer(w,t,role,true);w.players.push(p);t.roster.push(p.id);log.rookies.push(p.id);}}
  // Compact long-term history, keep recent seasons full and all finals.
  w.matches=w.matches.filter(m=>m.season>=w.season-2||m.phase==='grand-final'||m.phase==='regional-final');
+ // Predictions are kept only while their match is.
+ if(w.predictions){const kept=new Set(w.matches.map(m=>m.id));for(const id of Object.keys(w.predictions))if(!kept.has(id))delete w.predictions[id];}
  w.news=w.news.slice(0,450);
 }
+// ── Matchday helpers ────────────────────────────────────────────────────────────────────
+/** The home side's chance of winning before kickoff, from team strength and home edge. No dice are rolled. */
+export function winChance(w:World,m:Match):number{
+ const home=getTeam(w,m.home),away=getTeam(w,m.away);
+ const edge=m.phase==='grand-final'?0:.2+home.fanbase*.01;
+ return 1/(1+Math.exp(-((teamRating(w,home)+edge)-teamRating(w,away))/3.2));
+}
+/** Coins for a correct pick: more for backing the underdog. */
+export const predictionReward=(chance:number)=>Math.round(10+Math.max(0,.5-chance)*40);
+/** Pick a winner for a showcase fixture before it is played. Changing your mind is allowed until kickoff. */
+export function predict(w:World,matchId:string,teamId:string):World{
+ const m=w.matches.find(x=>x.id===matchId);
+ if(!m||m.homeScore!==null||m.season!==w.season||m.week!==w.week)throw new Error('Ya no se puede apostar por este partido.');
+ if(currentStage(w).kind!=='showcase')throw new Error('Las predicciones solo se hacen en los grandes eventos.');
+ if(teamId!==m.home&&teamId!==m.away)throw new Error('Ese club no juega este partido.');
+ const home=winChance(w,m);
+ (w.predictions??={})[matchId]={teamId,chance:teamId===m.home?home:1-home};
+ return w;
+}
+/** Settle a prediction once its match is played. */
+function settlePrediction(w:World,m:Match){
+ const pick=w.predictions?.[m.id];if(!pick||pick.settled)return;
+ const won=m.winner===pick.teamId;pick.settled=won?'won':'lost';pick.coins=won?predictionReward(pick.chance):0;
+ if(won){w.coins??={};w.coins[m.season]=(w.coins[m.season]??0)+pick.coins;}
+}
+export const seasonCoins=(w:World,season=w.season)=>w.coins?.[season]??0;
+
 /** Resolve a single fixture without advancing the calendar: used by Watch Match and Quick Result. */
 export function resolveMatch(w:World,id:string):World { const m=w.matches.find(x=>x.id===id); if(!m) throw new Error('Ese partido no está en esta crónica.'); if(m.season!==w.season||m.week!==w.week) throw new Error('Solo se pueden jugar los partidos de esta semana.'); simulateMatch(w,m); w.lastUpdated=Date.now(); return w; }
 

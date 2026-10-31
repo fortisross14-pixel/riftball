@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { currentFixtures, currentStage, galaItems, getTeam, lineup, teamRoster } from '../engine';
+import { currentFixtures, currentStage, galaItems, getTeam, lineup, seasonCoins, teamRoster } from '../engine';
+import { PredictionPicker } from './parts/PreMatchCard';
 import { useGame } from '../game/context';
 import { Shield, houseColours } from '../art/Heraldry';
 import { Portrait } from '../art/Portrait';
@@ -106,6 +107,7 @@ function ShowcaseBoard({ id }: { id: ShowcaseId }) {
         <h1 className="folio-title">{SHOWCASE_TITLE[id]}</h1>
         <p className="folio-sub">{SHOWCASE_STAKE[id]}</p>
         <p className={`stage-remaining ${pending.length ? '' : 'is-done'}`} role="status">{ES.stage.remaining(pending.length)}</p>
+        <p className="stage-coins">{ES.predict.hint} <b>{ES.predict.tally(seasonCoins(w))}</b></p>
         {groups.map((g) => (
           <div key={String(g)} className="stage-group">
             {g !== null && <h2 className="page-head small">{ES.stage.group(g)}</h2>}
@@ -143,6 +145,7 @@ function FixtureRow({ m, disabled, onWatch, onQuick, onReplay }: { m: Match; dis
           ? <button type="button" className="ink-button" onClick={onReplay}>{ES.stage.replay}</button>
           : <><button type="button" className="gilt-button" disabled={disabled} onClick={onWatch}>{ES.stage.watch}</button><button type="button" className="ink-button" disabled={disabled} onClick={onQuick}>{ES.stage.quick}</button></>}
       </span>
+      <span className="stage-predict"><PredictionPicker m={m} home={h} away={a} /></span>
     </li>
   );
 }
@@ -241,6 +244,7 @@ function Gala() {
       <header className="gala-head">
         <h1 className="showcase-title">{ES.gala.title}</h1>
         <p className="showcase-stake">{ES.gala.sub(w.season)}</p>
+        {seasonCoins(w) > 0 && <p className="stage-coins"><b>{ES.predict.tally(seasonCoins(w))}</b></p>}
       </header>
       {!items.length && <Blank>{ES.gala.nothing}</Blank>}
       <ol className="gala-list">

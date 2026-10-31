@@ -69,3 +69,16 @@ test('Every club and athlete still resolves raster art after 5 seasons',()=>{
  assert.equal(w.season,6);
  assertArtResolves(w,'after 5 seasons');
 });
+
+test('Games stay close: 30-35% end within one score (6 points) and under 12% by 20 or more',()=>{
+ let games=0,close=0,blowouts=0;
+ for(const seed of [55,66,77,88,99]){
+  const w=createWorld(seed);
+  while(w.season<=2)advanceWeekAuto(w);
+  for(const m of w.matches){if(m.homeScore===null)continue;const margin=Math.abs(m.homeScore-m.awayScore!);games++;if(margin<=6)close++;if(margin>=20)blowouts++;}
+ }
+ assert.ok(games>5000,`games ${games}`);
+ const closeShare=close/games,blowoutShare=blowouts/games;
+ assert.ok(closeShare>=.30&&closeShare<=.35,`one-score games ${(closeShare*100).toFixed(1)}%`);
+ assert.ok(blowoutShare<.12,`20+ games ${(blowoutShare*100).toFixed(1)}%`);
+});

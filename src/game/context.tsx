@@ -11,6 +11,7 @@ export type Game = {
   advance: (weeks: number) => void;
   resolveFixture: (id: string) => Promise<boolean>;
   resolveFixtures: (ids: string[]) => boolean;
+  predict: (matchId: string, teamId: string) => void;
   dismissIntro: () => void;
   revealAward: () => void;
   simulateToNextEvent: () => void;

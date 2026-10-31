@@ -70,7 +70,7 @@
 .stage-group + .stage-group { margin-top: 16px; }
 .stage-fixtures { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .stage-fixture {
-  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: 'h s a' 'x x x';
+  display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); grid-template-areas: 'h s a' 'x x x' 'p p p';
   align-items: center; gap: 6px 10px;
   padding: 8px 10px; border: 1px solid var(--vellum-3); background: rgba(255, 250, 235, 0.4);
 }

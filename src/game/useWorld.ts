@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { advanceOneWeek, createWorld, dismissIntro as dismissIntroIn, isEventStage, isStageComplete, resolveMatch, revealAward as revealAwardIn } from '../engine';
+import { advanceOneWeek, createWorld, dismissIntro as dismissIntroIn, isEventStage, predict as predictIn, isStageComplete, resolveMatch, revealAward as revealAwardIn } from '../engine';
 import { deleteSave, exportLegacySave, exportSave, LegacySaveError, loadSave, SaveConflict, saveWorld, validateImport } from '../storage';
 import type { World } from '../types';
 import { ES } from '../i18n/es';
@@ -135,6 +135,7 @@ export function useWorld() {
 
   const resolveFixture = useCallback(async (id: string) => mutate((w) => resolveMatch(w, id)), [mutate]);
   const resolveFixtures = useCallback((ids: string[]) => mutate((w) => { for (const id of ids) resolveMatch(w, id); }), [mutate]);
+  const predict = useCallback((matchId: string, teamId: string) => { mutate((w) => predictIn(w, matchId, teamId)); }, [mutate]);
   const dismissIntro = useCallback(() => { mutate(dismissIntroIn); }, [mutate]);
   const revealAward = useCallback(() => { mutate(revealAwardIn); }, [mutate]);
 
@@ -189,5 +190,5 @@ export function useWorld() {
   const exportWorld = useCallback(() => { if (world) exportSave(world); }, [world]);
   const exportLegacy = useCallback(() => { if (legacy) exportLegacySave(legacy.raw); }, [legacy]);
 
-  return { world, legacy, save, conflict, busy, notice, setNotice, advance, simulateToNextEvent, resolveFixture, resolveFixtures, dismissIntro, revealAward, refreshLatest, newUniverse, startFresh, importFile, exportWorld, exportLegacy };
+  return { world, legacy, save, conflict, busy, notice, setNotice, advance, simulateToNextEvent, resolveFixture, resolveFixtures, predict, dismissIntro, revealAward, refreshLatest, newUniverse, startFresh, importFile, exportWorld, exportLegacy };
 }

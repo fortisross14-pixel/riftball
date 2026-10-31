@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SEASON, StageBlockedError, advanceOneWeek, advanceWeekAuto, createWorld, currentFixtures, currentStage, dismissIntro, galaItems, isEventStage, isStageComplete, pendingFixtures, resolveMatch, revealAward } from './engine';
+import { SEASON, StageBlockedError, advanceOneWeek, advanceWeekAuto, createWorld, currentFixtures, currentStage, dismissIntro, galaItems, isEventStage, isStageComplete, pendingFixtures, predict, predictionReward, resolveMatch, revealAward, seasonCoins, winChance } from './engine';
 import type { World } from './types';
 
 // One world played up to the national semifinal week, shared (and cloned) by the tests below.
@@ -93,4 +93,24 @@ test('The market writes a summary the pre-season page can show', () => {
   advanceOneWeek(w);
   assert.equal(w.week, 1);
   assert.equal(currentStage(w).kind, 'league');
+});
+
+test('Showcase predictions pay coins of the Rift for correct picks, more for underdogs', () => {
+  const w = atNationalSemis();
+  const league = currentFixtures(w)[0];
+  assert.throws(() => predict(w, league.id, league.home), 'no predictions outside showcases');
+  advanceOneWeek(w);
+  const fixtures = currentFixtures(w);
+  for (const m of fixtures) predict(w, m.id, m.away);
+  const chances = fixtures.map((m) => 1 - winChance(w, m));
+  for (const m of fixtures) resolveMatch(w, m.id);
+  assert.throws(() => predict(w, fixtures[0].id, fixtures[0].home), 'no picks after kickoff');
+  let expected = 0;
+  fixtures.forEach((m, i) => {
+    const pick = w.predictions![m.id];
+    assert.equal(pick.settled, m.winner === m.away ? 'won' : 'lost');
+    if (m.winner === m.away) expected += predictionReward(chances[i]);
+  });
+  assert.equal(seasonCoins(w), expected);
+  assert.ok(predictionReward(0.2) > predictionReward(0.6));
 });
