@@ -20,10 +20,10 @@ export async function saveWorld(world:World,knownRevision:number):Promise<number
  });
 }
 export async function deleteSave():Promise<void>{const db=await openDB();return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(KEY);tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);});}
-export function exportSave(world:World){const blob=new Blob([JSON.stringify({format:'riftball-world-v1',world},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`riftball-year-${world.season}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+export function exportSave(world:World){const blob=new Blob([JSON.stringify({format:'riftball-world-v2',world})],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`riftball-year-${world.season}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 export function validateImport(input:unknown):World{
  if(typeof input!=='object'||input===null)throw new Error('Invalid save file');
  const item=input as {format?:string;world?:World};const w=item.world;
- if(item.format!=='riftball-world-v1'||!w||w.version!==1||!Array.isArray(w.teams)||w.teams.length!==80||!Array.isArray(w.players)||!Array.isArray(w.matches)||!Array.isArray(w.news)||!Array.isArray(w.trophies)||!Number.isInteger(w.rng)||!Number.isInteger(w.season)||!Number.isInteger(w.week)||w.week<1||w.week>26)throw new Error('This is not a compatible Riftball v1 save.');
+ if((item.format!=='riftball-world-v1'&&item.format!=='riftball-world-v2')||!w||(w.version!==1&&w.version!==2)||!Array.isArray(w.teams)||w.teams.length!==80||!Array.isArray(w.players)||!Array.isArray(w.matches)||!Array.isArray(w.news)||!Array.isArray(w.trophies)||!Number.isInteger(w.rng)||!Number.isInteger(w.season)||!Number.isInteger(w.week)||w.week<1||w.week>26)throw new Error('This is not a compatible Riftball save (v1 or v2).');
  return normalizeWorld(w);
 }

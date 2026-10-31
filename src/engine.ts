@@ -1,4 +1,5 @@
 import { ATTR_KEYS, EMPTY_RECORD, EMPTY_STATS, RACES, REGIONS, ROLES } from './types';
+import { chronicleOffseason, chronicleWeek, rebuildRecords } from './chronicle';
 import type { Attributes, Match, MatchEvent, Player, Race, Rarity, Role, SeasonStats, StatKey, Story, Team, World } from './types';
 
 const CITIES = [
@@ -99,8 +100,8 @@ const PALETTE:[string,string][][]=[
  [['#7c759e','#c3b5e7'],['#758b9e','#b8d2e1'],['#7d546c','#d9b1cd'],['#587987','#9eb8c4'],['#9a6a70','#d9acbb']]
 ];
 export function random(w:World):number { w.rng = (Math.imul(1664525,w.rng)+1013904223)>>>0; return w.rng/4294967296; }
-const int=(w:World,a:number,b:number)=>Math.floor(a+random(w)*(b-a+1));
-const pick=<T,>(w:World,a:T[])=>a[int(w,0,a.length-1)];
+export const int=(w:World,a:number,b:number)=>Math.floor(a+random(w)*(b-a+1));
+export const pick=<T,>(w:World,a:T[])=>a[int(w,0,a.length-1)];
 const clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n));
 const rid=(w:World,prefix:string)=>`${prefix}-${++w.serial}`;
 const grade=(r:number):Rarity => r<.003?'Generational':r<.02?'Legendary':r<.09?'Extraordinary':r<.27?'Elite':r<.57?'Professional':'Ordinary';
@@ -112,6 +113,7 @@ export function positionRating(attrs:Attributes,role:Role):number { const weight
 // plateaus, then declines from declineAge. Long-lived races keep their edge.
 const PEAK_AGE=27, GROWTH_PER_YEAR=1.7;
 const RETIRE_AGE:Record<Race,number>={Human:35,Orc:35,Elf:40,Dwarf:38,Goblin:30,Troll:35,Lizardkin:35,Revenant:44,Satyr:35};
+export const retireAge=(race:Race)=>RETIRE_AGE[race];
 export const declineAge=(race:Race)=>RETIRE_AGE[race]-4;
 const growthEnd=(race:Race)=>Math.min(PEAK_AGE,declineAge(race));
 // Expected distance between a player's current rating and their peak at a given age.
@@ -170,7 +172,7 @@ function seedSchedule(w:World){
  }
 }
 export function createWorld(seed=2026):World {
- const w:World={version:1,seed,rng:seed>>>0,season:1,week:1,teams:[],players:[],matches:[],news:[],trophies:[],awards:[],retired:[],history:[],serial:0,totalGames:0,lastUpdated:Date.now()};
+ const w:World={version:2,seed,rng:seed>>>0,season:1,week:1,teams:[],players:[],matches:[],news:[],trophies:[],awards:[],storylines:[],records:[],retired:[],history:[],serial:0,totalGames:0,lastUpdated:Date.now()};
  for(let region=0;region<4;region++)for(let i=0;i<20;i++){
   const city=CITIES[region][i],nickname=NICKNAMES[region][i],colors=PALETTE[region][i%5];
   const team:Team={id:rid(w,'t'),name:`${city} ${nickname}`,city,nickname,initials:(city.slice(0,2)+nickname.slice(0,1)).toUpperCase(),region,division:i<10?0:1,colors,philosophy:pick(w,PHILOSOPHIES).toUpperCase(),power:int(w,45,85),fanbase:int(w,32,94),academy:int(w,35,90),budget:int(w,15,85),roster:[],record:EMPTY_RECORD(),historyTitles:0,worldTitles:0,rival:'',rivalHeat:0,rivalRecord:{w:0,d:0,l:0},form:[]};
@@ -190,9 +192,10 @@ export function createWorld(seed=2026):World {
  addStory(w,'scandal','REFEREES REQUEST HAZARD PAY',`The Riftball Authority has confirmed that all match officials will receive protective armor, a whistle, and exactly one emergency teleportation voucher.`,undefined,undefined,undefined,1);
  return w;
 }
-function addStory(w:World,kind:Story['kind'],title:string,body:string,teamId?:string,playerId?:string,matchId?:string,importance=2){
- w.news.unshift({id:rid(w,'n'),season:w.season,week:w.week,kind,title,body,teamId,playerId,matchId,importance});
+export function addStory(w:World,kind:Story['kind'],title:string,body:string,teamId?:string,playerId?:string,matchId?:string,importance=2):Story{
+ const story:Story={id:rid(w,'n'),season:w.season,week:w.week,kind,title,body,teamId,playerId,matchId,importance};w.news.unshift(story);
  if(w.news.length>450)w.news.length=450;
+ return story;
 }
 export function getTeam(w:World,id:string):Team {return w.teams.find(t=>t.id===id)!;}
 // Player lookup by id. Rebuilt whenever the active player list is replaced or changes size.
@@ -210,7 +213,7 @@ export function lineup(w:World,t:Team):Player[]{
  for(const role of requirements){const possible=pool.filter(p=>!chosen.includes(p));if(!possible.length)break;possible.sort((a,b)=>(b.rating-(b.role===role?0:16))-(a.rating-(a.role===role?0:16)));chosen.push(possible[0]);}
  return chosen;
 }
-function teamRating(w:World,t:Team,starters=lineup(w,t)):number{ if(!starters.length)return 32; return starters.reduce((s,p)=>s+p.rating,0)/starters.length + t.power*.075;}
+export function teamRating(w:World,t:Team,starters=lineup(w,t)):number{ if(!starters.length)return 32; return starters.reduce((s,p)=>s+p.rating,0)/starters.length + t.power*.075;}
 const mean=(players:Player[],...keys:StatKey[])=>players.length?players.reduce((s,p)=>s+keys.reduce((sum,k)=>sum+p.attrs[k],0)/keys.length,0)/players.length:42;
 function addStat(p:Player,key:keyof SeasonStats,amount=1){p.stats[key]+=amount;p.career[key]+=amount;}
 // XP needed for the next level grows with the square of the level, so level 15 is reserved for long, busy careers.
@@ -238,7 +241,7 @@ const count=(line:Player[],trait:string)=>line.filter(p=>p.trait===trait).length
 function rivalryResult(w:World,m:Match){
  const home=getTeam(w,m.home),away=getTeam(w,m.away);if(home.rival!==away.id)return;
  const h=m.homeScore!,a=m.awayScore!,margin=Math.abs(h-a);
- const heat=3+(margin<=3?6:0)+(margin>=20?8:0)+(m.phase!=='league'?12:0);
+ const heat=2+(margin<=3?4:0)+(margin>=20?5:0)+(m.phase!=='league'?10:0);
  for(const [t,us,them] of [[home,h,a],[away,a,h]] as [Team,number,number][]){t.rivalHeat=Math.min(100,t.rivalHeat+heat);if(us>them)t.rivalRecord.w++;else if(us<them)t.rivalRecord.l++;else t.rivalRecord.d++;}
 }
 export function simulateMatch(w:World,m:Match){
@@ -441,7 +444,7 @@ function annualAwards(w:World){
 }
 function offseason(w:World){
  // Old grudges cool slowly.
- for(const t of w.teams)t.rivalHeat=Math.round(t.rivalHeat*.85);
+ for(const t of w.teams)t.rivalHeat=Math.round(t.rivalHeat*.75);
  // Clubs rise and fall: results move budget and fanbase, and budget and results move club power.
  // A pull back toward the middle keeps dynasties from lasting forever.
  for(const t of w.teams){
@@ -474,7 +477,8 @@ function offseason(w:World){
   if(p.age>=ageThreshold&&random(w)<.15+Math.max(0,p.age-ageThreshold)*.11)expired.push(p);
   p.stats=EMPTY_STATS();
  }
- for(const p of expired){p.retired=true;w.retired.push(p);w.players=w.players.filter(x=>x.id!==p.id);const t=getTeam(w,p.teamId);t.roster=t.roster.filter(id=>id!==p.id);if(p.career.breaches>35||p.championships>=2)addStory(w,'milestone',`FAREWELL TO ${p.name.toUpperCase()}`,`${p.name} retires after ${p.seasons} seasons, ${p.career.breaches} Breaches and ${p.championships} world titles. The retirement speech was briefly interrupted by a goblin with a trumpet.`,t.id,p.id,undefined,3);}
+ for(const p of expired){p.retired=true;w.retired.push(p);w.players=w.players.filter(x=>x.id!==p.id);const t=getTeam(w,p.teamId);t.roster=t.roster.filter(id=>id!==p.id);if(p.career.breaches>35||p.championships>=2)if(!w.storylines.some(s=>s.id===`lastdance:${p.id}`&&s.status==='active'))addStory(w,'milestone',`FAREWELL TO ${p.name.toUpperCase()}`,`${p.name} retires after ${p.seasons} seasons, ${p.career.breaches} Breaches and ${p.championships} world titles. The retirement speech was briefly interrupted by a goblin with a trumpet.`,t.id,p.id,undefined,3);}
+ chronicleOffseason(w,expired);
  for(const t of w.teams){const count=Math.max(0,15-t.roster.length);for(let i=0;i<count;i++){const role=ROLES.filter(role=>teamRoster(w,t).filter(p=>p.role===role).length<2)[0]||pick(w,ROLES);const p=createPlayer(w,t,role,true);w.players.push(p);t.roster.push(p.id);}}
  // Compact long-term history, keep recent seasons full and all finals.
  w.matches=w.matches.filter(m=>m.season>=w.season-2||m.phase==='grand-final'||m.phase==='regional-final');
@@ -491,6 +495,7 @@ export function advanceOneWeek(w:World):World {
  if(week===22)setupFromPrevious(w,22,'world-semi','grand-final');
  if(week===23){const final=matchesIn(w,23,'grand-final')[0];if(final?.winner){const winner=getTeam(w,final.winner);winner.worldTitles++;for(const p of teamRoster(w,winner))p.championships++;w.trophies.push({season:w.season,competition:'GRAND RIFT CHAMPIONSHIP',teamId:winner.id,runnerUpId:final.home===winner.id?final.away:final.home});w.history.unshift({season:w.season,teamId:winner.id,description:`World champions · ${winner.name}`});}}
  if(week===24)annualAwards(w);
+ chronicleWeek(w,week,fixtures);
  if(week===25){offseason(w);addStory(w,'roundup',`YEAR ${w.season} CLOSES — A NEW WORLD AWAITS`,`Contracts have changed hands, some heroes have retired, and the league claims to have repaired most of the stadiums. The next season approaches.`,undefined,undefined,undefined,3);}
  if(week===26){w.season++;w.week=1;seedSchedule(w);addStory(w,'roundup',`YEAR ${w.season} IS HERE`,`Eighty clubs. Four regions. One world championship. The accountants have approved a fresh season of extremely expensive violence.`,undefined,undefined,undefined,3);}
  else w.week++;
@@ -504,6 +509,9 @@ export function summarize(w:World){const completed=w.matches.filter(m=>m.homeSco
 // Fill in fields added after a save was written, so older universes keep loading.
 export function normalizeWorld(w:World):World{
  w.awards??=[];
+ // v1 -> v2: storylines and the records table.
+ if(!w.version||w.version<2){w.storylines??=[];if(!w.records)rebuildRecords(w);w.version=2;}
+ w.storylines??=[];if(!w.records)rebuildRecords(w);
  for(const t of w.teams){t.rivalHeat??=30;t.rivalRecord??={w:0,d:0,l:0};}
  for(const p of [...w.players,...w.retired]){p.stats.blocks??=0;p.career.blocks??=0;}
  return w;

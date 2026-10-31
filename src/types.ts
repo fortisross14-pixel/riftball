@@ -11,10 +11,10 @@ export type EventKind = 'breach' | 'gate' | 'aftershock' | 'interception' | 'kno
 export type MatchEvent = { minute:number; kind:EventKind; teamId:string; playerId?:string; text:string; homeScore:number; awayScore:number; x:number; };
 export type Match = { id:string; season:number; week:number; home:string; away:string; homeScore:number|null; awayScore:number|null; phase:'league'|'regional-semi'|'regional-final'|'world-quarter'|'world-semi'|'grand-final'; region:number; events:MatchEvent[]; winner?:string; seed:number; };
 export type NewsKind = 'result' | 'milestone' | 'injury' | 'championship' | 'transfer' | 'prospect' | 'scandal' | 'roundup';
-export type Story = { id:string; season:number; week:number; kind:NewsKind; title:string; body:string; teamId?:string; playerId?:string; matchId?:string; importance:number; };
+export type Story = { id:string; season:number; week:number; kind:NewsKind; title:string; body:string; teamId?:string; playerId?:string; matchId?:string; importance:number; badge?:StoryBadge; storylineId?:string; };
 export type Award = { season:number; award:string; playerId:string; teamId:string; };
 export type Trophy = { season:number; competition:string; teamId:string; runnerUpId?:string; };
-export type World = { version:number; seed:number; rng:number; season:number; week:number; teams:Team[]; players:Player[]; matches:Match[]; news:Story[]; trophies:Trophy[]; awards:Award[]; retired:Player[]; history:{season:number; teamId:string; description:string}[]; serial:number; totalGames:number; lastUpdated:number; };
+export type World = { version:number; seed:number; rng:number; season:number; week:number; teams:Team[]; players:Player[]; matches:Match[]; news:Story[]; trophies:Trophy[]; awards:Award[]; storylines:Storyline[]; records:RecordEntry[]; retired:Player[]; history:{season:number; teamId:string; description:string}[]; serial:number; totalGames:number; lastUpdated:number; };
 export const REGIONS = ['IRON MARCHES','VERDANT REALMS','ASHEN COAST','GLOAMLANDS'];
 export const REGION_CAPTIONS = ['The Foundries','The Crownlands','The Free Ports','The Shadow Territories'];
 export const ROLES:Role[] = ['Bastion','Breaker','Runner','Thrower','Raider','Trickster'];
@@ -22,3 +22,10 @@ export const RACES:Race[] = ['Human','Orc','Elf','Dwarf','Goblin','Troll','Lizar
 export const ATTR_KEYS:StatKey[]=['strength','speed','agility','endurance','handling','passing','tackling','blocking','positioning','awareness','composure','arcana'];
 export const EMPTY_STATS = (): SeasonStats => ({games:0,breaches:0,assists:0,tackles:0,knockouts:0,interceptions:0,distance:0,passes:0,gates:0,mvp:0,injuries:0,blocks:0});
 export const EMPTY_RECORD = ():RecordTable => ({w:0,d:0,l:0,pf:0,pa:0,pts:0});
+export type StorylineKind = 'drought' | 'dynasty' | 'record' | 'rivalry' | 'last-dance' | 'prodigy' | 'upset' | 'heartbreak';
+// A storyline is the Chronicle's memory: later stories can refer back to it through `memory` ("the heartbreak in Brineport").
+// subjects hold team ids, player ids, or `region:N`.
+export type Storyline = { id:string; kind:StorylineKind; subjects:string[]; startSeason:number; lastSeason:number; status:'active'|'resolved'; memory:string; data:Record<string,number|string>; };
+export type StoryBadge = 'DROUGHT' | 'DYNASTY' | 'RECORD' | 'RIVALRY' | 'UPSET' | 'PRODIGY' | 'LAST DANCE';
+export type RecordStat = 'breaches' | 'tackles' | 'interceptions' | 'knockouts' | 'assists' | 'distance' | 'gates';
+export type RecordEntry = { stat:RecordStat; scope:'season'|'career'; value:number; playerId:string; playerName:string; teamId:string; season:number; since?:number; };
