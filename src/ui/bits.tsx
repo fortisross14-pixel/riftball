@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { ReactNode } from 'react';
 import type { Player, Team } from '../types';
 import { Portrait } from '../art/Portrait';
@@ -6,7 +7,7 @@ import { useGame } from '../game/context';
 import { ES, formLetter } from '../i18n/es';
 
 /** A framed athlete miniature. Rarity sets the frame's pigment. */
-export function Miniature({ player, size = 72, className = '' }: { player: Player; size?: number; className?: string }) {
+export const Miniature = memo(function Miniature({ player, size = 72, className = '' }: { player: Player; size?: number; className?: string }) {
   const { team } = useGame();
   const t = team(player.teamId);
   return (
@@ -14,7 +15,7 @@ export function Miniature({ player, size = 72, className = '' }: { player: Playe
       <Portrait player={player} house={t ? houseColours(t) : undefined} size={size} />
     </span>
   );
-}
+});
 
 export function HouseName({ team, size = 26, full = false }: { team: Team | undefined; size?: number; full?: boolean }) {
   const { go } = useGame();

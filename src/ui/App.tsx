@@ -21,6 +21,7 @@ import { Annals } from '../screens/Annals';
 import { Colophon } from '../screens/Colophon';
 import { StageScreen } from '../screens/Stage';
 import { Tour } from './Tour';
+import { usePageTurn } from './prefs';
 
 // Six main sections; Ajustes sits behind the gear in the header.
 const RIBBONS: { section: Section; name: string; silk: string }[] = [
@@ -39,15 +40,16 @@ export default function App() {
   const { route, go } = useRoute();
   const key = routeKey(route);
   const [turning, setTurning] = useState(0);
+  const [pageTurn] = usePageTurn();
   const [newSeason, setNewSeason] = useState<number | null>(null);
   const first = useRef(true);
   const lastWeek = useRef<string | null>(null);
 
   useEffect(() => {
     if (first.current) { first.current = false; return; }
-    setTurning((n) => n + 1);
+    if (pageTurn) setTurning((n) => n + 1);
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
-  }, [key]);
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // When the calendar enters an event (a showcase, the gala, the market), open the event page.
   // A new season gets its own card. Loading a save never jumps anywhere.
@@ -117,6 +119,7 @@ export default function App() {
           <span className="boss boss-tl" aria-hidden="true" /><span className="boss boss-tr" aria-hidden="true" />
           <span className="boss boss-bl" aria-hidden="true" /><span className="boss boss-br" aria-hidden="true" />
           <div className="book">
+            <div className="book-paper" aria-hidden="true" />
             <Headband world={w} save={game.save} onColophon={() => go({ kind: 'section', section: 'colophon' })} />
             <ControlBar world={w} busy={!!game.busy} locked={game.conflict}
               onEvent={active === 'evento' ? undefined : () => go({ kind: 'section', section: 'evento' })}
@@ -124,7 +127,7 @@ export default function App() {
             <main id="folio" className="folio-stage" key={key}>
               <Page route={route} />
             </main>
-            {turning > 0 && <div className="leaf" key={turning} aria-hidden="true"><div className="leaf-front" /><div className="leaf-back" /></div>}
+            {turning > 0 && pageTurn && <div className="leaf" key={turning} aria-hidden="true"><div className="leaf-front" /><div className="leaf-back" /></div>}
             <div className="gutter-shade" aria-hidden="true" />
           </div>
         </div>

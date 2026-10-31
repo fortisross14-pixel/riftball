@@ -24,7 +24,7 @@
 .scoreboard::after { right: -20px; clip-path: polygon(0 0, 100% 0, 60% 50%, 100% 100%, 0 100%); }
 .sb-side { display: flex; align-items: center; gap: 16px; min-width: 0; }
 .sb-side.is-away { justify-content: flex-end; text-align: right; }
-.sb-side .shield { flex: none; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.5)); }
+.sb-side .shield { flex: none; }
 .sb-side strong { display: block; font-family: var(--face-display); font-weight: 700; font-size: clamp(1.4rem, 2.2vw, 2.2rem); line-height: 1; }
 .sb-side small { font-family: var(--face-data); font-size: 0.9rem; color: #e4cfa0; }
 .sb-centre { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 220px; }
@@ -48,7 +48,7 @@
 .arena .token-halo { animation: halo 1.4s ease-in-out infinite; }
 @keyframes halo { 50% { opacity: 0.4; } }
 .arena .ball { transition: transform 620ms var(--ease-out); }
-.arena .rift-line { filter: drop-shadow(0 0 4px #7af0ff); animation: rift 3s ease-in-out infinite; }
+.arena .rift-line { animation: rift 3s ease-in-out infinite; }
 @keyframes rift { 50% { opacity: 0.55; } }
 .arena .burst-inner { animation: burst 1300ms var(--ease-out) forwards; transform-origin: 0 0; }
 @keyframes burst { 0% { transform: scale(0.2); opacity: 0; } 18% { transform: scale(1.1); opacity: 1; } 70% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.04); opacity: 0; } }

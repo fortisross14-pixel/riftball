@@ -4,7 +4,7 @@
    ===================================================================== */
 
 :root {
-  --leaf: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='140'%3E%3Cfilter id='f' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03 .055' numOctaves='3' seed='7' result='n'/%3E%3CfeSpecularLighting in='n' surfaceScale='3.2' specularConstant='1' specularExponent='16' lighting-color='%23fff2c0' result='s'%3E%3CfeDistantLight azimuth='225' elevation='38'/%3E%3C/feSpecularLighting%3E%3CfeComposite in='s' in2='SourceGraphic' operator='arithmetic' k1='0' k2='.6' k3='1' k4='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' fill='%23b0802a' filter='url(%23f)'/%3E%3C/svg%3E");
+  --leaf: url("./tex/leaf.webp");
   --boss: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64' viewBox='0 0 64 64'%3E%3Cdefs%3E%3CradialGradient id='b' cx='.35' cy='.3' r='.85'%3E%3Cstop offset='0' stop-color='%23f6dc8a'/%3E%3Cstop offset='.5' stop-color='%23b8862a'/%3E%3Cstop offset='1' stop-color='%235a3e0c'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cpath d='M2 2 H62 V12 C52 12 47 16 45 21 C40 19 34 22 33 27 C28 26 23 30 22 34 C17 35 13 41 12 46 L12 62 H2 Z' fill='url(%23b)' stroke='%232a1a10' stroke-width='1.5'/%3E%3Ccircle cx='15' cy='15' r='8' fill='url(%23b)' stroke='%232a1a10' stroke-width='1.3'/%3E%3Ccircle cx='15' cy='15' r='3.4' fill='none' stroke='%235a3e0c' stroke-width='1.2'/%3E%3Ccircle cx='12.5' cy='12.5' r='2' fill='%23fff3c8' opacity='.75'/%3E%3Ccircle cx='52' cy='7' r='2.1' fill='%235a3e0c'/%3E%3Ccircle cx='7' cy='52' r='2.1' fill='%235a3e0c'/%3E%3Cpath d='M5 30 Q12 27 14 21 M30 5 Q27 12 21 14' fill='none' stroke='%235a3e0c' stroke-width='1.4'/%3E%3C/svg%3E");
   --tooling: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48'%3E%3Crect x='3' y='3' width='42' height='42' fill='none' stroke='%23a07a2c' stroke-width='1.2'/%3E%3Crect x='13' y='13' width='22' height='22' fill='none' stroke='%23a07a2c' stroke-width='1'/%3E%3Cg fill='%23c8962e'%3E%3Cpath d='M8 5.5 L10.5 8 L8 10.5 L5.5 8Z'/%3E%3Cpath d='M24 5.5 L26.5 8 L24 10.5 L21.5 8Z'/%3E%3Cpath d='M40 5.5 L42.5 8 L40 10.5 L37.5 8Z'/%3E%3Cpath d='M8 21.5 L10.5 24 L8 26.5 L5.5 24Z'/%3E%3Cpath d='M40 21.5 L42.5 24 L40 26.5 L37.5 24Z'/%3E%3Cpath d='M8 37.5 L10.5 40 L8 42.5 L5.5 40Z'/%3E%3Cpath d='M24 37.5 L26.5 40 L24 42.5 L21.5 40Z'/%3E%3Cpath d='M40 37.5 L42.5 40 L40 42.5 L37.5 40Z'/%3E%3C/g%3E%3C/svg%3E");
   --deckle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='64'%3E%3Cpath d='M0 0 H6 L3 5 L7 11 L2 17 L6 23 L3 30 L8 36 L2 43 L6 50 L3 57 L5 64 H0 Z' fill='%23a88a5c' opacity='.55'/%3E%3Cpath d='M0 0 H3 L1 6 L4 12 L1 19 L3 26 L1 33 L4 40 L1 47 L3 55 L1 64 H0 Z' fill='%232e0b09' opacity='.85'/%3E%3C/svg%3E");
@@ -18,7 +18,7 @@
   background-origin: border-box;
   padding: clamp(6px, 0.8vw, 12px);
 }
-.boss { width: 64px; height: 64px; background: var(--boss) no-repeat center / contain; clip-path: none; filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.55)); }
+.boss { width: 64px; height: 64px; background: var(--boss) no-repeat center / contain; clip-path: none; }
 .boss-tl { top: -10px; left: -10px; }
 .boss-tr { top: -10px; right: -10px; }
 .boss-bl { bottom: -10px; left: -10px; }
@@ -72,7 +72,7 @@
 }
 .masthead .ribbons { position: static; grid-column: 2; padding: 0; }
 .turn-corner { position: relative; right: auto; bottom: auto; grid-column: 3; justify-self: end; flex-direction: column; align-items: flex-end; pointer-events: auto; margin-right: 22px; }
-.turn-actions { filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.5)); }
+
 .turn-page {
   padding: 18px 30px 14px 16px;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 24px), calc(100% - 24px) 100%, 0 100%);

@@ -510,6 +510,10 @@ export const ES = {
     burnBody: 'Borra la partida guardada y funda un mundo nuevo con otra semilla. Exporta antes si quieres conservar este.',
     burnButton: 'Fundar un mundo nuevo',
     open: 'Abrir los ajustes',
+    display: 'Pantalla',
+    pageTurn: 'Animación de pasar página',
+    pageTurnNote: 'Más bonita, un poco más lenta. Desactívala si el equipo va justo.',
+    pageTurnOff: 'Desactivada: tu dispositivo es táctil o pide movimiento reducido.',
   },
 
   /* ---------------------------------------------------------------- an athlete's page */

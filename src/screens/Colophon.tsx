@@ -2,12 +2,14 @@ import { useRef } from 'react';
 import { nfmt, useGame } from '../game/context';
 import { exportSave } from '../storage';
 import { ES } from '../i18n/es';
+import { pageTurnAllowed, usePageTurn } from '../ui/prefs';
 
 const T = ES.settings;
 
 export function Colophon() {
   const { world: w, go, locked, importFile, newUniverse } = useGame();
   const input = useRef<HTMLInputElement>(null);
+  const [pageTurn, setPageTurn] = usePageTurn();
   const games = w.totalGames ?? w.matches.filter((m) => m.homeScore !== null).length;
   return (
     <div className="spread colophon">
@@ -23,6 +25,12 @@ export function Colophon() {
           <div><dt>{T.retired}</dt><dd>{nfmt(w.retired.length)}</dd></div>
         </dl>
         <p className="colophon-note">{T.note}</p>
+        <h2 className="page-head small spaced">{T.display}</h2>
+        <label className="check">
+          <input type="checkbox" checked={pageTurn} disabled={!pageTurnAllowed()} onChange={(e) => setPageTurn(e.target.checked)} />
+          <span>{T.pageTurn}</span>
+        </label>
+        <p className="aside-note">{pageTurnAllowed() ? T.pageTurnNote : T.pageTurnOff}</p>
       </section>
       <section className="page recto">
         <h2 className="page-head">{T.keeping}</h2>

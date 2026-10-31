@@ -12,8 +12,13 @@
 // transparent PNGs of the shield only. The most specific match wins; anything missing falls back
 // to the vector art, so files can be added one at a time.
 
-const portraitFiles = import.meta.glob('./raster/portraits/*.{png,webp,jpg}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const crestFiles = import.meta.glob('./raster/crests/*.{png,webp,jpg}', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+// The game serves baked WebP art (scripts/bake-art.cjs): full size for big displays and 96px thumbnails
+// for lists. The PNG sources in raster/crests and raster/portraits are not bundled.
+const glob = (files: Record<string, string>) => files;
+const portraitFiles = glob(import.meta.glob('./raster/web/portraits/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>);
+const portraitThumbs = glob(import.meta.glob('./raster/web/portraits-96/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>);
+const crestFiles = glob(import.meta.glob('./raster/web/crests/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>);
+const crestThumbs = glob(import.meta.glob('./raster/web/crests-96/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>);
 
 function index(files: Record<string, string>) {
   const out = new Map<string, string>();
@@ -25,15 +30,22 @@ function index(files: Record<string, string>) {
 }
 
 const portraits = index(portraitFiles);
+const portraits96 = index(portraitThumbs);
 const crests = index(crestFiles);
+const crests96 = index(crestThumbs);
+/** Displays up to this many CSS pixels use the 96px thumbnail (sharp up to about 2x density for small marks). */
+const THUMB_MAX = 64;
+
 // Lookups use the stable keys stored on each club (artKey) and athlete (portraitKey), never a display
 // name, so translating or renaming clubs never breaks their art.
-export function paintedPortrait(playerId: string, portraitKey: string | undefined): string | undefined {
+export function paintedPortrait(playerId: string, portraitKey: string | undefined, size = 180): string | undefined {
   if (!portraits.size) return undefined;
-  return portraits.get(`player-${playerId.toLowerCase()}`) ??(portraitKey ? portraits.get(portraitKey) : undefined);
+  const set = size <= THUMB_MAX ? portraits96 : portraits;
+  return set.get(`player-${playerId.toLowerCase()}`) ?? (portraitKey ? set.get(portraitKey) : undefined);
 }
 
-export function paintedCrest(teamId: string, artKey: string | undefined): string | undefined {
+export function paintedCrest(teamId: string, artKey: string | undefined, size = 96): string | undefined {
   if (!crests.size) return undefined;
-  return crests.get(`club-${teamId.toLowerCase()}`) ??(artKey ? crests.get(artKey) : undefined);
+  const set = size <= THUMB_MAX ? crests96 : crests;
+  return set.get(`club-${teamId.toLowerCase()}`) ?? (artKey ? set.get(artKey) : undefined);
 }

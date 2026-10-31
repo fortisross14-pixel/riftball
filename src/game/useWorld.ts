@@ -1,21 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { advanceOneWeek, createWorld, dismissIntro as dismissIntroIn, isEventStage, predict as predictIn, isStageComplete, resolveMatch, revealAward as revealAwardIn } from '../engine';
-import { deleteSave, exportLegacySave, exportSave, LegacySaveError, loadSave, SaveConflict, saveWorld, validateImport } from '../storage';
+import { createWorld, dismissIntro as dismissIntroIn, isStageComplete, predict as predictIn, revealAward as revealAwardIn } from '../engine';
+import { deleteSave, exportLegacySave, exportSave, LegacySaveError, loadSave, SaveConflict, validateImport } from '../storage';
 import type { World } from '../types';
 import { ES } from '../i18n/es';
+import { createSimClient, type SimClient } from './simClient';
 
 export type SaveState = 'loading' | 'saving' | 'saved' | 'new' | 'unavailable' | 'conflict';
 
-/** The longest run "simulate to the next event" will ever play (a whole season and then some). */
-const MAX_RUN = 40;
-
 /**
  * The book's state: the world, its persistence in IndexedDB, cross-tab conflict protection,
- * and every action that changes the world. Progress always goes through the engine's stage
- * gates: nothing here can play past an unfinished showcase or an unrevealed gala.
+ * and every action that changes the world. The simulation and the saving run in a Web Worker
+ * that keeps its own copy of the world, so the page never freezes. Progress always goes through
+ * the engine's stage gates: nothing here can play past an unfinished showcase or an unrevealed gala.
  */
 export function useWorld() {
-  const [world, setWorld] = useState<World | null>(null);
+  const [world, setWorldState] = useState<World | null>(null);
   const [legacy, setLegacy] = useState<{ raw: unknown } | null>(null);
   const [save, setSave] = useState<SaveState>('loading');
   const [conflict, setConflict] = useState(false);
@@ -26,6 +25,11 @@ export function useWorld() {
   const channel = useRef<BroadcastChannel | null>(null);
   const session = useRef(`sess-${Math.random().toString(36).slice(2)}`);
   const jobRef = useRef(false);
+  const sim = useRef<SimClient | null>(null);
+  if (!sim.current) sim.current = createSimClient();
+
+  /** Replace the whole world (load, import, new universe): the worker gets its own copy. */
+  const replaceWorld = useCallback((w: World) => { sim.current!.load(w); setWorldState(w); }, []);
 
   useEffect(() => {
     let alive = true;
@@ -40,14 +44,14 @@ export function useWorld() {
         } else if (found) {
           savedRevision.current = found.revision;
           skipLoadedSave.current = true;
-          setWorld(found.world);
+          replaceWorld(found.world);
           setSave('saved');
         } else {
-          setWorld(createWorld());
+          replaceWorld(createWorld());
           setSave('new');
         }
       } catch {
-        if (alive) { setWorld(createWorld()); setSave('unavailable'); }
+        if (alive) { replaceWorld(createWorld()); setSave('unavailable'); }
       }
     })();
     try {
@@ -55,15 +59,16 @@ export function useWorld() {
       channel.current.onmessage = (e) => { if (e.data?.session !== session.current && e.data?.type === 'updated') setConflict(true); };
     } catch { channel.current = null; }
     return () => { alive = false; channel.current?.close(); };
-  }, []);
+  }, [replaceWorld]);
 
+  // Saving happens in the worker, from its own copy, shortly after each change.
   useEffect(() => {
     if (!world || conflict) return;
     if (skipLoadedSave.current) { skipLoadedSave.current = false; return; }
     setSave('saving');
     const timer = setTimeout(async () => {
       try {
-        const revision = await saveWorld(world, savedRevision.current);
+        const revision = await sim.current!.save(savedRevision.current);
         savedRevision.current = revision;
         setSave('saved');
         channel.current?.postMessage({ type: 'updated', session: session.current, revision });
@@ -80,26 +85,17 @@ export function useWorld() {
     return () => clearTimeout(t);
   }, [notice]);
 
-  /** Play weeks one at a time until `stop` says so, yielding to the browser to draw progress. */
-  const run = useCallback(async (plan: number, stop: (w: World, played: number) => boolean) => {
-    if (jobRef.current || !world || conflict) return;
-    if (!isStageComplete(world)) { setNotice(ES.notice.stageBlocked); return; }
+  /** Run a simulation job in the worker; the page stays responsive and shows progress. */
+  const job = useCallback(async (work: () => Promise<World>, showBusy: number) => {
+    if (jobRef.current || !world || conflict) return false;
     jobRef.current = true;
-    setBusy({ current: 0, total: plan });
+    if (showBusy) setBusy({ current: 0, total: showBusy });
     try {
-      const w = structuredClone(world) as World;
-      let played = 0;
-      do {
-        advanceOneWeek(w);
-        played++;
-        if (played % 3 === 0) {
-          setBusy({ current: played, total: Math.max(plan, played) });
-          await new Promise((r) => setTimeout(r, 0));
-        }
-      } while (!stop(w, played) && isStageComplete(w) && played < MAX_RUN);
-      setWorld(w);
+      setWorldState(await work());
+      return true;
     } catch (e) {
       setNotice(ES.notice.failed(e instanceof Error ? e.message : ''));
+      return false;
     } finally {
       jobRef.current = false;
       setBusy(null);
@@ -107,37 +103,40 @@ export function useWorld() {
   }, [world, conflict]);
 
   /** The main button: finish the current week and move to the next one. */
-  const advance = useCallback(async (count = 1) => run(count, (_w, played) => played >= count), [run]);
+  const advance = useCallback(async (count = 1) => {
+    if (world && !isStageComplete(world)) { setNotice(ES.notice.stageBlocked); return; }
+    await job(() => sim.current!.run(count, 'count', count, (current, total) => setBusy({ current, total })), count);
+  }, [job, world]);
 
   /** Play league weeks until the next event (a showcase intro, the gala, the market). Never enters one. */
   const simulateToNextEvent = useCallback(async () => {
     if (!world) return;
-    let plan = 0;
-    for (let wk = world.week; wk < 22; wk++) plan++;
-    return run(Math.max(1, plan), (w) => isEventStage(w));
-  }, [run, world]);
+    if (!isStageComplete(world)) { setNotice(ES.notice.stageBlocked); return; }
+    const plan = Math.max(1, 22 - world.week);
+    await job(() => sim.current!.run(plan, 'event', 0, (current, total) => setBusy({ current, total })), plan);
+  }, [job, world]);
 
-  /** Apply a quick, synchronous change to a copy of the world. */
-  const mutate = useCallback((fn: (w: World) => void, after?: string) => {
-    if (jobRef.current || !world || conflict) return false;
-    jobRef.current = true;
+  const resolveFixtures = useCallback((ids: string[]) => { void job(() => sim.current!.resolve(ids), 0); return true; }, [job]);
+  const resolveFixture = useCallback(async (id: string) => job(() => sim.current!.resolve([id]), 0), [job]);
+
+  /**
+   * Small changes (intro seen, an award revealed, a prediction) are applied to a shallow copy here,
+   * so the tap answers at once, and mirrored into the worker's copy.
+   */
+  const quick = useCallback((apply: (w: World) => void, op: Parameters<SimClient['op']>[0]) => {
+    if (jobRef.current || !world || conflict) return;
     try {
-      const w = structuredClone(world) as World;
-      fn(w);
-      setWorld(w);
-      if (after) setNotice(after);
-      return true;
+      const copy: World = { ...world, stage: world.stage && { ...world.stage }, predictions: world.predictions && { ...world.predictions } };
+      apply(copy);
+      setWorldState(copy);
+      sim.current!.op(op);
     } catch (e) {
       setNotice(ES.notice.failed(e instanceof Error ? e.message : ''));
-      return false;
-    } finally { jobRef.current = false; }
+    }
   }, [world, conflict]);
-
-  const resolveFixture = useCallback(async (id: string) => mutate((w) => resolveMatch(w, id)), [mutate]);
-  const resolveFixtures = useCallback((ids: string[]) => mutate((w) => { for (const id of ids) resolveMatch(w, id); }), [mutate]);
-  const predict = useCallback((matchId: string, teamId: string) => { mutate((w) => predictIn(w, matchId, teamId)); }, [mutate]);
-  const dismissIntro = useCallback(() => { mutate(dismissIntroIn); }, [mutate]);
-  const revealAward = useCallback(() => { mutate(revealAwardIn); }, [mutate]);
+  const predict = useCallback((matchId: string, teamId: string) => quick((w) => predictIn(w, matchId, teamId), { name: 'predict', matchId, teamId }), [quick]);
+  const dismissIntro = useCallback(() => quick(dismissIntroIn, { name: 'dismissIntro' }), [quick]);
+  const revealAward = useCallback(() => quick(revealAwardIn, { name: 'revealAward' }), [quick]);
 
   const refreshLatest = useCallback(async () => {
     try {
@@ -145,13 +144,13 @@ export function useWorld() {
       if (stored?.kind === 'world') {
         savedRevision.current = stored.revision;
         skipLoadedSave.current = true;
-        setWorld(stored.world);
+        replaceWorld(stored.world);
         setConflict(false);
         setSave('saved');
         setNotice(ES.notice.refreshed);
       }
     } catch { setNotice(ES.notice.archiveClosed); }
-  }, []);
+  }, [replaceWorld]);
 
   const startFresh = useCallback(async () => {
     try {
@@ -159,11 +158,11 @@ export function useWorld() {
       savedRevision.current = 0;
       setConflict(false);
       setLegacy(null);
-      setWorld(createWorld(Math.floor(Math.random() * 1000000000)));
+      replaceWorld(createWorld(Math.floor(Math.random() * 1000000000)));
       setNotice(ES.notice.newWorld);
       return true;
     } catch { setNotice(ES.notice.clearFailed); return false; }
-  }, []);
+  }, [replaceWorld]);
 
   const newUniverse = useCallback(async () => {
     if (!window.confirm(ES.confirm.newWorld)) return false;
@@ -178,14 +177,14 @@ export function useWorld() {
       savedRevision.current = 0;
       setConflict(false);
       setLegacy(null);
-      setWorld(parsed);
+      replaceWorld(parsed);
       setNotice(ES.notice.imported);
       return true;
     } catch (e) {
       setNotice(e instanceof LegacySaveError ? ES.legacy.importRejected : e instanceof Error ? e.message : ES.notice.importUnreadable);
       return false;
     }
-  }, []);
+  }, [replaceWorld]);
 
   const exportWorld = useCallback(() => { if (world) exportSave(world); }, [world]);
   const exportLegacy = useCallback(() => { if (legacy) exportLegacySave(legacy.raw); }, [legacy]);

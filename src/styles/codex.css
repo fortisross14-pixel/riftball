@@ -40,10 +40,10 @@
   --page-pad: clamp(22px, 3.6vw, 60px);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --tex-vellum: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .25 0 0 0 0 .12 0 0 0 .1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  --tex-fibre: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .05' numOctaves='2' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .36 0 0 0 0 .18 0 0 0 .13 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
-  --tex-wood: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='500'%3E%3Cfilter id='w'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.003 .11' numOctaves='4' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 .32 0 0 0 0 .19 0 0 0 0 .1 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23w)'/%3E%3C/svg%3E");
-  --tex-leather: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='turbulence' baseFrequency='.09' numOctaves='3' seed='2'/%3E%3CfeColorMatrix values='0 0 0 0 .1 0 0 0 0 .02 0 0 0 0 .01 0 0 0 .35 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23l)'/%3E%3C/svg%3E");
+  --tex-vellum: url("./tex/vellum.webp");
+  --tex-fibre: url("./tex/fibre.webp");
+  --tex-wood: url("./tex/wood.webp");
+  --tex-leather: url("./tex/leather.webp");
   --vine: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='34' height='120' viewBox='0 0 34 120'%3E%3Cpath d='M17 0 C6 20 28 40 17 60 C6 80 28 100 17 120' fill='none' stroke='%232f6b57' stroke-width='1.6'/%3E%3Cpath d='M17 26 c-10 -4 -14 -12 -9 -16 c5 2 9 8 9 16Z' fill='%232f6b57'/%3E%3Cpath d='M17 86 c10 -4 14 -12 9 -16 c-5 2 -9 8 -9 16Z' fill='%232f6b57'/%3E%3Ccircle cx='26' cy='46' r='2.4' fill='%23c8962e'/%3E%3Ccircle cx='8' cy='106' r='2.4' fill='%23c8962e'/%3E%3Ccircle cx='24' cy='60' r='1.6' fill='%23a3271c'/%3E%3C/svg%3E");
 }
 
@@ -62,7 +62,6 @@ body {
     radial-gradient(ellipse 120% 90% at 50% 50%, transparent 55%, rgba(0, 0, 0, 0.55)),
     var(--tex-wood),
     linear-gradient(180deg, #2a1b11, #170f0a);
-  background-attachment: fixed;
   font-variant-numeric: oldstyle-nums proportional-nums;
   -webkit-font-smoothing: antialiased;
 }
@@ -244,7 +243,7 @@ h1, h2, h3, h4, p { margin: 0; }
 /* ------------------------------------------------------------ spreads and pages */
 
 .folio-stage { position: relative; animation: ink-in 760ms var(--ease-out) backwards 180ms; }
-@keyframes ink-in { from { opacity: 0; filter: blur(3px); } to { opacity: 1; filter: none; } }
+@keyframes ink-in { from { opacity: 0; } to { opacity: 1; } }
 
 .spread { display: grid; grid-template-columns: 1fr 1fr; }
 .page { padding: 34px var(--page-pad) 64px; min-width: 0; position: relative; z-index: 1; }
@@ -364,7 +363,7 @@ h1, h2, h3, h4, p { margin: 0; }
 .house-name { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-weight: 700; min-width: 0; }
 .house-name span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .house-name:hover span { color: var(--rubric); text-decoration: underline; text-underline-offset: 3px; }
-.house-name .shield { flex: none; filter: drop-shadow(0 1px 1px rgba(40, 25, 10, 0.3)); }
+.house-name .shield { flex: none; }
 .athlete-name { font-weight: 700; text-decoration: none; }
 .athlete-name:hover { color: var(--rubric); text-decoration: underline; text-underline-offset: 3px; }
 .is-gone { font-style: italic; color: var(--ink-3); }
@@ -445,7 +444,7 @@ h1, h2, h3, h4, p { margin: 0; }
 /* ------------------------------------------------------------ the turn corner */
 
 .turn-corner { position: fixed; right: clamp(12px, 2vw, 32px); bottom: clamp(12px, 2vw, 28px); z-index: 30; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; }
-.turn-actions { display: flex; align-items: stretch; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55)); }
+.turn-actions { display: flex; align-items: stretch; }
 .turn-page {
   position: relative;
   display: flex; align-items: center; gap: 12px;

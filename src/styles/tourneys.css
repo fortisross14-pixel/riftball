@@ -44,7 +44,7 @@ button.bracket-match:hover { transform: translateY(-2px); box-shadow: 0 8px 16px
 .bracket-side.is-winner .bracket-name, .bracket-side.is-winner strong { color: var(--rubric); }
 .bracket-side.is-loser { opacity: 0.55; }
 .bracket-heart { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-.bracket-heart .rift-crown { filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.5)); }
+
 .bracket-heart .bracket-match { border: 2px solid var(--gold-hi); }
 .reigning { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; font-size: 0.92rem; color: #e4d6b0; }
 .reigning button { display: inline-flex; align-items: center; gap: 8px; border: 0; background: none; color: #fff4d6; padding: 2px 4px; }

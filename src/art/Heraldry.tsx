@@ -120,8 +120,8 @@ type ShieldProps = { team: Pick<Team, 'id' | 'nickname' | 'region' | 'name'> & {
 
 function ShieldImpl({ team, size = 64, title = false }: ShieldProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const painted = paintedCrest(team.id, team.artKey);
-  if (painted) return <img src={painted} width={size} height={size * 1.2} alt={title ? ES.club.arms(team.name) : ''} className="shield-img" draggable={false} />;
+  const painted = paintedCrest(team.id, team.artKey, size);
+  if (painted) return <img src={painted} width={size} height={size * 1.2} alt={title ? ES.club.arms(team.name) : ''} className="shield-img" draggable={false} loading="lazy" decoding="async" />;
   const arms = armsOf(team);
   const path = SHIELD_PATHS[arms.shape];
   const charge = CHARGES[arms.charge] ?? CHARGES.mullet;

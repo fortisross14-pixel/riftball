@@ -145,7 +145,7 @@
 .arms-entry:hover { background: rgba(200, 150, 46, 0.12); }
 .arms-entry:hover .shield { transform: rotate(-3deg) scale(1.04); }
 .arms-shield { position: relative; display: flex; flex-direction: column; align-items: center; }
-.arms-shield .shield { transition: transform 300ms var(--ease-out); filter: drop-shadow(0 4px 5px rgba(50, 30, 10, 0.35)); }
+.arms-shield .shield { transition: transform 300ms var(--ease-out); }
 .crowns { display: flex; gap: 3px; margin-top: 4px; }
 .crowns i { width: 12px; height: 9px; background: var(--gold); clip-path: polygon(0 100%, 0 20%, 25% 60%, 50% 0, 75% 60%, 100% 20%, 100% 100%); }
 .arms-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
@@ -158,7 +158,7 @@
 /* ------------------------------------------------------------ House folio */
 
 .house-hero { display: grid; grid-template-columns: auto 1fr; gap: 18px; align-items: center; }
-.achievement { display: block; filter: drop-shadow(0 10px 14px rgba(50, 30, 10, 0.35)); }
+.achievement { display: block; }
 .house-realm { font-family: var(--face-rubric); font-weight: 700; color: var(--rubric); }
 .house-hero .folio-title { font-size: clamp(2.3rem, 3.4vw, 3.7rem); margin-top: 4px; }
 .blazon { margin-top: 12px; font-style: italic; color: var(--ink-2); font-size: 1.1rem; }

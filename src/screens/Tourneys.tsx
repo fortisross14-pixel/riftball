@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import type { Match, Team } from '../types';
 import { REGIONS } from '../types';
 import { sortedStandings } from '../engine';
@@ -95,7 +95,7 @@ export function Tourneys() {
   );
 }
 
-export function ChallengeRow({ m, showPhase = false }: { m: Match; showPhase?: boolean }) {
+export const ChallengeRow = memo(function ChallengeRow({ m, showPhase = false }: { m: Match; showPhase?: boolean }) {
   const { team, go, world, resolveFixture, busy, locked } = useGame();
   const h = team(m.home);
   const a = team(m.away);
@@ -112,7 +112,7 @@ export function ChallengeRow({ m, showPhase = false }: { m: Match; showPhase?: b
       {!done && m.season === world.season && m.week === world.week && <span className="challenge-actions"><button type="button" className="gilt-button" disabled={busy || locked} onClick={() => go({ kind: 'contest', id: m.id })}>{T.watch}</button><button type="button" className="ink-button" disabled={busy || locked} onClick={() => void resolveFixture(m.id)}>{T.quick}</button></span>}
     </div>
   );
-}
+});
 
 /* ------------------------------------------------------------ The World Cup, laid across both pages */
 
