@@ -279,12 +279,12 @@ export const ES = {
   /* ---------------------------------------------------------------- the words of a match (glossary) */
   term: {
     breach: '¡BRECHA!', gate: '¡PORTAZO!', aftershock: '¡RÉPLICA!', spark: '¡CHISPA!', knockout: '¡KO!', interception: '¡ROBO!',
-    fumble: '¡BALÓN SUELTO!', bigplay: '¡JUGADÓN!', injury: 'Lesión', whistle: 'Pitido', penalty: '¡FALTA!',
+    fumble: '¡BALÓN SUELTO!', bigplay: '¡JUGADÓN!', injury: 'Lesión', whistle: 'Pitido', penalty: '¡FALTA!', miss: 'Portazo fallado',
   } as Record<string, string>,
   /** Calm versions of the glossary words for lists and tables. */
   termPlain: {
     breach: 'Brecha', gate: 'Portazo', aftershock: 'Réplica', spark: 'Chispa', knockout: 'KO', interception: 'Robo',
-    fumble: 'Balón suelto', bigplay: 'Jugadón', injury: 'Lesión', whistle: 'Pitido', penalty: 'Falta',
+    fumble: 'Balón suelto', bigplay: 'Jugadón', injury: 'Lesión', whistle: 'Pitido', penalty: 'Falta', miss: 'Portazo fallado',
   } as Record<string, string>,
 
   /* ---------------------------------------------------------------- Crónica */

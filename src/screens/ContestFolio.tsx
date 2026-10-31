@@ -22,7 +22,7 @@ const L = T.live;
 /** The glossary: calm words for lists, loud ones for the arena. */
 const KIND_WORD = ES.termPlain as Record<MatchEvent['kind'], string>;
 const KIND_SHOUT = ES.term as Record<MatchEvent['kind'], string>;
-const KIND_WEIGHT: Record<MatchEvent['kind'], number> = { breach: 8, gate: 4, aftershock: 2, interception: 5, knockout: 4, fumble: 3, bigplay: 3, injury: 2, whistle: 1, penalty: 2, spark: 2 };
+const KIND_WEIGHT: Record<MatchEvent['kind'], number> = { breach: 8, gate: 4, aftershock: 2, interception: 5, knockout: 4, fumble: 3, bigplay: 3, injury: 2, whistle: 1, penalty: 2, spark: 2, miss: 1 };
 const LOUD = new Set<MatchEvent['kind']>(['breach', 'gate', 'interception', 'knockout', 'fumble', 'spark']);
 /** Moments that get a full callout over the pitch. */
 const CALLOUT = new Set<MatchEvent['kind']>(['breach', 'gate', 'aftershock', 'spark', 'knockout', 'interception', 'bigplay']);

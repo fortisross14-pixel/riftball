@@ -448,7 +448,7 @@ export function simulateMatch(w:World,m:Match){
    }
    if(downs<=0){
     // Final down: the philosophy decides whether to kick a gate shot. Ice-Cold kickers rarely miss.
-    if(x>=70-plan.gate*25&&random(w)<.2+plan.gate*.5){teamStat(side,'gatesAttempted');const kicker=passer;const probability=clamp(.72-(90-x)*.01+(kicker.attrs.composure-50)*.004+(has(kicker,'Ice-Cold')?.12:0)+clutch(kicker)*.02,.23,.92);if(random(w)<probability){score[side]+=2;teamStat(side,'gates');pStat(kicker,'gates');matchDrive.result='gate';matchDrive.scorerId=kicker.id;addStat(kicker,'gates');event(m,minute,'gate',attack.id,kicker,EV.gate(kicker.name),score[0],score[1],x);}else {matchDrive.result='miss';event(m,minute,'whistle',attack.id,kicker,EV.gateMiss(kicker.name),score[0],score[1],x);}}
+    if(x>=46-plan.gate*20&&random(w)<.6+plan.gate*.35){teamStat(side,'gatesAttempted');const kicker=passer;const probability=clamp(.72-(90-x)*.01+(kicker.attrs.composure-50)*.004+(has(kicker,'Ice-Cold')?.12:0)+clutch(kicker)*.02,.23,.92);if(random(w)<probability){score[side]+=2;teamStat(side,'gates');pStat(kicker,'gates');matchDrive.result='gate';matchDrive.scorerId=kicker.id;addStat(kicker,'gates');event(m,minute,'gate',attack.id,kicker,EV.gate(kicker.name),score[0],score[1],x);}else {matchDrive.result='miss';event(m,minute,'miss',attack.id,kicker,EV.gateMiss(kicker.name),score[0],score[1],x);}}
     break;}
   }
   matchDrive.endX=x;matchDrive.endMinute=minute;matchDrive.points=score[side]-beforeScore;
