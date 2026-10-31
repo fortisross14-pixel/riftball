@@ -137,3 +137,44 @@ test('Club power drifts with results, and max level stays rare over 30 seasons',
   assert.ok(maxed<.03,`max level share ${maxed}`);
  }
 });
+
+test('Pass 3 reports reconcile official scores, attempts, metres and possessions',()=>{
+ const w=createWorld(611);for(let i=0;i<4;i++)advanceOneWeek(w);
+ const matches=w.matches.filter(m=>m.homeScore!==null);
+ assert.ok(matches.length>80);
+ for(const m of matches){
+  const report=m.report!;assert.ok(report,'completed matches have a full report');
+  assert.equal(report.drives.length,report.teams[m.home].possessions+report.teams[m.away].possessions);
+  for(const [teamId,expected] of [[m.home,m.homeScore!],[m.away,m.awayScore!]] as const){
+   const t=report.teams[teamId];assert.equal(t.breaches*5+t.gates*2+t.aftershocks,expected);
+   assert.equal(t.plays,t.runAttempts+t.passAttempts);
+   assert.equal(t.yards,t.rushingYards+t.passingYards);
+   assert.ok(t.passesCompleted<=t.passAttempts);
+   const contributions=Object.values(report.players).filter(p=>p.teamId===teamId);
+   assert.equal(contributions.reduce((sum,p)=>sum+p.passesAttempted,0),t.passAttempts);
+   assert.equal(contributions.reduce((sum,p)=>sum+p.passesCompleted,0),t.passesCompleted);
+  }
+ }
+});
+
+test('Pass 3 substitutes healthy bench athletes, tracks contributions, and preserves roster integrity',()=>{
+ const w=createWorld(612);for(let i=0;i<3;i++)advanceOneWeek(w);
+ const matches=w.matches.filter(m=>m.report);
+ assert.ok(matches.some(m=>Object.values(m.report!.benchUsed).some(ids=>ids.length>0)));
+ for(const m of matches)for(const t of [m.home,m.away]){
+  const r=m.report!;assert.equal(r.starters[t].length,8);
+  assert.ok(r.benchUsed[t].every(id=>!r.starters[t].includes(id)));
+  assert.equal(new Set(r.starters[t]).size,8);
+ }
+ for(const t of w.teams)assert.equal(teamRoster(w,t).length,15);
+});
+
+test('Pass 3 season archives survive offseason and report fields are optional for legacy saves',()=>{
+ const w=createWorld(613);for(let i=0;i<52;i++)advanceOneWeek(w);
+ assert.deepEqual(w.seasonArchive?.map(a=>a.season),[1,2]);
+ assert.equal(w.seasonArchive?.[0].standings.length,80);
+ const historic=w.matches.find(m=>m.season===1&&m.phase==='grand-final')!;assert.ok(historic);
+ delete historic.report;
+ assert.equal(historic.homeScore!==null,true);
+ assert.equal(historic.report,undefined);
+});

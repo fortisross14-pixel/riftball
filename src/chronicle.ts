@@ -217,9 +217,47 @@ function awardFollowUps(w:World){
  }
 }
 
+// Broadcast stories use recorded match facts and never synthesize statistics from headline events.
+function matchReportStories(w:World,fixtures:Match[]){
+ const scored=fixtures.filter(m=>m.report&&m.homeScore!==null&&m.awayScore!==null);
+ if(!scored.length)return;
+ const starCandidates=scored.flatMap(m=>Object.values(m.report!.players).map(row=>({m,row})));
+ const standout=starCandidates.sort((a,b)=>b.row.impact-a.row.impact)[0];
+ if(standout?.row.impact>=20){
+  const p=getPlayer(w,standout.row.playerId),t=getTeam(w,standout.row.teamId);
+  if(p){const stats=standout.row;const feats=[stats.breaches?`${stats.breaches} Breach${stats.breaches===1?'':'es'}`:'',stats.interceptions?`${stats.interceptions} interception${stats.interceptions===1?'':'s'}`:'',stats.tackles>=4?`${stats.tackles} tackles`:'',stats.yards>=40?`${stats.yards} metres gained`:'',stats.knockouts?`${stats.knockouts} knockouts`:''].filter(Boolean);
+   const hooks=['put the opposition in a medical textbook','demanded a second page in the stat ledger','made the stadium announcer run out of adjectives'];
+   addStory(w,'milestone',`${p.name.toUpperCase()} OWNS THE MATCHDAY`,`${p.name} of the ${t.name} produces ${feats.slice(0,3).join(', ')||'a game-changing performance'} in a ${getTeam(w,standout.m.home).name} ${standout.m.homeScore}–${standout.m.awayScore} ${getTeam(w,standout.m.away).name} contest. The performance ${hooks[(w.week+w.season)%hooks.length]}.`,t.id,p.id,standout.m.id,4);
+  }
+ }
+ const drama=scored.map(m=>{
+  const report=m.report!,h=report.teams[m.home],a=report.teams[m.away];
+  const winner=m.winner,loser=winner==m.home?m.away:m.home;
+  const decisive=winner?report.teams[winner]:undefined;
+  const leadFlip=!!winner&&m.events.some(e=>e.minute>=14&&e.minute<=28&&(winner===m.home?e.homeScore<e.awayScore:e.awayScore<e.homeScore));
+  const turnoverBattle=h.turnovers+a.turnovers;
+  const physical=h.knockouts+a.knockouts;
+  const points=Math.abs(m.homeScore!-m.awayScore!);
+  const score=(leadFlip?12:0)+(points<=3?6:0)+(turnoverBattle>=3?7:0)+(physical>=4?5:0)+((decisive?.turnovers??0)===0?1:0)+(m.phase==='grand-final'?15:0);
+  return {m,score,leadFlip,turnoverBattle,physical,winner,loser};
+ }).sort((a,b)=>b.score-a.score)[0];
+ if(drama&&drama.score>=11&&drama.winner){
+  const win=getTeam(w,drama.winner),lose=getTeam(w,drama.loser),m=drama.m;
+  const occasion=drama.leadFlip?'a late reversal':drama.turnoverBattle>=3?'a turnover-strewn battle':drama.physical>=4?'a bruising clash': 'a razor-thin finish';
+  const title=drama.leadFlip?`${win.nickname.toUpperCase()} TURN IT AROUND`:drama.turnoverBattle>=3?`CHAOS ON THE FIELD: ${win.nickname.toUpperCase()} PREVAIL`:`${win.nickname.toUpperCase()} ESCAPE THE CRUNCH`;
+  addStory(w,'result',title,`${win.name} defeat ${lose.name} ${Math.max(m.homeScore!,m.awayScore!)}–${Math.min(m.homeScore!,m.awayScore!)} in ${occasion}. The match records ${drama.turnoverBattle} turnovers and ${drama.physical} knockouts. The referees are requesting a week off.`,win.id,undefined,m.id,3);
+ }
+ // Injury reports are grounded in this week's player-specific match events, not accumulated career totals.
+ const injuries=scored.flatMap(m=>m.events.filter(e=>e.kind==='injury'&&e.playerId).map(e=>({m,e}))).slice(0,5);
+ if(injuries.length>=2&&w.week%3===0){const sample=injuries[0];const p=sample.e.playerId?getPlayer(w,sample.e.playerId):undefined;
+  addStory(w,'injury','THE MEDICAL GUILD HAS QUESTIONS',`${injuries.length} injuries appear in this week's recorded match reports. ${p?`${p.name} is among those requiring treatment. `:''}A spokesman assures supporters that the stretchers are now made from regulation-grade timber.`,sample.e.teamId,sample.e.playerId,sample.m.id,2);
+ }
+}
+
 // Called by the engine after each week's fixtures are played and the next round is scheduled.
 export function chronicleWeek(w:World,week:number,fixtures:Match[]){
  trackRecords(w,week);
+ matchReportStories(w,fixtures);
  upsets(w,fixtures);
  rivalryRecaps(w,fixtures);
  rivalryPreviews(w,w.matches.filter(m=>m.season===w.season&&m.week===week+1&&m.homeScore===null));
