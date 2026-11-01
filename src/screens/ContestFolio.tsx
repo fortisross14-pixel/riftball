@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import type { Match, MatchEvent, Player, Team } from '../types';
@@ -112,6 +112,16 @@ function useFocusMode() {
 function LiveView({ m, home, away, index, setIndex, playing, setPlaying, speed, setSpeed }: LiveProps) {
   const { world: w, go } = useGame();
   useFocusMode();
+  // Callouts sit just under the score strip; on phones its height changes with long club names.
+  const stripRef = useRef<HTMLElement>(null);
+  const [stripH, setStripH] = useState(116);
+  useEffect(() => {
+    const el = stripRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => setStripH(Math.ceil(el.getBoundingClientRect().height) + 8));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
   const events = m.events;
   const current = index >= 0 && index < events.length ? events[index] : undefined;
   const shown = events.slice(0, Math.max(0, index + 1));
@@ -136,8 +146,8 @@ function LiveView({ m, home, away, index, setIndex, playing, setPlaying, speed, 
   const step = (d: number) => { setPlaying(false); setIndex((i) => Math.max(-1, Math.min(events.length, i + d))); };
 
   return createPortal(
-    <div className="live-stage" role="region" aria-label={L.label}>
-      <header className="live-strip">
+    <div className="live-stage" role="region" aria-label={L.label} style={{ '--strip-h': `${stripH}px` } as CSSProperties}>
+      <header className="live-strip" ref={stripRef}>
         <button type="button" className="live-exit" onClick={exit} aria-label={L.exitLabel}>← {L.exit}</button>
         <div className="live-side" style={clubColours(home)}>
           <Shield team={home} size={42} />

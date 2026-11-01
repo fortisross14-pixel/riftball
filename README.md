@@ -58,6 +58,16 @@ Durante el desarrollo usa `npm run test:fast`; ejecuta `npm test` antes de publi
 - **Atletas, Clubes, Estadísticas e Historia** con trayectorias, palmarés, cara a cara con el rival, récords y el Salón de las Leyendas.
 - **Guardado automático** en IndexedDB, exportación e importación en JSON, y protección si otra pestaña escribe a la vez.
 
+## Novedades de la v0.6
+
+- **Las estrellas deciden**: los Legendarios y Generacionales tocan más balón, el mejor titular cuenta doble en la fuerza del equipo, dan un aura de temple en los momentos clave y crecen más rápido. Los clubes con una estrella titular llegan a la final nacional unas 2,5–3 veces más que el resto, pero los favoritos siguen perdiendo casi un tercio de las eliminatorias. Contra las dinastías, tras ganar el título nacional, un club rico del país ficha a la figura del campeón.
+- **Habilidades por rareza**: Básicas (Común y Profesional), Avanzadas (Élite y Épico) y siete **Definitivas** nuevas, solo para Legendarios y Generacionales: Último Aliento, Carrera Infinita, Lanza del Cielo, Mano del Destino, Muro Eterno, Rugido de la Grieta y Furia Ancestral. Tienen carga propia, solo saltan en momentos clave, paran la repetición con un callout casi a pantalla completa y deciden alrededor de un 12 % de los partidos igualados.
+- **El fondo del retrato muestra la rareza**: pergamino, verde, azul, morado (Épico), dorado con rayos y carmesí con borde iridiscente, en todas partes.
+- **Partido en móvil vertical**: una columna con scroll, el marcador fijo arriba y los controles al alcance del pulgar. El menú se desliza en pantallas estrechas.
+- **Nombres**: todos los retratos pintados son masculinos, así que por ahora solo hay nombres masculinos (149 en total). Las partidas antiguas cambian los nombres retirados al cargarlas.
+- **Clubes con personalidad**: estadio con apodo, mascota con carácter, cántico, año de fundación, leyenda fundacional y un **rasgo con efecto real** (Fortaleza, Cantera, Malditos en finales, Afición ruidosa, Sangre fría). Sus colores aparecen en el escudo, la clasificación, el marcador y las celebraciones. La ficha del club tiene estantería de trofeos, leyendas del club y una línea de temporadas.
+- Herramientas de medida: `npx tsx scripts/stars.ts`, `scripts/ultimates.ts` y `scripts/margins.ts`.
+
 ## Guardado y partidas antiguas
 
 El mundo se guarda en el navegador después de cada cambio. Si borras los datos del navegador o usas una ventana privada, puedes perderlo: **exporta una copia** desde Ajustes de vez en cuando.

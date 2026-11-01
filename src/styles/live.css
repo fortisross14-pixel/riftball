@@ -254,11 +254,11 @@ html.is-focus .desk, html.is-focus .marginal-note { visibility: hidden; }
   .live-pitch:has(.live-prematch) .arena { aspect-ratio: 1000 / 440; height: auto; }
   /* Callouts: full width, just under the sticky score strip. */
   .callout, .ultimate-callout {
-    position: fixed; top: 116px; left: 8px; right: 8px; bottom: auto; width: auto;
+    position: fixed; top: var(--strip-h, 116px); left: 8px; right: 8px; bottom: auto; width: auto;
     transform: none; z-index: 30;
   }
   .callout { animation-name: callout-in-mobile; }
-  .ultimate-callout { inset: 116px 8px auto 8px; grid-template-columns: auto minmax(0, 1fr); max-height: calc(100dvh - 190px); overflow: hidden; }
+  .ultimate-callout { inset: var(--strip-h, 116px) 8px auto 8px; grid-template-columns: auto minmax(0, 1fr); max-height: calc(100dvh - var(--strip-h, 116px) - 70px); overflow: hidden; }
   .ultimate-portrait { width: 96px; }
   .ultimate-name { font-size: 2rem; }
   .callout-portrait { width: 72px; height: 72px; }
