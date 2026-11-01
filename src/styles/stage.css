@@ -189,3 +189,31 @@
 .h2h-title { font-family: var(--face-rubric); color: var(--rubric); margin: 10px 0 4px; }
 .mascot-line { font-style: italic; color: var(--ink-2); margin-top: 10px; }
 .mascot-line b { font-style: normal; color: var(--rubric); }
+
+/* ------------------------------------------------------------ rarity grounds behind painted portraits
+   Plain CSS gradients: no SVG filters, no continuous animation. */
+.portrait-ground { position: relative; display: inline-block; flex: none; overflow: hidden; border-radius: inherit; box-sizing: border-box; vertical-align: middle; }
+.portrait-ground > .portrait-img { position: relative; display: block; width: 100%; height: 100%; }
+.ground-ordinary { background: radial-gradient(circle at 50% 38%, #f3e8cc, #d9c79c 75%); }
+.ground-professional { background: radial-gradient(circle at 50% 38%, #6fa585, #2b6149 60%, #163b2d); }
+.ground-elite { background: radial-gradient(circle at 50% 38%, #6d8fd0, #2c4a8e 60%, #15275a); }
+.ground-extraordinary {
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 214, 255, 0.45), transparent 45%),
+    radial-gradient(circle at 50% 38%, #9a5cbf, #5b2580 60%, #2e0f45);
+}
+.ground-legendary {
+  background:
+    repeating-conic-gradient(from 0deg at 50% 62%, rgba(255, 246, 200, 0.42) 0deg 7deg, transparent 7deg 20deg),
+    radial-gradient(circle at 50% 45%, #fbe39a, #d9a637 55%, #8c6418);
+}
+.ground-generational {
+  border: 3px solid transparent;
+  background:
+    radial-gradient(circle at 50% 40%, rgba(255, 200, 190, 0.35), transparent 50%) padding-box,
+    radial-gradient(circle at 50% 38%, #d63c4f, #8e1426 60%, #4a0710) padding-box,
+    conic-gradient(from 30deg, #ff5d73, #ffd36b, #7af0ff, #c77dff, #ff5d73) border-box;
+}
+.matchup-star .portrait-ground { border-radius: 50%; }
+.duel-side .portrait-ground, .after-play-card .portrait-ground { border-radius: 8px; }
+.miniature .portrait-ground { width: 100% !important; height: 100% !important; }

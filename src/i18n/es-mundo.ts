@@ -39,7 +39,7 @@ export const ROL_ES: Record<Role, string> = {
   Bastion: 'Bastión', Breaker: 'Rompedor', Runner: 'Corredor', Thrower: 'Lanzador', Raider: 'Asaltante', Trickster: 'Embaucador',
 };
 export const RAREZA_ES: Record<Rarity, string> = {
-  Ordinary: 'Común', Professional: 'Profesional', Elite: 'Élite', Extraordinary: 'Extraordinario', Legendary: 'Legendario', Generational: 'Generacional',
+  Ordinary: 'Común', Professional: 'Profesional', Elite: 'Élite', Extraordinary: 'Épico', Legendary: 'Legendario', Generational: 'Generacional',
 };
 export const raza = (r: Race) => RAZA_ES[r];
 export const rol = (r: Role) => ROL_ES[r];

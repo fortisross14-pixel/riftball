@@ -553,7 +553,11 @@ export type PortraitProps = {
 function PortraitImpl({ player, house = ['#7d2420', '#d4a537'], size = 180, framed = true, title }: PortraitProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const painted = paintedPortrait(player.id, player.portraitKey, size);
-  if (painted) return <img src={painted} width={size} height={size} alt={title ?? ''} className="portrait-img" draggable={false} loading="lazy" decoding="async" />;
+  if (painted) {
+    const img = <img src={painted} width={size} height={size} alt={title ?? ''} className="portrait-img" draggable={false} loading="lazy" decoding="async" />;
+    // The painted portraits are transparent on purpose: the rarity ground always shows behind them.
+    return framed ? <span className={`portrait-ground ground-${player.rarity.toLowerCase()}`} style={{ width: size, height: size }}>{img}</span> : img;
+  }
   const d = dice(`${player.id}:${player.portrait}`);
   const skins = SKINS[player.race];
   const skin = d.pick(skins);
