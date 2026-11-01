@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { advanceWeekAuto, createWorld, getPlayer, getTeam } from './engine';
 import type { World } from './types';
 import { assertArtResolves } from './testing/art';
+import { starStats, type StarStats } from './testing/stars';
 test('Ten years preserves rosters, histories, unique athlete IDs and valid championships',()=>{
  const w=createWorld(2026);for(let i=0;i<300;i++)advanceWeekAuto(w);
  assert.equal(w.season,11);assert.equal(w.week,1);
@@ -89,4 +90,13 @@ test('The chronicle stays varied: at least 60% unique story bodies over 10 seaso
  assert.ok(bodies.length>500,`stories ${bodies.length}`);
  const share=new Set(bodies).size/bodies.length;
  assert.ok(share>=.6,`unique story bodies ${(share*100).toFixed(1)}%`);
+});
+
+test('Stars decide seasons without owning them: 5 seeds x 20 seasons',()=>{
+ const acc:StarStats={withStar:0,withStarFinals:0,noStar:0,noStarFinals:0,knockouts:0,favouriteLosses:0,maxNationalShare:0};
+ for(const seed of [2026,1,2,3,4])starStats(createWorld(seed),20,acc);
+ const withRate=acc.withStarFinals/acc.withStar,withoutRate=acc.noStarFinals/acc.noStar;
+ assert.ok(withRate>=2*withoutRate,`national finals: with a Legendary/Generational starter ${(withRate*100).toFixed(1)}%, without ${(withoutRate*100).toFixed(1)}%`);
+ assert.ok(acc.maxNationalShare<=.5,`one club won ${(acc.maxNationalShare*100).toFixed(0)}% of its country's titles`);
+ assert.ok(acc.favouriteLosses/acc.knockouts>=.2,`favourites lost only ${((acc.favouriteLosses/acc.knockouts)*100).toFixed(1)}% of knockouts`);
 });

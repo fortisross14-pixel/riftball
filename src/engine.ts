@@ -173,12 +173,14 @@ function assignFoundingPortraits(w:World){
  }
 }
 // One offseason of the age curve. Academy quality speeds up young players' growth.
+/** Rarer athletes reach their ceiling sooner. */
+const RARITY_GROWTH:Record<Rarity,number>={Ordinary:.95,Professional:1,Elite:1.05,Extraordinary:1.12,Legendary:1.25,Generational:1.35};
 function ageCurve(w:World,p:Player){
  const team=w.teams.find(t=>t.id===p.teamId);
  if(p.age<=growthEnd(p.race)){
   const yearsLeft=Math.max(1,growthEnd(p.race)-p.age+1);
   const academy=team&&p.age<=23?(team.academy-60)*.012:0;
-  shiftRating(w,p,Math.max(0,(p.potential-p.rating)/yearsLeft*(.6+random(w)*.8)+academy));
+  shiftRating(w,p,Math.max(0,(p.potential-p.rating)/yearsLeft*(.6+random(w)*.8)*RARITY_GROWTH[p.rarity]+academy));
  }else if(p.age>declineAge(p.race)){
   shiftRating(w,p,-(int(w,1,2)+(p.age-declineAge(p.race))*.35));
  }else if(random(w)<.3)shiftRating(w,p,random(w)<.5?1:-1);
@@ -282,7 +284,12 @@ export function lineup(w:World,t:Team):Player[]{
  for(const role of requirements){const possible=pool.filter(p=>!chosen.includes(p));if(!possible.length)break;possible.sort((a,b)=>(b.rating-(b.role===role?0:16))-(a.rating-(a.role===role?0:16)));chosen.push(possible[0]);}
  return chosen;
 }
-export function teamRating(w:World,t:Team,starters=lineup(w,t)):number{ if(!starters.length)return 32; return starters.reduce((s,p)=>s+p.rating,0)/starters.length + t.power*.075;}
+export function teamRating(w:World,t:Team,starters=lineup(w,t)):number{
+ if(!starters.length)return 32;
+ const best=Math.max(...starters.map(p=>p.rating));
+ const stars=starters.filter(isStar).length;
+ return (starters.reduce((s,p)=>s+p.rating,0)+best)/(starters.length+1)+Math.min(2,stars)*0.9+t.power*0.04;
+}
 const mean=(players:Player[],...keys:StatKey[])=>players.length?players.reduce((s,p)=>s+keys.reduce((sum,k)=>sum+p.attrs[k],0)/keys.length,0)/players.length:42;
 function addStat(p:Player,key:keyof SeasonStats,amount=1){p.stats[key]+=amount;p.career[key]+=amount;}
 // XP needed for the next level grows with the square of the level, so level 15 is reserved for long, busy careers.
@@ -301,6 +308,10 @@ function pickWeighted<T>(w:World,items:T[],weight:(item:T)=>number):T{
  return items[items.length-1];
 }
 // Who touches the ball, makes the tackle, or covers the pass, by role.
+// Stars get the ball. Rarity and rating raise a player's share of carries, catches and tackles.
+export const RARITY_STAR:Record<Rarity,number>={Ordinary:1,Professional:1.05,Elite:1.15,Extraordinary:1.3,Legendary:1.8,Generational:2.2};
+export const isStar=(p:Pick<Player,'rarity'>)=>p.rarity==='Legendary'||p.rarity==='Generational';
+const starWeight=(p:Player)=>RARITY_STAR[p.rarity]*Math.max(.4,1+(p.rating-65)*0.03);
 const CARRY:Record<Role,number>={Runner:6,Trickster:2,Breaker:1.5,Raider:1,Bastion:.2,Thrower:.3};
 const CATCH:Record<Role,number>={Runner:2,Trickster:3,Raider:2.5,Breaker:1,Bastion:.2,Thrower:.1};
 const TACKLE:Record<Role,number>={Breaker:3,Raider:3,Bastion:1.5,Trickster:1.2,Runner:.8,Thrower:.5};
@@ -375,6 +386,8 @@ export function simulateMatch(w:World,m:Match){
   const tired=(p:Player)=>fresh.has(p.id)?0:tiredness*Math.max(0,85-p.attrs.endurance)*.13*(has(p,'Relentless')?.3:1);
   // Clutch Performers raise their game in the final quarter and in knockouts.
   const clutch=(p:Player)=>has(p,'Clutch Performer')?(fatigue>=.75?4:0)+(knockout?2:0):0;
+  const keyMoment=fatigue>=.75||knockout;
+  const aura=(s:number)=>keyMoment&&lines[s].some(isStar)?1.5:0;
   const linemen=off.filter(p=>p.role==='Bastion'||p.role==='Breaker');
   // Substitutions can leave a Bastion-only line, so the last fallback is whoever passes best.
   const byPassing=(a:Player,b:Player)=>b.attrs.passing-a.attrs.passing;
@@ -396,8 +409,8 @@ export function simulateMatch(w:World,m:Match){
    const blockEdge=(mean(off.filter(p=>p.role==='Bastion'||p.role==='Breaker'),'blocking','strength')-mean(deff,'tackling','strength'))/180;
    const isPass=random(w)<clamp(plan.pass+routeEdge-blockEdge*.5+(target-x>=9?.06:0)+(chasing?0.12:0)-(cruising?0.2:0),.12,.86)*(power?.6:1);
    const blocker=pick(w,linemen.length?linemen:off);
-   const carrier=isPass?pickWeighted(w,off.filter(p=>p!==passer),p=>CATCH[p.role]):pickWeighted(w,off,p=>CARRY[p.role]);
-   const defender=pickWeighted(w,deff,p=>isPass?COVER[p.role]:TACKLE[p.role]);
+   const carrier=isPass?pickWeighted(w,off.filter(p=>p!==passer),p=>CATCH[p.role]*starWeight(p)):pickWeighted(w,off,p=>CARRY[p.role]*starWeight(p));
+   const defender=pickWeighted(w,deff,p=>(isPass?COVER[p.role]:TACKLE[p.role])*Math.sqrt(starWeight(p)));
    const c=carrier.attrs,b=blocker.attrs,d=defender.attrs;
    // Undisciplined blockers jump early.
    if((has(blocker,'Undisciplined')&&random(w)<.03*flagRate)||(strike&&random(w)<.025)){x=Math.max(5,x-5);downs--;teamStat(side,'penalties');event(m,minute,'penalty',attack.id,blocker,EV.falseStart(blocker.name),score[0],score[1],x);if(downs<=0)break;continue;}
@@ -414,8 +427,8 @@ export function simulateMatch(w:World,m:Match){
     attackValue=c.speed*.3+c.agility*.3+c.handling*.1+b.blocking*.3-(tired(carrier)+tired(blocker))*.5;
     defenseValue=d.tackling*.4+d.speed*.2+shape[1-side].read*.4-tired(defender);
    }
-   attackValue+=clutch(carrier)+(isPass?clutch(passer):0)+(has(carrier,'Relentless')&&score[side]<score[1-side]?2:0);
-   defenseValue+=clutch(defender);
+   attackValue+=clutch(carrier)+(isPass?clutch(passer):0)+(has(carrier,'Relentless')&&score[side]<score[1-side]?2:0)+aura(side);
+   defenseValue+=clutch(defender)+aura(1-side);
    // Distinct tactical matchups: pass rush, route discipline and power fronts matter more than a flat team rating.
    const tacticalEdge=isPass?(plan.pass-defPlan.defense*.045)*.07:(power?(plan.aggression-defPlan.defense*.08):plan.tempo-defPlan.tempo)*.055;
    const lineupShift=off.reduce((sum,p)=>sum+p.rating,0)/off.length-startingLineRating[side];
@@ -599,10 +612,11 @@ function offseason(w:World){
  for(const t of w.teams){
   const r=t.record,g=r.w+r.d+r.l,share=g?(r.w+r.d*.5)/g:.5;
   const champion=w.trophies.some(x=>x.season===w.season&&x.teamId===t.id&&x.competition==='GRAND RIFT CHAMPIONSHIP');
+  const nationalChamp=w.trophies.some(x=>x.season===w.season&&x.teamId===t.id&&x.competition.endsWith(' CHAMPIONS'));
   const favourites=teamRoster(w,t).filter(p=>p.trait==='Fan Favorite').length;
   t.budget=clamp(Math.round(t.budget+(share-.5)*10+(t.division===0?1:-1)+(champion?3:0)+(50-t.budget)*.05+int(w,-3,3)),10,95);
   t.fanbase=clamp(Math.round(t.fanbase+(share-.5)*4+(champion?3:0)+favourites+(55-t.fanbase)*.04+int(w,-1,1)),20,99);
-  t.power=clamp(Math.round(t.power+(share-.5)*12+(t.budget-50)*.06+(champion?2:0)+(60-t.power)*.12+int(w,-3,3)),30,95);
+  t.power=clamp(Math.round(t.power+(share-.5)*12+(t.budget-50)*.06+(champion?2:0)-(nationalChamp?4:0)+(60-t.power)*0.2+int(w,-3,3)),30,95);
  }
  // Promotion/relegation after the completed season.
  for(let r=0;r<4;r++){
@@ -611,6 +625,17 @@ function offseason(w:World){
  }
  // Contract moves between clubs and rookie arrival.
  const log={season:w.season,retired:[] as string[],transfers:[] as {playerId:string;from:string;to:string}[],rookies:[] as string[]};w.offseasonLog=log;
+ // Champions get raided: a rich club of the same country buys the national champion's best player (a straight swap).
+ // Stars still decide titles, but they change shirts, so no club wins its country forever.
+ for(const champ of w.teams.filter(t=>w.trophies.some(x=>x.season===w.season&&x.teamId===t.id&&x.competition.endsWith(' CHAMPIONS')))){
+  const star=[...teamRoster(w,champ)].sort((a,b)=>b.rating-a.rating)[0];
+  const buyers=w.teams.filter(t=>t.region===champ.region&&t.id!==champ.id).sort((a,b)=>b.budget-a.budget||a.id.localeCompare(b.id)).slice(0,6);
+  const buyer=buyers.length?pick(w,buyers):undefined;if(!star||!buyer)continue;
+  const back=[...teamRoster(w,buyer)].filter(q=>q.role===star.role).sort((a,b)=>b.rating-a.rating)[0]??teamRoster(w,buyer)[0];if(!back)continue;
+  champ.roster=champ.roster.filter(id=>id!==star.id);buyer.roster=buyer.roster.filter(id=>id!==back.id);champ.roster.push(back.id);buyer.roster.push(star.id);star.teamId=buyer.id;back.teamId=champ.id;
+  log.transfers.push({playerId:star.id,from:champ.id,to:buyer.id},{playerId:back.id,from:buyer.id,to:champ.id});
+  addStory(w,'transfer',`${buyer.nickname.toUpperCase()} ASALTAN AL CAMPEÓN: FICHAN A ${star.name.toUpperCase()}`,pickLine(TRANSFER,storySeed(w,star.id))({name:star.name,to:buyer.name,from:champ.name,role:rol(star.role).toLowerCase()}),buyer.id,star.id,undefined,4);
+ }
  const movements=int(w,30,55);
  for(let i=0;i<movements;i++){
   const from=pick(w,w.teams),to=pick(w,w.teams);if(from.id===to.id)continue;
