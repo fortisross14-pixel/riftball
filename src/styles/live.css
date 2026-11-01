@@ -208,3 +208,65 @@ html.is-focus .desk, html.is-focus .marginal-note { visibility: hidden; }
 .after-decided { grid-column: 1 / -1; margin: 0; padding: 8px 12px; border: 2px solid var(--gold); background: rgba(240, 207, 106, 0.16); font-weight: 700; }
 .gift.tier-ultimate { border-color: var(--gold); background: rgba(240, 207, 106, 0.14); }
 .gift-stats { font-family: var(--face-data); font-size: 0.9rem; margin-top: 4px; }
+
+/* ------------------------------------------------------------ phones and portrait screens: one scrolling column
+   The score strip sticks to the top, the pitch keeps its proportions at full width, the controls stick
+   to the bottom within thumb reach, and the ticker and the booth follow. The page itself scrolls. */
+@media (max-width: 760px), (orientation: portrait) {
+  html.is-focus, html.is-focus body { overflow: visible; }
+  html.is-focus .desk { display: none; }
+  .live-stage {
+    position: relative; inset: auto; z-index: 1;
+    display: flex; flex-direction: column; gap: 8px;
+    height: auto; min-height: 100vh; min-height: 100dvh;
+    padding: 0 8px 12px;
+  }
+  .live-strip {
+    order: 0; position: sticky; top: 0; z-index: 20;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas: 'exit score score' 'home home away' 'momentum momentum momentum';
+    padding: 6px 8px; border-radius: 0 0 8px 8px; border-top: 0;
+  }
+  .live-phase { display: none; }
+  .live-score { min-width: 0; align-items: flex-end; }
+  .live-digits { font-size: 2rem; }
+  .live-side { justify-content: flex-start; }
+  .live-side.is-away { justify-content: flex-end; }
+  .live-side strong { font-size: 1.05rem; }
+  .live-side .shield-img, .live-side svg { width: 30px; height: 36px; }
+  .live-exit { min-height: 44px; min-width: 44px; }
+  .live-pitch { order: 1; flex: none; width: 100%; aspect-ratio: 1000 / 440; }
+  .live-pitch .arena { height: 100%; }
+  .live-controls {
+    order: 2; position: sticky; bottom: 0; z-index: 15;
+    padding: 6px; margin: 0 -8px; background: rgba(31, 21, 14, 0.96); border-top: 1px solid var(--gold-deep);
+  }
+  .live-controls > button, .live-speed button { min-height: 44px; min-width: 44px; }
+  .live-controls .timeline { flex-basis: 100%; order: 9; }
+  .live-ticker { order: 3; }
+  .live-ticker li { white-space: normal; }
+  .tick-text { white-space: normal; }
+  .live-booth { order: 4; grid-template-columns: 1fr; }
+  .live-booth p { white-space: normal; }
+  /* The pre-match card sits below the pitch instead of over it. */
+  .live-prematch { position: static; padding: 0; background: none; }
+  .live-pitch:has(.live-prematch) { aspect-ratio: auto; }
+  .live-pitch:has(.live-prematch) .arena { aspect-ratio: 1000 / 440; height: auto; }
+  /* Callouts: full width, just under the sticky score strip. */
+  .callout, .ultimate-callout {
+    position: fixed; top: 116px; left: 8px; right: 8px; bottom: auto; width: auto;
+    transform: none; z-index: 30;
+  }
+  .callout { animation-name: callout-in-mobile; }
+  .ultimate-callout { inset: 116px 8px auto 8px; grid-template-columns: auto minmax(0, 1fr); max-height: calc(100dvh - 190px); overflow: hidden; }
+  .ultimate-portrait { width: 96px; }
+  .ultimate-name { font-size: 2rem; }
+  .callout-portrait { width: 72px; height: 72px; }
+}
+@keyframes callout-in-mobile { 0% { opacity: 0; } 12% { opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .callout { animation: none; } }
+@media (max-width: 760px), (orientation: portrait) {
+  .live-pitch { flex-direction: column; align-items: stretch; gap: 8px; }
+  .live-pitch .arena { width: 100%; }
+  .live-pitch:has(.live-prematch) .arena { flex: none; }
+}

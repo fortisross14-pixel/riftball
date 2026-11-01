@@ -217,3 +217,16 @@
 .matchup-star .portrait-ground { border-radius: 50%; }
 .duel-side .portrait-ground, .after-play-card .portrait-ground { border-radius: 8px; }
 .miniature .portrait-ground { width: 100% !important; height: 100% !important; }
+
+/* ------------------------------------------------------------ navigation ribbons
+   The side padding used to reserve room for the old "Turn the page" corner, which no longer exists.
+   On narrow screens the six ribbons slide sideways instead of being cut off. */
+.masthead { padding: 0 16px !important; justify-content: center; }
+.masthead .ribbons { justify-content: center; max-width: 100%; }
+@media (max-width: 760px) {
+  .masthead { padding: 0 !important; }
+  .masthead .ribbons { justify-content: flex-start; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; padding: 0 8px; gap: 4px; }
+  .masthead .ribbons::-webkit-scrollbar { display: none; }
+  .ribbon { flex: none; width: 82px !important; }
+  .ribbon-name { font-size: 0.8rem; }
+}

@@ -103,6 +103,7 @@ function useFocusMode() {
   useEffect(() => {
     const root = document.documentElement;
     root.classList.add('is-focus');
+    window.scrollTo(0, 0);
     return () => root.classList.remove('is-focus');
   }, []);
 }
