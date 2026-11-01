@@ -242,7 +242,10 @@
 .club-header {
   display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
   padding: 16px 18px; margin: 8px 0 14px;
-  border: 2px solid var(--ink); border-left: 10px solid var(--c1); border-right: 10px solid var(--c2);
+  border: 2px solid var(--ink);
+  /* The club scarf: a band of both colours along the top. */
+  box-shadow: inset 0 8px 0 var(--c1), inset 0 14px 0 var(--c2);
+  padding-top: 26px;
   background: linear-gradient(100deg, color-mix(in srgb, var(--c1) 22%, transparent), transparent 45%, color-mix(in srgb, var(--c2) 22%, transparent));
 }
 .club-header-text { min-width: 0; flex: 1 1 240px; }
@@ -251,7 +254,8 @@
 .club-identity > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; align-items: baseline; }
 .club-identity dt { font-family: var(--face-rubric); color: var(--rubric); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
 .club-identity dd { margin: 0; }
-.club-legend { grid-template-columns: 1fr !important; font-style: italic; color: var(--ink-2); border-left: 3px solid var(--gold); padding-left: 10px; }
+.club-legend { grid-template-columns: 1fr !important; font-style: italic; color: var(--ink-2); padding: 8px 12px; background: rgba(73, 48, 25, 0.06); border-radius: 4px; }
+.club-legend dd::before { content: '«'; } .club-legend dd::after { content: '»'; }
 .chip-icon { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; margin-right: 6px; border-radius: 50%; background: var(--ink); color: var(--gold-hi); font-style: normal; }
 @media (max-width: 560px) { .club-identity > div { grid-template-columns: 1fr; gap: 2px; } }
 
