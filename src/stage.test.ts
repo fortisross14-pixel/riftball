@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { SEASON, StageBlockedError, advanceOneWeek, advanceWeekAuto, createWorld, currentFixtures, currentStage, dismissIntro, galaItems, isEventStage, isStageComplete, pendingFixtures, predict, predictionReward, resolveMatch, revealAward, seasonCoins, winChance, abilityTier, tierForRarity, normalizeWorld } from './engine';
 import type { World } from './types';
+import { RETIRED_FIRST_NAMES } from './i18n/es-mundo';
 
 // One world played up to the national semifinal week, shared (and cloned) by the tests below.
 let base: World | undefined;
@@ -146,4 +147,16 @@ test('Ability tiers follow rarity: Definitivas only on Legendary and Generationa
   for (const p of old.players) { p.ability = p.rarity === 'Ordinary' ? 'Rift Roar' : 'Sure Hands'; delete (p.stats as Partial<typeof p.stats>).ultimates; }
   normalizeWorld(old);
   for (const p of old.players) { assert.equal(abilityTier(p.ability), tierForRarity(p.rarity)); assert.equal(p.stats.ultimates, 0); }
+});
+
+test('Every athlete has a man\'s first name (all painted portraits are men), also after migrating an old save', () => {
+  const w = createWorld(9191);
+  for (const p of w.players) assert.ok(!RETIRED_FIRST_NAMES.has(p.name.split(' ')[0]), p.name);
+  const old = JSON.parse(JSON.stringify(w)) as World;
+  old.version = 5;
+  old.players[0].name = 'Valeria Escudero';
+  old.players[1].name = 'Hilda Barbapiedra';
+  normalizeWorld(old);
+  for (const p of old.players) assert.ok(!RETIRED_FIRST_NAMES.has(p.name.split(' ')[0]), p.name);
+  assert.ok(old.players[0].name.endsWith(' Escudero') && old.players[1].name.endsWith(' Barbapiedra'), 'surnames are kept');
 });

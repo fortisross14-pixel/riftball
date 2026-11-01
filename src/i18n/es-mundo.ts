@@ -70,17 +70,20 @@ export const ATRIBUTO_ES: Record<StatKey, string> = {
 
 /* ------------------------------------------------------------ names */
 
+// All painted portraits are men, so every first name is a man's name for now.
 export const NOMBRES: Record<Race, readonly string[]> = {
-  Human: ['Gonzalo', 'Elena', 'Rodrigo', 'Marisa', 'Tristán', 'Inés', 'Bruno', 'Ximena', 'Álvaro', 'Leonor', 'Darío', 'Valeria', 'Alonso', 'Beatriz'],
-  Orc: ['Gorak', 'Thrag', 'Morg', 'Grusha', 'Durgan', 'Urzok', 'Brakka', 'Korg', 'Rugga', 'Brog', 'Hruk', 'Kraz', 'Mogga'],
-  Elf: ['Aerith', 'Faelar', 'Liora', 'Thalen', 'Elowen', 'Vaelis', 'Eryndor', 'Sylra', 'Aelion', 'Naeris', 'Cael', 'Faryn'],
-  Dwarf: ['Borin', 'Durgin', 'Baldrico', 'Gimra', 'Thora', 'Dagna', 'Kelda', 'Brokk', 'Orín', 'Hilda', 'Brum', 'Thorvik'],
-  Goblin: ['Snik', 'Fizz', 'Zibbit', 'Gríbel', 'Kip', 'Razz', 'Nix', 'Tambal', 'Snark', 'Tik', 'Bogle', 'Esquirla'],
-  Troll: ['Grunk', 'Ugg', 'Brug', 'Mogmuk', 'Thoom', 'Drol', 'Grob', 'Krum', 'Rog', 'Thugga', 'Gruñón'],
-  Lizardkin: ['Sszar', 'Krizzt', 'Xak', 'Tziri', 'Sskel', 'Zirrak', 'Xiss', 'Skra', 'Rizzt', 'Tsaka'],
-  Revenant: ['Vesper', 'Morrow', 'Malaquías', 'Mortis', 'Lázaro', 'Cuervo', 'Noctis', 'Eidolón', 'Mirto', 'Vhal'],
-  Giantkin: ['Brakka', 'Karn', 'Mira', 'Ossa', 'Torén', 'Vala', 'Garr', 'Noma', 'Brek', 'Siv', 'Harkan'],
+  Human: ['Gonzalo', 'Rodrigo', 'Tristán', 'Bruno', 'Álvaro', 'Darío', 'Alonso', 'Fernán', 'Sancho', 'Íñigo', 'Lope', 'Garcilaso', 'Bermudo', 'Ramiro', 'Tello', 'Nuño', 'Fadrique', 'Gaspar', 'Leandro', 'Martín'],
+  Orc: ['Gorak', 'Thrag', 'Morg', 'Durgan', 'Urzok', 'Brakka', 'Korg', 'Brog', 'Hruk', 'Kraz', 'Grashnak', 'Ugluk', 'Zoggo', 'Murzog', 'Brugnak', 'Rakdush', 'Ghor', 'Skarbak'],
+  Elf: ['Faelar', 'Thalen', 'Vaelis', 'Eryndor', 'Aelion', 'Cael', 'Ilmarin', 'Thranduil', 'Celebor', 'Aldarion', 'Finrael', 'Galdor', 'Lindir', 'Sorael', 'Elrohir', 'Taurion'],
+  Dwarf: ['Borin', 'Durgin', 'Baldrico', 'Brokk', 'Orín', 'Brum', 'Thorvik', 'Gundar', 'Hagrim', 'Dolgrin', 'Barbaroc', 'Thrain', 'Kazdur', 'Ragnor', 'Grimbor', 'Fundin'],
+  Goblin: ['Snik', 'Fizz', 'Zibbit', 'Gríbel', 'Kip', 'Razz', 'Nix', 'Tambal', 'Snark', 'Tik', 'Bogle', 'Esquirla', 'Pizco', 'Ratón', 'Gubbo', 'Zarpa', 'Chusco', 'Mizbit'],
+  Troll: ['Grunk', 'Ugg', 'Brug', 'Mogmuk', 'Thoom', 'Drol', 'Grob', 'Krum', 'Rog', 'Thugga', 'Gruñón', 'Bonk', 'Murg', 'Glut', 'Pedrolo', 'Tronco'],
+  Lizardkin: ['Sszar', 'Krizzt', 'Xak', 'Sskel', 'Zirrak', 'Xiss', 'Skra', 'Rizzt', 'Tsaka', 'Ssalvador', 'Kesh', 'Zahrak', 'Xolotl', 'Tzunk', 'Ssith'],
+  Revenant: ['Vesper', 'Morrow', 'Malaquías', 'Mortis', 'Lázaro', 'Cuervo', 'Noctis', 'Eidolón', 'Mirto', 'Vhal', 'Osario', 'Sepulcro', 'Ánimo', 'Tumbal', 'Ceniciento', 'Orfeo'],
+  Giantkin: ['Brakka', 'Karn', 'Torén', 'Garr', 'Brek', 'Harkan', 'Ymrik', 'Bergelmir', 'Skollen', 'Hrodgar', 'Thrym', 'Goliat', 'Atlante', 'Kolosso'],
 };
+/** First names used before v0.6 that are being retired (all portraits are men). Saves rename them on load. */
+export const RETIRED_FIRST_NAMES = new Set(['Elena', 'Marisa', 'Inés', 'Ximena', 'Leonor', 'Valeria', 'Beatriz', 'Grusha', 'Rugga', 'Mogga', 'Aerith', 'Liora', 'Elowen', 'Sylra', 'Naeris', 'Faryn', 'Gimra', 'Thora', 'Dagna', 'Kelda', 'Hilda', 'Tziri', 'Mira', 'Ossa', 'Vala', 'Noma', 'Siv']);
 export const APELLIDOS: Record<Race, readonly string[]> = {
   Human: ['Valdés', 'del Espino', 'Montenegro', 'Escudero', 'Robledo', 'Piedrahíta', 'Cuervo', 'Lanzagrís', 'Sotomayor', 'Albarracín'],
   Orc: ['Rompecráneos', 'Quiebrahuesos', 'Muerdehierro', 'Puñosangre', 'Pisabarro', 'Colmillotuerto', 'Machacamuelas', 'Tripadura'],

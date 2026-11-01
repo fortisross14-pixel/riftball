@@ -1,7 +1,7 @@
 import { ATTR_KEYS, EMPTY_RECORD, EMPTY_STATS, RACES, REGIONS, ROLES } from './types';
 import { chronicleOffseason, chronicleWeek, rebuildRecords } from './chronicle';
 import { COMISIONADO, DRAGON, FAREWELL_STORY, LEGEND_STORY, MVP_STORY, NATIONAL_CHAMPS, RESULT_CLEAR, RESULT_CLOSE, RESULT_ROUT, STORM, STRIKE, TRANSFER, WORLD_CHAMPS, mascotOf, pickLine } from './i18n/es-cronica';
-import { APELLIDOS, APODOS_CLUB, APODOS_RASGO, APODOS_ROL, CIUDADES, EV, NOMBRES, PAISES, awardEs, filosofia, raza, rol } from './i18n/es-mundo';
+import { RETIRED_FIRST_NAMES, APELLIDOS, APODOS_CLUB, APODOS_RASGO, APODOS_ROL, CIUDADES, EV, NOMBRES, PAISES, awardEs, filosofia, raza, rol } from './i18n/es-mundo';
 import type { WorldEvent, Attributes, GalaItem, Match, MatchEvent, Player, Race, Rarity, Role, SeasonStats, StatKey, Story, Team, World, StageState, ShowcaseId, MatchTeamStats, MatchPlayerStats, MatchDrive, MatchReport } from './types';
 
 /** A 30-week Chronicle calendar. These numbers are intentionally exported so UI and jump controls cannot drift from the engine. */
@@ -847,6 +847,14 @@ export function normalizeWorld(w:World):World{
   if(!(p.portrait>=1&&p.portrait<=max))p.portrait=1+hashIndex(p.id,max);
   p.portraitKey=portraitKeyOf(p.race,p.portrait);
  }
+ // v5 -> v6: first names retired in v0.6 are replaced by a name from the current list (same surname).
+ for(const p of [...w.players,...w.retired]){
+  const [first,...rest]=p.name.split(' ');
+  if(!RETIRED_FIRST_NAMES.has(first))continue;
+  const pool=NOMBRES[p.race]??NOMBRES.Human;
+  p.name=[pool[hashIndex(`${p.id}:name`,pool.length)],...rest].join(' ');
+ }
+ for(const r of w.records){const holder=[...w.players,...w.retired].find(p=>p.id===r.playerId);if(holder)r.playerName=holder.name;}
  // v5 -> v6: abilities follow rarity (ultimates only on Legendary/Generational), and ultimate counters.
  for(const p of [...w.players,...w.retired]){
   p.stats.ultimates??=0;p.career.ultimates??=0;p.stats.decisive??=0;p.career.decisive??=0;
