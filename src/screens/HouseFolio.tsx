@@ -1,11 +1,13 @@
 import { lineup, playProfile, teamRoster } from '../engine';
 import { played, record, useGame } from '../game/context';
-import { Achievement } from '../art/Heraldry';
 import { RoleGlyph } from '../art/Ornament';
 import { AthleteName, Blank, FormPips, HouseName, Miniature } from '../ui/bits';
 import { ChallengeRow, realmName } from './Tourneys';
 import { ES, awardName, filosofia, raza, rol } from '../i18n/es';
 import { MASCOT_LINES, mascotOf, pickLine } from '../i18n/es-cronica';
+import { CLUB_TRAIT_ES, ESTILO_ICONO } from '../i18n/es-clubes';
+import { ClubBadge, clubColours } from '../ui/ClubBadge';
+import { roman } from '../art/hash';
 
 const T = ES.club;
 
@@ -28,20 +30,39 @@ export function HouseFolio({ id }: { id: string }) {
   const meetings = rival ? contests.filter((m) => m.homeScore !== null && (m.home === rival.id || m.away === rival.id)).sort((a, b) => order(b) - order(a)).slice(0, 5) : [];
   const shelf = w.awards.filter((a) => a.teamId === t.id).slice().reverse().slice(0, 12);
   const games = played(t);
+  const C = ES.clubPage;
+  const id_ = t.identity;
+  // Club legends: everyone, active or retired, who wore this shirt in a recorded season or wears it now.
+  const legends = w.players.concat(w.retired).filter((p) => p.teamId === t.id || p.history?.some((h) => h.teamId === t.id)).sort((a, b) => b.fame - a.fame).slice(0, 5);
+  const timeline = (w.seasonArchive ?? []).map((a) => {
+    const table = a.standings.filter((x) => x.region === t.region).sort((x, y) => y.pts - x.pts || (y.pf - y.pa) - (x.pf - x.pa));
+    return { season: a.season, pos: table.findIndex((x) => x.teamId === t.id) + 1 };
+  }).filter((x) => x.pos > 0).slice(-20);
   const values = [t.power, t.fanbase, t.academy, t.budget];
 
   return (
     <div className="spread house-folio">
       <section className="page verso">
         <button type="button" className="back-link" onClick={() => history.length > 1 ? history.back() : go({ kind: 'section', section: 'armorial' })}>{ES.common.back}</button>
-        <div className="house-hero">
-          <Achievement team={t} size={250} />
-          <div>
+        <header className="club-header" style={clubColours(t)}>
+          <ClubBadge team={t} size={176} title />
+          <div className="club-header-text">
             <h1 className="folio-title">{t.name}</h1>
             <p className="house-realm">{T.of(realmName(t.region))}</p>
             <p className="blazon"><span>{T.motto}</span> «{style.lema}»</p>
+            {id_ && <p className="club-founded">{C.founded(id_.founded)}</p>}
           </div>
-        </div>
+        </header>
+        {id_ && (
+          <dl className="club-identity">
+            <div><dt>{C.stadium}</dt><dd>{id_.stadium.name} · «{id_.stadium.nickname}»</dd></div>
+            <div><dt>{C.mascot}</dt><dd>{C.mascotLine(id_.mascot.name, id_.mascot.species, id_.mascot.personality)}</dd></div>
+            <div><dt>{C.chant}</dt><dd><q>{id_.chant}</q></dd></div>
+            <div className="club-chip"><dt>{C.trait}</dt><dd><span className="chip-icon" aria-hidden="true">{CLUB_TRAIT_ES[id_.trait].icono}</span><b>{CLUB_TRAIT_ES[id_.trait].nombre}</b> — {CLUB_TRAIT_ES[id_.trait].efecto}{id_.trait === 'cursed' && t.finalsLost ? ` (${C.finalsLost(t.finalsLost)})` : ''}</dd></div>
+            <div className="club-chip"><dt>{C.style}</dt><dd><span className="chip-icon" aria-hidden="true">{ESTILO_ICONO[t.philosophy.toUpperCase()] ?? '⧗'}</span><b>{style.nombre}</b></dd></div>
+            <div className="club-legend"><dd>{id_.legend}</dd></div>
+          </dl>
+        )}
 
         <div className="philosophy">
           <h3>{T.style} <strong>{style.nombre}</strong></h3>
@@ -60,12 +81,16 @@ export function HouseFolio({ id }: { id: string }) {
           ))}
         </dl>
 
-        <h2 className="page-head small spaced">{T.honours}</h2>
+        <h2 className="page-head small spaced">{C.trophies}</h2>
         <p className="honour-line">{T.honourLine(t.worldTitles, t.historyTitles)}</p>
-        <ul className="honours">
-          {honours.slice(0, 8).map((h, i) => <li key={`${h.season}-${i}`}><span className="yr">{ES.common.season(h.season)}</span>{h.competition === 'GRAND RIFT CHAMPIONSHIP' ? T.worldChamps : T.nationalChamps(realmName(t.region))}</li>)}
-          {!honours.length && <li><Blank>{T.emptyCabinet}</Blank></li>}
-        </ul>
+        {honours.length ? (
+          <ul className="trophy-shelf" style={clubColours(t)}>
+            {honours.slice(0, 16).map((h, i) => {
+              const world = h.competition === 'GRAND RIFT CHAMPIONSHIP';
+              return <li key={`${h.season}-${i}`} className={world ? 'is-world' : 'is-national'} title={world ? C.worldCup : C.nationalCup(realmName(t.region))}><span className="cup" aria-hidden="true" /><small>{ES.common.season(h.season)}</small><span className="sr-only">{world ? C.worldCup : C.nationalCup(realmName(t.region))}</span></li>;
+            })}
+          </ul>
+        ) : <Blank>{T.emptyCabinet}</Blank>}
 
         <h2 className="page-head small spaced">{ES.shelf.title}</h2>
         {shelf.length ? (
@@ -87,6 +112,13 @@ export function HouseFolio({ id }: { id: string }) {
           </>
         )}
         <p className="mascot-line"><b>{ES.h2h.mascot}:</b> {pickLine(MASCOT_LINES, `${t.id}:${w.season}:${w.week}`)(mascotOf(t.id, t.nickname))}</p>
+        <h2 className="page-head small spaced">{C.legends}</h2>
+        <p className="aside-note">{C.legendsNote}</p>
+        {legends.length ? (
+          <ol className="club-legends">
+            {legends.map((p, i) => <li key={p.id}><span className="legend-rank">{roman(i + 1)}</span><Miniature player={p} size={44} /><span><AthleteName player={p} /><small>{rol(p.role)} {raza(p.race).toLowerCase()}{p.retired ? `, ${ES.common.retired}` : ''}</small></span><strong>{C.legacy(p.fame)}</strong></li>)}
+          </ol>
+        ) : <Blank>{C.noLegends}</Blank>}
         {next && <><h2 className="page-head small spaced">{T.next}</h2><ChallengeRow m={next} showPhase /></>}
         <h2 className="page-head small spaced">{T.recent}</h2>
         {recentPlayed.length ? recentPlayed.map((m) => <ChallengeRow key={m.id} m={m} showPhase />) : <Blank>{T.noGames}</Blank>}
@@ -114,6 +146,14 @@ export function HouseFolio({ id }: { id: string }) {
           <div><dt>{T.figures.won}</dt><dd>{games ? Math.round((t.record.w / games) * 100) : 0}%</dd></div>
           <div><dt>{T.figures.form}</dt><dd><FormPips team={t} /></dd></div>
         </dl>
+
+        <h2 className="page-head small spaced">{C.seasons}</h2>
+        <p className="aside-note">{C.seasonsNote}</p>
+        {timeline.length ? (
+          <ol className="club-seasons" style={clubColours(t)}>
+            {timeline.map(({ season, pos }) => <li key={season} title={ES.common.season(season)}><i style={{ height: `${Math.max(8, (13 - pos) / 12 * 100)}%` }} className={pos === 1 ? 'is-first' : pos <= 4 ? 'is-top' : ''} /><small>{C.position(pos)}</small><span>{season}</span></li>)}
+          </ol>
+        ) : <Blank>{C.noSeasons}</Blank>}
 
         <h2 className="page-head small spaced">{T.roster}</h2>
         <div className="table-scroll">

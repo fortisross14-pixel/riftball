@@ -33,7 +33,8 @@ export const PLUMILLA_LINES = [
 ] as const;
 const MASCOTAS = ['Pedrusco', 'Chispitas', 'Don Plumón', 'Burbuja', 'Doña Ceniza', 'Ventolín', 'Remolino', 'Tizón', 'Musguito', 'Coral', 'Trueno Chico', 'Escamita'];
 /** Every club has a mascot with opinions. The name follows the club, so it never changes. */
-export const mascotOf = (clubId: string, nickname: string) => `${pickLine(MASCOTAS, clubId)}, la mascota de los ${nickname}`;
+export const mascotName = (clubId: string) => pickLine(MASCOTAS, clubId);
+export const mascotOf = (clubId: string, nickname: string) => `${mascotName(clubId)}, la mascota de los ${nickname}`;
 export const MASCOT_LINES = [
   (m: string) => `${m}, ha declarado que «esto ya lo veía venir desde el calentamiento».`,
   (m: string) => `${m}, se ha negado a bailar en el descanso como protesta por el arbitraje.`,

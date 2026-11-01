@@ -12,6 +12,7 @@ import { RoleGlyph } from '../art/Ornament';
 import { roman } from '../art/hash';
 import { AthleteName, Blank, HouseName, Miniature } from '../ui/bits';
 import { Term } from '../ui/Term';
+import { ClubBadge, clubColours } from '../ui/ClubBadge';
 import { realmName } from './Tourneys';
 import { ES, GRIMBALDO_HOME, HABILIDAD_ES, coachQuote, commentary, filosofia, habilidad, mvpQuote, rareza, raza, rol } from '../i18n/es';
 
@@ -138,7 +139,7 @@ function LiveView({ m, home, away, index, setIndex, playing, setPlaying, speed, 
     <div className="live-stage" role="region" aria-label={L.label}>
       <header className="live-strip">
         <button type="button" className="live-exit" onClick={exit} aria-label={L.exitLabel}>← {L.exit}</button>
-        <div className="live-side">
+        <div className="live-side" style={clubColours(home)}>
           <Shield team={home} size={42} />
           <strong>{home.nickname}</strong>
         </div>
@@ -146,7 +147,7 @@ function LiveView({ m, home, away, index, setIndex, playing, setPlaying, speed, 
           <span className="live-digits">{sealed ? <>{L.hidden}<i>:</i>{L.hidden}</> : <><b key={`h${score[0]}`}>{score[0]}</b><i>–</i><b key={`a${score[1]}`}>{score[1]}</b></>}</span>
           <span className="live-clock">{sealed ? L.kickoff : T.minute(current?.minute ?? 0)}{possession ? <> · <span className="live-ball" style={{ '--side': houseColours(possession)[0] } as CSSProperties}>{L.possession(possession.nickname)}</span></> : null}</span>
         </div>
-        <div className="live-side is-away">
+        <div className="live-side is-away" style={clubColours(away)}>
           <strong>{away.nickname}</strong>
           <Shield team={away} size={42} />
         </div>
@@ -242,6 +243,7 @@ function Booth({ m, events, home, away }: { m: Match; events: MatchEvent[]; home
     <div className="live-booth" aria-live="polite">
       <p><b>{ES.commentators.grimbaldo}:</b> {lines.grimbaldo}</p>
       <p><b>{ES.commentators.ebano}:</b> {lines.ebano}</p>
+      {lastBig.kind === 'breach' && lastBig.teamId === m.home && home.identity && <p className="booth-crowd"><b>{ES.crowd}:</b> «{home.identity.chant}»</p>}
     </div>
   );
 }
@@ -375,8 +377,8 @@ function Scoreboard({ m, home, away, score, state }: { m: Match; home: Team; awa
   const winner = m.winner ? team(m.winner) : undefined;
   return (
     <header className={`scoreboard is-${state}`}>
-      <div className="sb-side">
-        <Shield team={home} size={92} title />
+      <div className="sb-side" style={clubColours(home)}>
+        <ClubBadge team={home} size={104} title />
         <div><strong>{home.name}</strong><small>{realmName(home.region)} · {T.home}</small></div>
       </div>
       <div className="sb-centre">
@@ -388,9 +390,9 @@ function Scoreboard({ m, home, away, score, state }: { m: Match; home: Team; awa
         <span className="sb-state">{state === 'revealed' ? (winner ? T.winner(winner.nickname) : T.draw) : T.notYet}</span>
         <span className="sb-phase">{PHASE_NAME[m.phase]} · {ES.common.seasonWeek(m.season, m.week)}</span>
       </div>
-      <div className="sb-side is-away">
+      <div className="sb-side is-away" style={clubColours(away)}>
         <div><strong>{away.name}</strong><small>{realmName(away.region)} · {T.away}</small></div>
-        <Shield team={away} size={92} title />
+        <ClubBadge team={away} size={104} title />
       </div>
     </header>
   );

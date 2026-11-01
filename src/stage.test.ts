@@ -160,3 +160,24 @@ test('Every athlete has a man\'s first name (all painted portraits are men), als
   for (const p of old.players) assert.ok(!RETIRED_FIRST_NAMES.has(p.name.split(' ')[0]), p.name);
   assert.ok(old.players[0].name.endsWith(' Escudero') && old.players[1].name.endsWith(' Barbapiedra'), 'surnames are kept');
 });
+
+test('Every club has a full, stable identity with a real trait, also after migrating an old save', () => {
+  const a = createWorld(3030), b = createWorld(3030);
+  assert.deepEqual(a.teams.map((t) => t.identity), b.teams.map((t) => t.identity), 'identities are deterministic');
+  const traits = new Set<string>();
+  for (let r = 0; r < 4; r++) {
+    const clubs = a.teams.filter((t) => t.region === r);
+    assert.equal(new Set(clubs.map((t) => t.identity!.stadium.nickname)).size, clubs.length, 'stadium nicknames are unique within a country');
+  }
+  for (const t of a.teams) {
+    const id = t.identity!;
+    assert.ok(id.stadium.name && id.mascot.name && id.chant.includes(t.nickname) && id.legend.length > 40 && id.founded >= 700 && id.founded < 1200, t.name);
+    traits.add(id.trait);
+  }
+  assert.equal(traits.size, 5, 'all five club traits appear');
+  const old = JSON.parse(JSON.stringify(a)) as World;
+  old.version = 5;
+  for (const t of old.teams) delete t.identity;
+  normalizeWorld(old);
+  assert.deepEqual(old.teams.map((t) => t.identity), a.teams.map((t) => t.identity), 'old saves get the same identities');
+});

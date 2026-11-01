@@ -1,5 +1,6 @@
 import { ATTR_KEYS, EMPTY_RECORD, EMPTY_STATS, RACES, REGIONS, ROLES } from './types';
 import { chronicleOffseason, chronicleWeek, rebuildRecords } from './chronicle';
+import { ANNIVERSARY, CURSE, clubIdentity } from './i18n/es-clubes';
 import { COMISIONADO, DRAGON, FAREWELL_STORY, LEGEND_STORY, MVP_STORY, NATIONAL_CHAMPS, RESULT_CLEAR, RESULT_CLOSE, RESULT_ROUT, STORM, STRIKE, TRANSFER, WORLD_CHAMPS, mascotOf, pickLine } from './i18n/es-cronica';
 import { RETIRED_FIRST_NAMES, APELLIDOS, APODOS_CLUB, APODOS_RASGO, APODOS_ROL, CIUDADES, EV, NOMBRES, PAISES, awardEs, filosofia, raza, rol } from './i18n/es-mundo';
 import type { WorldEvent, Attributes, GalaItem, Match, MatchEvent, Player, Race, Rarity, Role, SeasonStats, StatKey, Story, Team, World, StageState, ShowcaseId, MatchTeamStats, MatchPlayerStats, MatchDrive, MatchReport } from './types';
@@ -87,6 +88,13 @@ Object.assign(ABILITY_EFFECTS,{
  'Rift Roar':'Ultimate: the opponents lose their remaining Spark charges.',
  'Ancestral Fury':'Ultimate: when behind in a key moment, the whole side plays much better for the rest of the match.',
 });
+/** Stories for clubs whose trait shows: "Malditos en finales" after another lost final. */
+export function curseStory(w:World,m:Match){
+ if(!m.winner||(m.phase!=='regional-final'&&m.phase!=='grand-final'))return;
+ const loser=getTeam(w,m.winner===m.home?m.away:m.home);
+ if(clubTrait(loser)!=='cursed'||!loser.identity)return;
+ addStory(w,'scandal',`LA MALDICIÓN DE LAS FINALES PERSIGUE A LOS ${loser.nickname.toUpperCase()}`,pickLine(CURSE,storySeed(w,m.id))({club:loser.name,nick:loser.nickname,finals:loser.finalsLost??1,mascot:loser.identity.mascot.name}),loser.id,undefined,m.id,4);
+}
 export const BASIC_ABILITIES=['Second Wind','Sure Hands','Trickster’s Luck','Iron Resolve'];
 export const ADVANCED_ABILITIES=['Blinkstep','Grave Grip','Ironhide','Perfect Spiral','Thundercharge','Bonebreaker'];
 export const ULTIMATES=['Last Breath','Endless Run','Sky Lance','Hand of Fate','Eternal Wall','Rift Roar','Ancestral Fury'];
@@ -157,7 +165,7 @@ function createPlayer(w:World,team:Team,role:Role,newProspect=false):Player {
  const race=drawRace(w,team.region); const rarity=grade(random(w));
  const age=newProspect?int(w,17,21):int(w,19,33);
  // Potential is the rating this player is expected to reach at their peak. Academies raise rookie ceilings.
- const peak=(team.division===0?68:62)+boost[rarity]*.8+int(w,-5,5)+(rarity==='Generational'?8:rarity==='Legendary'?3:0)+(newProspect?(team.academy-60)*.1:0);
+ const peak=(team.division===0?68:62)+boost[rarity]*.8+int(w,-5,5)+(rarity==='Generational'?8:rarity==='Legendary'?3:0)+(newProspect?(team.academy-60)*.1+(team.identity?.trait==='academy'?4:0):0);
  const base=peak-ageGap(race,age)-8;
  const attrs={} as Attributes;
  for(const key of ATTR_KEYS)attrs[key]=clamp(Math.round(base+int(w,-15,15)+(MOD[race][key]||0)+(ROLE_WEIGHT[role][key]?int(w,3,13):0)),13,99);
@@ -181,6 +189,11 @@ export function giveNickname(w:World,p:Player):string{
  for(let i=0;i<pool.length;i++){const c=pool[(start+i)%pool.length];if(!taken.has(c)){choice=c;break;}}
  p.nickname=choice;
  return choice;
+}
+/** Every club gets its stadium, mascot, chant, founding legend and trait (chosen by hash, not by the dice). */
+export const clubTrait=(t:Team)=>t.identity?.trait;
+function giveIdentities(w:World){
+ for(let r=0;r<4;r++)w.teams.filter(t=>t.region===r).forEach((t,i)=>{t.identity??=clubIdentity(t,i);t.finalsLost??=0;});
 }
 function assignFoundingPortraits(w:World){
  for(const race of RACES){
@@ -270,6 +283,7 @@ export function createWorld(seed=2026):World {
   for(let i=0;i+1<pool.length;i+=2){const a=pool[i],b=pool[i+1],heat=int(w,20,50);a.rival=b.id;b.rival=a.id;a.rivalHeat=heat;b.rivalHeat=heat;}
  }
  assignFoundingPortraits(w);
+ giveIdentities(w);
  // Stars start with a nickname; everyone else has to earn one (see chronicle.ts).
  [...w.players].sort((a,b)=>b.rating-a.rating||a.id.localeCompare(b.id)).slice(0,STAR_NICKNAMES).forEach(p=>giveNickname(w,p));
  seedSchedule(w);
@@ -335,6 +349,10 @@ const TACKLE:Record<Role,number>={Breaker:3,Raider:3,Bastion:1.5,Trickster:1.2,R
 const COVER:Record<Role,number>={Raider:3,Trickster:2,Breaker:1.5,Runner:.8,Bastion:.4,Thrower:.4};
 const has=(p:Player,trait:string)=>p.trait===trait;
 const count=(line:Player[],trait:string)=>line.filter(p=>p.trait===trait).length;
+/** Count finals lost, for the "Malditos en finales" chronicle. */
+function finalsResult(w:World,m:Match){
+ if((m.phase==='regional-final'||m.phase==='grand-final')&&m.winner){const loser=getTeam(w,m.winner===m.home?m.away:m.home);loser.finalsLost=(loser.finalsLost??0)+1;}
+}
 function rivalryResult(w:World,m:Match){
  const home=getTeam(w,m.home),away=getTeam(w,m.away);if(home.rival!==away.id)return;
  const h=m.homeScore!,a=m.awayScore!,margin=Math.abs(h-a);
@@ -373,11 +391,16 @@ export function simulateMatch(w:World,m:Match){
 
  const knockout=m.phase!=='league';
  // A small home edge that grows with the crowd (and its favourite players). The Grand Final is played on neutral ground.
- const homeEdge=m.phase==='grand-final'?0:.2+home.fanbase*.01+count(homeLine,'Fan Favorite')*.4;
+ const homeEdge=m.phase==='grand-final'?0:.2+home.fanbase*.01+count(homeLine,'Fan Favorite')*.4+(clubTrait(home)==='fortress'?1.2:0);
+ const final=m.phase==='regional-final'||m.phase==='world-semi'||m.phase==='grand-final';
+ // Club trait "Malditos en finales": in finals the other side plays a little better.
+ const cursedBoost=(s:number)=>final&&clubTrait(sides[1-s])==='cursed'?1.5:0;
  // Born Leaders lift the whole lineup.
  const startingLineRating=lines.map(line=>line.reduce((sum,p)=>sum+p.rating,0)/line.length);
  const strike=refereeStrike(w,m),flagRate=strike?3:1;
- const strengths=[0,1].map(s=>teamRating(w,sides[s],lines[s])+(s===0?homeEdge:0)+Math.min(2,count(lines[s],'Born Leader')));
+ const strengths=[0,1].map(s=>teamRating(w,sides[s],lines[s])+(s===0?homeEdge:0)+Math.min(2,count(lines[s],'Born Leader'))+cursedBoost(s));
+ // Club trait "Afición ruidosa": visitors commit more fouls in this stadium.
+ const loudHome=clubTrait(home)==='loud'&&m.phase!=='grand-final';
  // Each side's defensive shape: how well it reads plays (Tacticians help), and how heavy its front line is.
  const shape=lines.map((l,s)=>({read:mean(l,'positioning','awareness')+Math.min(3,count(l,'Tactician')*1.5)+profiles[s].defense,wall:mean(l.filter(p=>p.role==='Bastion'||p.role==='Breaker'),'strength','blocking')+profiles[s].defense}));
  // Tempo: fast teams play more drives and tire everyone out.
@@ -440,7 +463,7 @@ export function simulateMatch(w:World,m:Match){
    const defender=pickWeighted(w,deff,p=>(isPass?COVER[p.role]:TACKLE[p.role])*Math.sqrt(starWeight(p)));
    const c=carrier.attrs,b=blocker.attrs,d=defender.attrs;
    // Undisciplined blockers jump early.
-   if((has(blocker,'Undisciplined')&&random(w)<.03*flagRate)||(strike&&random(w)<.025)){x=Math.max(5,x-5);downs--;teamStat(side,'penalties');event(m,minute,'penalty',attack.id,blocker,EV.falseStart(blocker.name),score[0],score[1],x);if(downs<=0)break;continue;}
+   if((has(blocker,'Undisciplined')&&random(w)<.03*flagRate*(loudHome&&side===1?2:1))||(strike&&random(w)<.025)||(loudHome&&side===1&&random(w)<.008)){x=Math.max(5,x-5);downs--;teamStat(side,'penalties');event(m,minute,'penalty',attack.id,blocker,EV.falseStart(blocker.name),score[0],score[1],x);if(downs<=0)break;continue;}
    matchDrive.plays++;teamStat(side,'plays');pStat(carrier,'plays');pStat(blocker,'plays');pStat(defender,'plays');
    if(isPass){teamStat(side,'passAttempts');pStat(passer,'passesAttempted');}else{teamStat(side,'runAttempts');pStat(carrier,'rushAttempts');}
    let attackValue:number,defenseValue:number;
@@ -528,7 +551,7 @@ export function simulateMatch(w:World,m:Match){
    if(tackled){
     addStat(defender,'tackles');teamStat(1-side,'tackles');pStat(defender,'tackles');
     // Hot-Headed defenders take a swing after the whistle.
-    if(has(defender,'Hot-Headed')&&random(w)<.03*flagRate){x=Math.min(89,x+10);downs=4;target=x+12;teamStat(1-side,'penalties');event(m,minute,'penalty',defend.id,defender,EV.hotHeaded(defender.name),score[0],score[1],x);}
+    if(has(defender,'Hot-Headed')&&random(w)<.03*flagRate*(loudHome&&side===0?2:1)){x=Math.min(89,x+10);downs=4;target=x+12;teamStat(1-side,'penalties');event(m,minute,'penalty',defend.id,defender,EV.hotHeaded(defender.name),score[0],score[1],x);}
     if((defender.ability==='Grave Grip'&&!spentAbility.has(defender.id))&&spark[1-side]>0&&x>=50&&random(w)<.25){addStat(defender,'interceptions');teamStat(1-side,'interceptions');teamStat(side,'turnovers');pStat(defender,'interceptions');pStat(carrier,'turnovers');matchDrive.result='interception';sparkEvent(1-side,defender,EV.graveGrip(defender.name,carrier.name),x);break;}
     const bonebreaker=(defender.ability==='Bonebreaker'&&!spentAbility.has(defender.id))&&spark[1-side]>0&&random(w)<.08;
     const knockoutRisk=clamp(.008+(d.strength-60)*.0004+(d.tackling-60)*.0003,.003,.04)*(.7+defPlan.aggression*.6)*(has(defender,'Reckless')?1.8:1);
@@ -542,7 +565,7 @@ export function simulateMatch(w:World,m:Match){
    if(downs<=0){
     // Final down: kick a ¡PORTAZO! (2) or give the ball up. Kicking teams try from further out; long kicks miss more.
     // Three ways to score: ¡BRECHA! 5, ¡RÉPLICA! 1 after a brecha, ¡PORTAZO! 2 (about 5.4, 3.4 and 1.2 per match).
-    if(x>=46-plan.gate*20&&random(w)<.6+plan.gate*.35){teamStat(side,'gatesAttempted');const kicker=passer;const probability=clamp(.72-(90-x)*.01+(kicker.attrs.composure-50)*.004+(has(kicker,'Ice-Cold')?.12:0)+clutch(kicker)*.02,.23,.92);const made=random(w)<probability,fate=!made&&ultWindow?holder(off,'Hand of Fate'):undefined;if(fate)ultimate(side,fate,EV.handOfFate(fate.name),x);if(made||fate){score[side]+=2;teamStat(side,'gates');pStat(kicker,'gates');matchDrive.result='gate';matchDrive.scorerId=kicker.id;addStat(kicker,'gates');event(m,minute,'gate',attack.id,kicker,EV.gate(kicker.name),score[0],score[1],x);}else {matchDrive.result='miss';event(m,minute,'miss',attack.id,kicker,EV.gateMiss(kicker.name),score[0],score[1],x);}}
+    if(x>=46-plan.gate*20&&random(w)<.6+plan.gate*.35){teamStat(side,'gatesAttempted');const kicker=passer;const probability=clamp(.72-(90-x)*.01+(clubTrait(attack)==='coldblood'?.08:0)+(kicker.attrs.composure-50)*.004+(has(kicker,'Ice-Cold')?.12:0)+clutch(kicker)*.02,.23,.92);const made=random(w)<probability,fate=!made&&ultWindow?holder(off,'Hand of Fate'):undefined;if(fate)ultimate(side,fate,EV.handOfFate(fate.name),x);if(made||fate){score[side]+=2;teamStat(side,'gates');pStat(kicker,'gates');matchDrive.result='gate';matchDrive.scorerId=kicker.id;addStat(kicker,'gates');event(m,minute,'gate',attack.id,kicker,EV.gate(kicker.name),score[0],score[1],x);}else {matchDrive.result='miss';event(m,minute,'miss',attack.id,kicker,EV.gateMiss(kicker.name),score[0],score[1],x);}}
     break;}
   }
   matchDrive.endX=x;matchDrive.endMinute=minute;matchDrive.points=score[side]-beforeScore;
@@ -554,6 +577,7 @@ export function simulateMatch(w:World,m:Match){
  for(const id of used){const p=getPlayer(w,id);if(p){addStat(p,'games');addXp(p,int(w,10,20));}}
  if(m.phase==='league')recordResult(w,m);
  rivalryResult(w,m);
+ finalsResult(w,m);
  if(m.events.length===0)event(m,32,'whistle',m.home,undefined,EV.whistle,score[0],score[1],50);
  m.events.sort((a,b)=>a.minute-b.minute);
  for(const entry of Object.values(report.players)){
@@ -607,7 +631,8 @@ function pickHeadline(w:World,weekly:Match[]){
  const captain=[...teamRoster(w,winner)].sort((x,y)=>y.fame-x.fame)[0];
  const body=m.phase==='grand-final'?pickLine(WORLD_CHAMPS,storySeed(w,m.id))({club:winner.name,nick:winner.nickname,country:PAISES[winner.region],captain:captain?.name,score:`${hi}-${lo}`,runnerUp:loserT.name})
   :pickLine(margin<=6?RESULT_CLOSE:margin>=20?RESULT_ROUT:RESULT_CLEAR,storySeed(w,m.id))(ctx);
- addStory(w,m.phase==='grand-final'?'championship':'result',headline,body,winner.id,undefined,m.id,m.phase==='grand-final'?8:m.phase==='league'?2:4);
+ const chant=winner.id===m.home&&winner.identity&&hashIndex(m.id,3)===0?` En ${winner.identity.stadium.nickname} no paraba de sonar: «${winner.identity.chant}»`:'';
+ addStory(w,m.phase==='grand-final'?'championship':'result',headline,body+chant,winner.id,undefined,m.id,m.phase==='grand-final'?8:m.phase==='league'?2:4);
 }
 // Role-aware impact: each role is judged only on the work that role is meant to do.
 const ROLE_IMPACT:Record<Role,Partial<Record<keyof SeasonStats,number>>>={
@@ -804,7 +829,7 @@ export function advanceOneWeek(w:World):World {
   w.seasonArchive.push({season:w.season,leaders:[...w.players].sort((a,b)=>b.stats.breaches-a.stats.breaches).slice(0,30).map(p=>({playerId:p.id,teamId:p.teamId,breaches:p.stats.breaches,tackles:p.stats.tackles,interceptions:p.stats.interceptions,passes:p.stats.passes,yards:p.stats.distance})),standings:w.teams.map(t=>({teamId:t.id,division:t.division,region:t.region,w:t.record.w,d:t.record.d,l:t.record.l,pf:t.record.pf,pa:t.record.pa,pts:t.record.pts}))});
   if(w.seasonArchive.length>40)w.seasonArchive.shift();
   offseason(w);addStory(w,'roundup',`SE CIERRA LA TEMPORADA ${w.season}`,`Hay contratos que han cambiado de manos, héroes que cuelgan las botas y una liga que jura haber reparado casi todos los estadios. La próxima temporada se acerca.`,undefined,undefined,undefined,3);}
- if(week===SEASON.NEW_SEASON){w.season++;w.week=1;seedSchedule(w);addStory(w,'roundup',`¡ARRANCA LA TEMPORADA ${w.season}!`,`Cuarenta y ocho clubes. Cuatro países elementales. Un solo campeonato del mundo. Los contables han aprobado otra temporada de violencia carísima.`,undefined,undefined,undefined,3);}
+ if(week===SEASON.NEW_SEASON){w.season++;w.week=1;seedSchedule(w);{const t=w.teams[hashIndex(`${w.seed}:anniversary:${w.season}`,w.teams.length)];if(t.identity)addStory(w,'roundup',`ANIVERSARIO: ${t.name.toUpperCase()}`,pickLine(ANNIVERSARY,storySeed(w,t.id))({club:t.name,founded:t.identity.founded,legend:t.identity.legend,season:w.season,stadium:t.identity.stadium.nickname}),t.id,undefined,undefined,2);}addStory(w,'roundup',`¡ARRANCA LA TEMPORADA ${w.season}!`,`Cuarenta y ocho clubes. Cuatro países elementales. Un solo campeonato del mundo. Los contables han aprobado otra temporada de violencia carísima.`,undefined,undefined,undefined,3);}
  else w.week++;
  // Injuries heal as the new week begins, before any of its fixtures can be played.
  for(const p of w.players)if(p.injury>0)p.injury--;
@@ -860,6 +885,7 @@ export function normalizeWorld(w:World):World{
   p.stats.ultimates??=0;p.career.ultimates??=0;p.stats.decisive??=0;p.career.decisive??=0;
   if(abilityTier(p.ability)!==tierForRarity(p.rarity)){const pool=abilityPool(p.rarity);p.ability=pool[hashIndex(`${p.id}:ability`,pool.length)];}
  }
+ giveIdentities(w);
  w.version=CURRENT_VERSION;
  currentStage(w);
  return w;

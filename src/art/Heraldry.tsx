@@ -44,7 +44,7 @@ export type Arms = {
 
 const cache = new Map<string, Arms>();
 
-type ArmsTeam = Pick<Team, 'id' | 'nickname' | 'region' | 'name'> & { artKey?: string };
+type ArmsTeam = Pick<Team, 'id' | 'nickname' | 'region' | 'name'> & { artKey?: string; colors?: [string, string] };
 /** The authored English nickname at the end of an art key ("kitehaven-ospreys" → "Ospreys"), for the vector fallback. */
 const artNickname = (artKey?: string) => { const last = artKey?.split('-').pop(); return last ? last.charAt(0).toUpperCase() + last.slice(1) : undefined; };
 
@@ -78,6 +78,7 @@ export function armsOf(team: ArmsTeam): Arms {
 
 /** House colours for tunics and banners, taken from the arms so a club looks the same everywhere. */
 export function houseColours(team: ArmsTeam): [string, string] {
+  if (team.colors) return team.colors;
   const a = armsOf(team);
   return [TINCTURES[a.colour].hex, TINCTURES[a.metal].hex];
 }

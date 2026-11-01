@@ -7,6 +7,7 @@ import { Shield } from '../art/Heraldry';
 import { RealmVignette, RiftCrown } from '../art/Ornament';
 import { Blank, FormPips, HouseName } from '../ui/bits';
 import { ES, PAIS_LEMA, countryName } from '../i18n/es';
+import { clubColours } from '../ui/ClubBadge';
 
 /** A country's name, for any screen that lists them. */
 export const realmName = (i: number) => countryName(i);
@@ -46,7 +47,7 @@ export function Tourneys() {
             <thead><tr><th>{T.th.rank}</th><th>{T.th.club}</th><th className="num">{T.th.p}</th><th className="num">{T.th.w}</th><th className="num">{T.th.d}</th><th className="num">{T.th.l}</th><th className="num">{T.th.pf}</th><th className="num">{T.th.pa}</th><th className="num">{T.th.diff}</th><th className="num">{T.th.pts}</th><th>{T.th.form}</th></tr></thead>
             <tbody>
               {standings.map((t, i) => (
-                <tr key={t.id} className={zone(i)}>
+                <tr key={t.id} className={`${zone(i)} club-row`} style={clubColours(t)}>
                   <td className="rank"><span className="zone-mark" />{i + 1}</td>
                   <td><HouseName team={t} size={26} /></td>
                   <td className="num">{played(t)}</td>

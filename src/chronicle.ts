@@ -2,7 +2,7 @@
 // prodigies, upsets) after each week and offseason, writes stories about them, and lets later
 // stories refer back ("Un año después de la decepción de Puertocoral, ...").
 import type { Match, NewsKind, Player, RecordEntry, RecordStat, Story, StoryBadge, Storyline, StorylineKind, Team, World } from './types';
-import { SEASON, addStory, getPlayer, getTeam, giveNickname, impactScore, lineup, retireAge, storySeed, teamRating } from './engine';
+import { curseStory, SEASON, addStory, getPlayer, getTeam, giveNickname, impactScore, lineup, retireAge, storySeed, teamRating } from './engine';
 import { ULTIMATE_STORY, DRAMA, INJURY, LOSE_STREAK, NICKNAME_STORY, RIVAL_PREVIEW, STAR, WIN_STREAK, mascotOf, pickLine } from './i18n/es-cronica';
 import { PAISES, RECORD_STAT_ES, awardEs, habilidad, rol } from './i18n/es-mundo';
 
@@ -305,6 +305,7 @@ export function chronicleWeek(w:World,week:number,fixtures:Match[]){
  matchReportStories(w,fixtures);
  upsets(w,fixtures);
  ultimateStories(w,fixtures);
+ for(const m of fixtures)curseStory(w,m);
  rivalryRecaps(w,fixtures);
  rivalryPreviews(w,w.matches.filter(m=>m.season===w.season&&m.week===week+1&&m.homeScore===null));
  if(week<=SEASON.LEAGUE_END&&week%2===0)nicknameMilestones(w,week);

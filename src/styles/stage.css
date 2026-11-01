@@ -230,3 +230,63 @@
   .ribbon { flex: none; width: 82px !important; }
   .ribbon-name { font-size: 0.8rem; }
 }
+
+/* ------------------------------------------------------------ clubs with personality (plain CSS, no filters) */
+.club-badge {
+  display: inline-grid; place-items: center; flex: none; border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--vellum) 0 62%, transparent 63%),
+    conic-gradient(var(--c1) 0 50%, var(--c2) 50% 100%);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+.club-header {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  padding: 16px 18px; margin: 8px 0 14px;
+  border: 2px solid var(--ink); border-left: 10px solid var(--c1); border-right: 10px solid var(--c2);
+  background: linear-gradient(100deg, color-mix(in srgb, var(--c1) 22%, transparent), transparent 45%, color-mix(in srgb, var(--c2) 22%, transparent));
+}
+.club-header-text { min-width: 0; flex: 1 1 240px; }
+.club-founded { font-style: italic; color: var(--ink-2); }
+.club-identity { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 0 0 16px; }
+.club-identity > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.club-identity dt { font-family: var(--face-rubric); color: var(--rubric); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.club-identity dd { margin: 0; }
+.club-legend { grid-template-columns: 1fr !important; font-style: italic; color: var(--ink-2); border-left: 3px solid var(--gold); padding-left: 10px; }
+.chip-icon { display: inline-grid; place-items: center; width: 1.6em; height: 1.6em; margin-right: 6px; border-radius: 50%; background: var(--ink); color: var(--gold-hi); font-style: normal; }
+@media (max-width: 560px) { .club-identity > div { grid-template-columns: 1fr; gap: 2px; } }
+
+.trophy-shelf {
+  list-style: none; margin: 6px 0 12px; padding: 10px 10px 0;
+  display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end;
+  border-bottom: 10px solid #6b4a2b; box-shadow: 0 2px 0 #3d2a18;
+  background: linear-gradient(transparent 70%, rgba(73, 48, 25, 0.12));
+}
+.trophy-shelf li { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.75rem; }
+.trophy-shelf .cup { position: relative; display: block; width: 26px; height: 34px; }
+.trophy-shelf .cup::before { content: ''; position: absolute; left: 3px; right: 3px; top: 0; height: 20px; border-radius: 0 0 12px 12px; background: var(--cup); border: 1.5px solid var(--ink); }
+.trophy-shelf .cup::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: 0; height: 13px; background: linear-gradient(var(--cup) 0 40%, transparent 40% 55%, var(--ink) 55%); clip-path: polygon(35% 0, 65% 0, 65% 55%, 100% 55%, 100% 100%, 0 100%, 0 55%, 35% 55%); }
+.trophy-shelf .is-world .cup { --cup: linear-gradient(135deg, #fbe39a, #d9a637 60%, #8c6418); width: 34px; height: 44px; }
+.trophy-shelf .is-world .cup::before { height: 27px; }
+.trophy-shelf .is-world .cup::after { height: 16px; left: 11px; right: 11px; }
+.trophy-shelf .is-national .cup { --cup: linear-gradient(135deg, #f3f1ea, #b9b4aa 60%, #6f6a62); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.club-legends { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.club-legends li { display: grid; grid-template-columns: 28px auto minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.club-legends small { display: block; color: var(--ink-2); }
+.club-legends strong { font-family: var(--face-data); font-size: 0.85rem; }
+
+.club-seasons { list-style: none; margin: 4px 0 12px; padding: 0; display: flex; gap: 4px; align-items: flex-end; height: 120px; overflow-x: auto; }
+.club-seasons li { flex: 0 0 26px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; font-size: 0.7rem; }
+.club-seasons i { display: block; width: 18px; background: var(--c2); border: 1px solid var(--ink); }
+.club-seasons i.is-top { background: var(--c1); }
+.club-seasons i.is-first { background: linear-gradient(var(--gold-hi), var(--gold)); }
+.club-seasons small { font-family: var(--face-data); font-weight: 700; }
+.club-seasons span { color: var(--ink-3); }
+
+.club-row td.rank { box-shadow: inset 6px 0 0 var(--c1), inset 10px 0 0 var(--c2); padding-left: 16px; }
+.live-side { border-bottom: 3px solid var(--c1); box-shadow: 0 3px 0 var(--c2); padding-bottom: 2px; }
+.sb-side .club-badge { box-shadow: 0 0 0 2px var(--ink), 0 0 0 4px var(--gold-hi); }
+.trophy-lift[style] { border-color: var(--c1); background: linear-gradient(160deg, color-mix(in srgb, var(--c1) 35%, var(--vellum)), var(--vellum) 55%, color-mix(in srgb, var(--c2) 35%, var(--vellum))); }
+.booth-crowd { grid-column: 1 / -1; color: #f3d58a; font-style: italic; }
+.club-header .folio-title { font-size: clamp(2rem, 3.2vw, 3rem); overflow-wrap: anywhere; }

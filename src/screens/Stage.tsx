@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { currentFixtures, currentStage, galaItems, getTeam, lineup, seasonCoins, teamRoster } from '../engine';
 import { PredictionPicker } from './parts/PreMatchCard';
+import { clubColours } from '../ui/ClubBadge';
 import { COMISIONADO, GRIMBALDO_LINES, pickLine } from '../i18n/es-cronica';
 import { useGame } from '../game/context';
 import { Shield, houseColours } from '../art/Heraldry';
@@ -220,7 +221,7 @@ function TrophyLift({ team, big, seed }: { team: Team; big: boolean; seed: strin
   const { world: w } = useGame();
   const captain = captainOf(w, team);
   return (
-    <article className={`trophy-lift ${big ? 'is-big' : ''}`}>
+    <article className={`trophy-lift ${big ? 'is-big' : ''}`} style={clubColours(team)}>
       <span className="trophy-lift-kicker">{big ? ES.stage.worldChampion : ES.stage.championOf(countryName(team.region))}</span>
       <div className="trophy-lift-art">
         <Shield team={team} size={big ? 150 : 96} />
