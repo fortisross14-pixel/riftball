@@ -3,8 +3,8 @@
 // stories refer back ("Un año después de la decepción de Puertocoral, ...").
 import type { Match, NewsKind, Player, RecordEntry, RecordStat, Story, StoryBadge, Storyline, StorylineKind, Team, World } from './types';
 import { SEASON, addStory, getPlayer, getTeam, giveNickname, impactScore, lineup, retireAge, storySeed, teamRating } from './engine';
-import { DRAMA, INJURY, LOSE_STREAK, NICKNAME_STORY, RIVAL_PREVIEW, STAR, WIN_STREAK, mascotOf, pickLine } from './i18n/es-cronica';
-import { PAISES, RECORD_STAT_ES, awardEs, rol } from './i18n/es-mundo';
+import { ULTIMATE_STORY, DRAMA, INJURY, LOSE_STREAK, NICKNAME_STORY, RIVAL_PREVIEW, STAR, WIN_STREAK, mascotOf, pickLine } from './i18n/es-cronica';
+import { PAISES, RECORD_STAT_ES, awardEs, habilidad, rol } from './i18n/es-mundo';
 
 export const RECORD_STATS:RecordStat[]=['breaches','tackles','interceptions','knockouts','assists','distance','rushingYards','passingYards','mvp','gates'];
 /** Spanish labels for record statistics. */
@@ -234,6 +234,21 @@ function nicknameMilestones(w:World,week:number){
  addStory(w,'milestone',`NACE UN APODO: «${nick.toUpperCase()}»`,pickLine(NICKNAME_STORY,storySeed(w,`${found.id}:${week}`))({name:found.name,club:team.name,nick,why}),team.id,found.id,undefined,3);
 }
 
+// ---------- Ultimates ----------
+// A knockout or final decided by an ultimate gets a headline of its own.
+function ultimateStories(w:World,fixtures:Match[]){
+ for(const m of fixtures){
+  if(m.phase==='league'||!m.decidedBy||!m.winner)continue;
+  const hero=getPlayer(w,m.decidedBy);if(!hero)continue;
+  const win=getTeam(w,m.winner),lose=getTeam(w,m.winner===m.home?m.away:m.home);
+  const call=hero.nickname?`«${hero.nickname}»`:hero.name.split(' ').slice(1).join(' ')||hero.name;
+  const stage=m.phase==='grand-final'?'la Gran Final':m.phase.startsWith('world')?'la Copa del Mundo':'la fase final nacional';
+  addStory(w,'championship',`LA DEFINITIVA DE ${call.toUpperCase()} HUNDE A LOS ${lose.nickname.toUpperCase()}`,
+   pickLine(ULTIMATE_STORY,storySeed(w,m.id))({hero:hero.nickname?`«${hero.nickname}» ${hero.name}`:hero.name,ability:habilidad(hero.ability),winner:win.name,loser:lose.name,hi:Math.max(m.homeScore!,m.awayScore!),lo:Math.min(m.homeScore!,m.awayScore!),stage}),
+   win.id,hero.id,m.id,m.phase==='grand-final'?7:6);
+ }
+}
+
 // ---------- Streaks ----------
 // A club reaching five wins or five defeats in a row gets a story (once per run, at exactly five).
 function streakStories(w:World,week:number){
@@ -289,6 +304,7 @@ export function chronicleWeek(w:World,week:number,fixtures:Match[]){
  trackRecords(w,week);
  matchReportStories(w,fixtures);
  upsets(w,fixtures);
+ ultimateStories(w,fixtures);
  rivalryRecaps(w,fixtures);
  rivalryPreviews(w,w.matches.filter(m=>m.season===w.season&&m.week===week+1&&m.homeScore===null));
  if(week<=SEASON.LEAGUE_END&&week%2===0)nicknameMilestones(w,week);

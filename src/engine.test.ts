@@ -59,7 +59,7 @@ test('Home advantage is small: league home win rate stays between 45% and 58%',(
 
 test('Every trait, ability and philosophy is described, and every club uses a known philosophy',()=>{
  const w=createWorld(31);
- assert.equal(Object.keys(TRAIT_EFFECTS).length,12);assert.equal(Object.keys(ABILITY_EFFECTS).length,10);assert.equal(Object.keys(PHILOSOPHY_PROFILES).length,6);
+ assert.equal(Object.keys(TRAIT_EFFECTS).length,12);assert.equal(Object.keys(ABILITY_EFFECTS).length,17);assert.equal(Object.keys(PHILOSOPHY_PROFILES).length,6);
  for(const t of w.teams)assert.ok(PHILOSOPHY_PROFILES[t.philosophy],t.philosophy);
  for(const p of w.players){assert.ok(TRAIT_EFFECTS[p.trait],p.trait);assert.ok(ABILITY_EFFECTS[p.ability],p.ability);}
 });

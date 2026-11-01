@@ -142,7 +142,16 @@ export const HABILIDAD_ES: Record<string, { nombre: string; efecto: string }> = 
   'Iron Resolve': { nombre: 'Temple de Hierro', efecto: 'Chispa (defensa): una parada segura junto a la línea de gol.' },
   'Sure Hands': { nombre: 'Manos Seguras', efecto: 'Chispa: anula una pérdida de balón o un robo.' },
   'Bonebreaker': { nombre: 'Rompehuesos', efecto: 'Chispa (defensa): un placaje que deja KO seguro.' },
+  'Last Breath': { nombre: 'Último Aliento', efecto: 'Definitiva: en las dos últimas posesiones, con el partido a un tanteo o menos, la ¡BRECHA! es segura.' },
+  'Endless Run': { nombre: 'Carrera Infinita', efecto: 'Definitiva: cuando su equipo pierde en un momento clave, recorre el campo entero hasta la ¡BRECHA!.' },
+  'Sky Lance': { nombre: 'Lanza del Cielo', efecto: 'Definitiva: cuando su equipo pierde en un momento clave, un pase desde donde sea que acaba en ¡BRECHA!.' },
+  'Hand of Fate': { nombre: 'Mano del Destino', efecto: 'Definitiva: convierte un ¡PORTAZO! fallado en acierto.' },
+  'Eternal Wall': { nombre: 'Muro Eterno', efecto: 'Definitiva (defensa): detiene en la línea de gol una ¡BRECHA! segura.' },
+  'Rift Roar': { nombre: 'Rugido de la Grieta', efecto: 'Definitiva: el rival pierde todas sus chispas.' },
+  'Ancestral Fury': { nombre: 'Furia Ancestral', efecto: 'Definitiva: si su equipo pierde en un momento clave, todos juegan mucho mejor el resto del partido.' },
 };
+/** Tier names for abilities, as players read them. */
+export const NIVEL_ES = { basic: 'Básica', advanced: 'Avanzada', ultimate: 'Definitiva' } as const;
 export const rasgo = (key: string) => RASGO_ES[key]?.nombre ?? key;
 export const habilidad = (key: string) => HABILIDAD_ES[key]?.nombre ?? key;
 
@@ -189,4 +198,12 @@ export const EV = {
   gateMiss: (k: string) => `${k} falla el portazo. La mascota no disimula su decepción.`,
   overtime: (f: string) => `¡BRECHA DE ORO! ${f} lo gana en la prórroga.`,
   whistle: 'Termina un partido durísimo. Los comentaristas siguen discutiendo el reglamento.',
+  ultimate: (ability: string, text: string) => `¡${habilidad(ability).toUpperCase()}! ${text}`,
+  lastBreath: (n: string) => `${n} respira hondo, mira el reloj y cruza el campo entero. Nadie se atreve a tocarle.`,
+  endlessRun: (n: string, g: number) => `${n} arranca y no para: ${g} metros, tres rivales por el suelo y la grada en pie.`,
+  skyLance: (p: string, c: string, g: number) => `${p} lanza el balón ${g} metros hacia el cielo y cae, como un rayo, en las manos de ${c}.`,
+  handOfFate: (n: string) => `El portazo de ${n} iba fuera. Una mano invisible lo empuja entre los postes.`,
+  eternalWall: (d: string, c: string) => `${c} ya celebraba la brecha. ${d} se planta en la línea y el mundo entero se detiene.`,
+  riftRoar: (n: string, rival: string) => `${n} ruge y la Grieta responde: ${rival} se quedan sin chispas.`,
+  ancestralFury: (n: string, club: string) => `${n} invoca a los ancestros. ${club} juegan poseídos el resto del partido.`,
 };

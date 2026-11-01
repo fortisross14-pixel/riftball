@@ -13,7 +13,7 @@ import { roman } from '../art/hash';
 import { AthleteName, Blank, HouseName, Miniature } from '../ui/bits';
 import { Term } from '../ui/Term';
 import { realmName } from './Tourneys';
-import { ES, GRIMBALDO_HOME, HABILIDAD_ES, coachQuote, commentary, filosofia, mvpQuote, raza, rol } from '../i18n/es';
+import { ES, GRIMBALDO_HOME, HABILIDAD_ES, coachQuote, commentary, filosofia, habilidad, mvpQuote, rareza, raza, rol } from '../i18n/es';
 
 const T = ES.contest;
 const L = T.live;
@@ -23,10 +23,12 @@ const L = T.live;
 /** The glossary: calm words for lists, loud ones for the arena. */
 const KIND_WORD = ES.termPlain as Record<MatchEvent['kind'], string>;
 const KIND_SHOUT = ES.term as Record<MatchEvent['kind'], string>;
-const KIND_WEIGHT: Record<MatchEvent['kind'], number> = { breach: 8, gate: 4, aftershock: 2, interception: 5, knockout: 4, fumble: 3, bigplay: 3, injury: 2, whistle: 1, penalty: 2, spark: 2, miss: 1 };
+const KIND_WEIGHT: Record<MatchEvent['kind'], number> = { breach: 8, gate: 4, aftershock: 2, interception: 5, knockout: 4, fumble: 3, bigplay: 3, injury: 2, whistle: 1, penalty: 2, spark: 2, miss: 1, ultimate: 9 };
 const LOUD = new Set<MatchEvent['kind']>(['breach', 'gate', 'interception', 'knockout', 'fumble', 'spark']);
 /** Moments that get a full callout over the pitch. */
-const CALLOUT = new Set<MatchEvent['kind']>(['breach', 'gate', 'aftershock', 'spark', 'knockout', 'interception', 'bigplay']);
+const CALLOUT = new Set<MatchEvent['kind']>(['breach', 'gate', 'aftershock', 'spark', 'knockout', 'interception', 'bigplay', 'ultimate']);
+/** An ultimate holds the replay longer: it is the moment of the match. */
+const ULTIMATE_MS = 3200;
 /** How long a callout stays up, in milliseconds. Playback waits for it. */
 const CALLOUT_MS = 1500;
 
@@ -69,7 +71,7 @@ function Replay({ m, home, away, initiallyRevealed }: { m: Match; home: Team; aw
     if (!playing || revealed) return;
     const current = index >= 0 ? events[index] : undefined;
     const base = Math.max(220, 1100 / speed);
-    const delay = current && CALLOUT.has(current.kind) ? Math.max(base, CALLOUT_MS) : base;
+    const delay = current?.kind === 'ultimate' ? ULTIMATE_MS : current && CALLOUT.has(current.kind) ? Math.max(base, CALLOUT_MS) : base;
     const t = setTimeout(() => setIndex((n) => Math.min(events.length, n + 1)), delay);
     return () => clearTimeout(t);
   }, [playing, revealed, index, speed, events]);
@@ -156,7 +158,8 @@ function LiveView({ m, home, away, index, setIndex, playing, setPlaying, speed, 
 
       <div className="live-pitch">
         <Arena m={m} home={home} away={away} events={shown} current={current} homeEight={homeEight} awayEight={awayEight} />
-        {current && CALLOUT.has(current.kind) && <Callout key={index} event={current} m={m} home={home} away={away} />}
+        {current?.kind === 'ultimate' && <UltimateCallout key={index} event={current} m={m} home={home} away={away} />}
+        {current && current.kind !== 'ultimate' && CALLOUT.has(current.kind) && <Callout key={index} event={current} m={m} home={home} away={away} />}
         {sealed && <div className="live-prematch"><PreMatchCard m={m} home={home} away={away} compact /></div>}
       </div>
 
@@ -182,7 +185,7 @@ function LiveView({ m, home, away, index, setIndex, playing, setPlaying, speed, 
                 <span className="tick-min">{e.minute}′</span>
                 <i className="tick-side" style={{ background: houseColours(e.teamId === m.home ? home : away)[0] }} />
                 <strong><Term k={e.kind}>{KIND_WORD[e.kind]}</Term></strong>
-                <span className="tick-text">{e.text}</span>
+                <span className="tick-text">{e.text}<AbilityNote e={e} /></span>
                 <span className="tick-score">{e.homeScore}–{e.awayScore}</span>
               </li>
             ))}
@@ -191,6 +194,37 @@ function LiveView({ m, home, away, index, setIndex, playing, setPlaying, speed, 
       </section>
     </div>,
     document.body,
+  );
+}
+
+/** For Spark and ultimate moments: the ability's effect in plain Spanish, under the line. */
+function AbilityNote({ e }: { e: MatchEvent }) {
+  const { player } = useGame();
+  if (e.kind !== 'spark' && e.kind !== 'ultimate') return null;
+  const a = e.playerId ? HABILIDAD_ES[player(e.playerId)?.ability ?? ''] : undefined;
+  return a ? <small className="tick-effect"> {a.efecto}</small> : null;
+}
+
+/** The ultimate callout: nearly the whole pitch, the rarity's colours, the ability in big letters. */
+function UltimateCallout({ event, m, home, away }: { event: MatchEvent; m: Match; home: Team; away: Team }) {
+  const { player } = useGame();
+  const [shown, setShown] = useState(true);
+  useEffect(() => { const t = setTimeout(() => setShown(false), ULTIMATE_MS - 200); return () => clearTimeout(t); }, []);
+  const p = event.playerId ? player(event.playerId) : undefined;
+  if (!shown || !p) return null;
+  const side = event.teamId === m.home ? home : away;
+  const a = HABILIDAD_ES[p.ability];
+  return (
+    <div className={`ultimate-callout rarity-${p.rarity.toLowerCase()}`} role="status" aria-label={ES.callout.ultimateLabel}>
+      <div className="ultimate-portrait"><Portrait player={p} house={houseColours(side)} size={220} /></div>
+      <div className="ultimate-body">
+        <span className="ultimate-kicker">{ES.callout.ultimateKicker(rareza(p.rarity))}</span>
+        <strong className="ultimate-name">{a?.nombre ?? p.ability}</strong>
+        <span className="ultimate-who"><Shield team={side} size={28} />{p.nickname ? `«${p.nickname}» ` : ''}{p.name}</span>
+        <p className="ultimate-effect">{a?.efecto}</p>
+        <span className="ultimate-score">{ES.callout.score(event.homeScore, event.awayScore)}</span>
+      </div>
+    </div>
   );
 }
 
@@ -324,6 +358,7 @@ function AfterMatch({ m, home, away }: { m: Match; home: Team; away: Team }) {
           </div>
         </div>
       )}
+      {m.decidedBy && (() => { const hero = player(m.decidedBy); return hero ? <p className="after-decided">{ES.post.decided(hero.nickname ? `«${hero.nickname}» ${hero.name}` : hero.name, habilidad(hero.ability))}</p> : null; })()}
       <div className="after-quotes">
         {mvp && <blockquote><p>{mvpQuote(mvp.trait, m.id)}</p><footer>— {mvp.nickname ? `«${mvp.nickname}» ` : ''}{mvp.name}, {ES.post.mvp.toLowerCase()}</footer></blockquote>}
         {loser && <blockquote><p>{coachQuote(margin, m.id)}</p><footer>— {ES.post.loserCoach(loser.nickname)}</footer></blockquote>}

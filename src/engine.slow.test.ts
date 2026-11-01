@@ -5,6 +5,7 @@ import { advanceWeekAuto, createWorld, getPlayer, getTeam } from './engine';
 import type { World } from './types';
 import { assertArtResolves } from './testing/art';
 import { starStats, type StarStats } from './testing/stars';
+import { ultimateStats } from './testing/ultimates';
 test('Ten years preserves rosters, histories, unique athlete IDs and valid championships',()=>{
  const w=createWorld(2026);for(let i=0;i<300;i++)advanceWeekAuto(w);
  assert.equal(w.season,11);assert.equal(w.week,1);
@@ -99,4 +100,12 @@ test('Stars decide seasons without owning them: 5 seeds x 20 seasons',()=>{
  assert.ok(withRate>=2*withoutRate,`national finals: with a Legendary/Generational starter ${(withRate*100).toFixed(1)}%, without ${(withoutRate*100).toFixed(1)}%`);
  assert.ok(acc.maxNationalShare<=.5,`one club won ${(acc.maxNationalShare*100).toFixed(0)}% of its country's titles`);
  assert.ok(acc.favouriteLosses/acc.knockouts>=.2,`favourites lost only ${((acc.favouriteLosses/acc.knockouts)*100).toFixed(1)}% of knockouts`);
+});
+
+test('Definitivas matter without dominating: they decide 5-15% of close games',()=>{
+ const acc={games:0,close:0,closeDecided:0,withUltimate:0,holders:0,players:0};
+ for(const seed of [11,22,33]){const w=createWorld(seed);while(w.season<=3)advanceWeekAuto(w);ultimateStats(w,acc);}
+ const share=acc.closeDecided/acc.close;
+ assert.ok(acc.close>1000,`close games ${acc.close}`);
+ assert.ok(share>=.05&&share<=.15,`close games decided by a Definitiva: ${(share*100).toFixed(1)}%`);
 });

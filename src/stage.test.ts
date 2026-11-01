@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SEASON, StageBlockedError, advanceOneWeek, advanceWeekAuto, createWorld, currentFixtures, currentStage, dismissIntro, galaItems, isEventStage, isStageComplete, pendingFixtures, predict, predictionReward, resolveMatch, revealAward, seasonCoins, winChance } from './engine';
+import { SEASON, StageBlockedError, advanceOneWeek, advanceWeekAuto, createWorld, currentFixtures, currentStage, dismissIntro, galaItems, isEventStage, isStageComplete, pendingFixtures, predict, predictionReward, resolveMatch, revealAward, seasonCoins, winChance, abilityTier, tierForRarity, normalizeWorld } from './engine';
 import type { World } from './types';
 
 // One world played up to the national semifinal week, shared (and cloned) by the tests below.
@@ -135,4 +135,15 @@ test('Rare world events have real effects: storms postpone a round, dragons move
   assert.equal(moved.home, d.away, 'the dragon sends the match to the other ground');
   while (dragon!.week <= d.week) advanceWeekAuto(dragon!);
   assert.ok(dragon!.news.some((n) => n.title.startsWith('UN DRAGÓN')), 'the dragon makes the news');
+});
+
+test('Ability tiers follow rarity: Definitivas only on Legendary and Generational athletes, also after migration', () => {
+  const w = createWorld(7171);
+  for (const p of w.players) assert.equal(abilityTier(p.ability), tierForRarity(p.rarity), `${p.name} (${p.rarity}) has ${p.ability}`);
+  assert.ok(w.players.some((p) => abilityTier(p.ability) === 'ultimate'), 'some stars carry a Definitiva');
+  const old = JSON.parse(JSON.stringify(w)) as World;
+  old.version = 5;
+  for (const p of old.players) { p.ability = p.rarity === 'Ordinary' ? 'Rift Roar' : 'Sure Hands'; delete (p.stats as Partial<typeof p.stats>).ultimates; }
+  normalizeWorld(old);
+  for (const p of old.players) { assert.equal(abilityTier(p.ability), tierForRarity(p.rarity)); assert.equal(p.stats.ultimates, 0); }
 });

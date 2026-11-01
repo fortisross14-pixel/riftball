@@ -279,12 +279,12 @@ export const ES = {
   /* ---------------------------------------------------------------- the words of a match (glossary) */
   term: {
     breach: '¡BRECHA!', gate: '¡PORTAZO!', aftershock: '¡RÉPLICA!', spark: '¡CHISPA!', knockout: '¡KO!', interception: '¡ROBO!',
-    fumble: '¡BALÓN SUELTO!', bigplay: '¡JUGADÓN!', injury: 'Lesión', whistle: 'Pitido', penalty: '¡FALTA!', miss: 'Portazo fallado',
+    fumble: '¡BALÓN SUELTO!', bigplay: '¡JUGADÓN!', injury: 'Lesión', whistle: 'Pitido', penalty: '¡FALTA!', miss: 'Portazo fallado', ultimate: '¡DEFINITIVA!',
   } as Record<string, string>,
   /** Calm versions of the glossary words for lists and tables. */
   termPlain: {
     breach: 'Brecha', gate: 'Portazo', aftershock: 'Réplica', spark: 'Chispa', knockout: 'KO', interception: 'Robo',
-    fumble: 'Balón suelto', bigplay: 'Jugadón', injury: 'Lesión', whistle: 'Pitido', penalty: 'Falta', miss: 'Portazo fallado',
+    fumble: 'Balón suelto', bigplay: 'Jugadón', injury: 'Lesión', whistle: 'Pitido', penalty: 'Falta', miss: 'Portazo fallado', ultimate: 'Definitiva',
   } as Record<string, string>,
 
   /* ---------------------------------------------------------------- Crónica */
@@ -457,6 +457,7 @@ export const ES = {
     passes: ['Pases completados', 'PAS'], gates: ['Portazos', 'PTZ'], tackles: ['Placajes', 'PLA'], blocks: ['Bloqueos', 'BLQ'],
     interceptions: ['Robos', 'ROB'], knockouts: ['KO', 'KO'], injuries: ['Lesiones sufridas', 'LES'], mvp: ['Mejor del partido', 'MVP'],
     rushingYards: ['Metros de carrera', 'MC'], passingYards: ['Metros de pase', 'MP'],
+    ultimates: ['Definitivas activadas', 'DEF'], decisive: ['Partidos decididos por su Definitiva', 'DEC'],
   } as Record<string, [string, string]>,
 
   /* ---------------------------------------------------------------- Historia */
@@ -530,6 +531,8 @@ export const ES = {
     level: (n: number) => `Nivel ${n}`,
     xp: (xp: number, goal: number, next: number) => `${xp} de ${goal} de experiencia para el nivel ${next}`,
     trait: 'Rasgo.',
+    tier: (tier: string) => `Habilidad ${tier.toLowerCase()}.`,
+    ultimateStats: (uses: number, decided: number) => `Activada ${uses} ${uses === 1 ? 'vez' : 'veces'} en su carrera · ${decided} ${decided === 1 ? 'partido decidido' : 'partidos decididos'}.`,
     unknownEffect: 'Su efecto aún no está documentado.',
     facts: { seasons: 'Temporadas', crowns: 'Coronas mundiales', titles: 'Otros títulos', potential: 'Potencial' },
     honours: 'Palmarés',
@@ -668,6 +671,8 @@ export const ES = {
   },
   callout: {
     label: 'Gran jugada',
+    ultimateLabel: 'Habilidad Definitiva',
+    ultimateKicker: (rarity: string) => `¡DEFINITIVA! · ${rarity}`,
     score: (h: number, a: number) => `${h} – ${a}`,
   },
 
@@ -702,6 +707,7 @@ export const ES = {
     playOfMatch: 'Jugada del partido',
     mvp: 'Mejor del partido',
     loserCoach: (nick: string) => `Entrenador de ${nick}`,
+    decided: (name: string, ability: string) => `Partido decidido por la Definitiva de ${name}: ${ability}.`,
   },
   commentators: {
     grimbaldo: 'El Viejo Grimbaldo',
@@ -810,9 +816,11 @@ const EBANO: Record<string, readonly string[]> = {
   knockout: ['KO número {n}. La Dra. Plumilla ya va de camino.', 'Placaje de alto impacto. Lo anoto.'],
   interception: ['Robo. Cambio de posesión en el minuto {m}.', 'Pase interceptado. Ese riesgo no compensaba.'],
   bigplay: ['Carrera larga. Muy por encima de la media.', 'Ganancia notable. La defensa, notablemente ausente.'],
+  ultimate: ['Definitiva activada. Probabilidad previa de este momento: ínfima. La anoto igualmente.', 'Una Definitiva en el minuto {m}. Mis modelos no contemplan esto. Mis modelos lloran.', 'Esto no sale en ninguna tabla. Lo voy a enmarcar.'],
 };
+const GRIMBALDO_ULTIMATE = ['¡POR LAS BARBAS DE MI ABUELO! ¡ESO ES UNA DEFINITIVA!', '¡Que paren el mundo! ¡He visto esto una vez en Pedravelo y casi me muero!', '¡Me he caído de la silla! ¡Que alguien me levante, que quiero verlo otra vez!'];
 export function commentary(kind: string, ctx: { home: boolean; minute: number; score: string; count: number }, seed: number | string) {
-  const g = ctx.home ? GRIMBALDO.happy : line([GRIMBALDO.sour, GRIMBALDO.sour, GRIMBALDO.neutral], `${seed}-mood`);
+  const g = kind === 'ultimate' ? GRIMBALDO_ULTIMATE : ctx.home ? GRIMBALDO.happy : line([GRIMBALDO.sour, GRIMBALDO.sour, GRIMBALDO.neutral], `${seed}-mood`);
   const e = EBANO[kind] ?? ['Anotado.'];
   return {
     grimbaldo: line(g, `${seed}-g`),

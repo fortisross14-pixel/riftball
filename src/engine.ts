@@ -8,7 +8,7 @@ import type { WorldEvent, Attributes, GalaItem, Match, MatchEvent, Player, Race,
 export const SEASON = { LEAGUE_END:22, NATIONAL_SEMI:23, NATIONAL_FINAL:24, WORLD_GROUPS:25, WORLD_SEMI:26, WORLD_FINAL:27, AWARDS:28, MARKET:29, NEW_SEASON:30 } as const;
 
 /** Save format version. Bumped whenever a saved world needs migrating. */
-export const CURRENT_VERSION=5;
+export const CURRENT_VERSION=6;
 /** The current world has exactly this many clubs. Older 80-club saves cannot be mapped onto them. */
 export const TEAM_COUNT=48;
 /** Stable art keys: lower-case, dash-separated. Never derived from a (translatable) display name at runtime. */
@@ -76,7 +76,24 @@ export const ABILITY_EFFECTS:Record<string,string>={
  'Sure Hands':'Spark: cancels a fumble or an interception.',
  'Bonebreaker':'Spark (defence): a guaranteed knockout tackle.'
 };
-const ABILITIES=Object.keys(ABILITY_EFFECTS);
+// Abilities come in three tiers, tied to rarity. Ultimates (Definitivas) only exist on Legendary and
+// Generational athletes, have their own once-per-match charge, and only fire in key moments.
+Object.assign(ABILITY_EFFECTS,{
+ 'Last Breath':'Ultimate: in the last two possessions of a game within one score, the drive ends in a breach.',
+ 'Endless Run':'Ultimate: when behind in a key moment, runs the length of the field for a breach.',
+ 'Sky Lance':'Ultimate: when behind in a key moment, a pass from anywhere that ends in a breach.',
+ 'Hand of Fate':'Ultimate: turns a missed gate shot into a score.',
+ 'Eternal Wall':'Ultimate (defence): stops a certain breach on the goal line.',
+ 'Rift Roar':'Ultimate: the opponents lose their remaining Spark charges.',
+ 'Ancestral Fury':'Ultimate: when behind in a key moment, the whole side plays much better for the rest of the match.',
+});
+export const BASIC_ABILITIES=['Second Wind','Sure Hands','Trickster’s Luck','Iron Resolve'];
+export const ADVANCED_ABILITIES=['Blinkstep','Grave Grip','Ironhide','Perfect Spiral','Thundercharge','Bonebreaker'];
+export const ULTIMATES=['Last Breath','Endless Run','Sky Lance','Hand of Fate','Eternal Wall','Rift Roar','Ancestral Fury'];
+export type AbilityTier='basic'|'advanced'|'ultimate';
+export const abilityTier=(ability:string):AbilityTier=>ULTIMATES.includes(ability)?'ultimate':ADVANCED_ABILITIES.includes(ability)?'advanced':'basic';
+export const tierForRarity=(r:Rarity):AbilityTier=>r==='Legendary'||r==='Generational'?'ultimate':r==='Elite'||r==='Extraordinary'?'advanced':'basic';
+export const abilityPool=(r:Rarity)=>({basic:BASIC_ABILITIES,advanced:ADVANCED_ABILITIES,ultimate:ULTIMATES})[tierForRarity(r)];
 // Philosophies are play-calling profiles.
 // pass: share of plays that are passes. aggression: big plays and hard hits, but more turnovers.
 // gate: willingness to kick gate shots on a final down. tempo: drives per match and fatigue. defense: flat defensive bonus.
@@ -145,7 +162,7 @@ function createPlayer(w:World,team:Team,role:Role,newProspect=false):Player {
  const attrs={} as Attributes;
  for(const key of ATTR_KEYS)attrs[key]=clamp(Math.round(base+int(w,-15,15)+(MOD[race][key]||0)+(ROLE_WEIGHT[role][key]?int(w,3,13):0)),13,99);
  const rating=positionRating(attrs,role); const potential=clamp(Math.round(rating+ageGap(race,age)),rating,99);
- const p:Player={id:rid(w,'p'),name:`${pick(w,NOMBRES[race])} ${pick(w,APELLIDOS[race])}`,race,role,teamId:team.id,age,level:newProspect?1:int(w,1,7),xp:0,rating,rarity,potential,attrs,trait:pick(w,TRAITS),ability:pick(w,ABILITIES),injury:0,careerWear:0,stats:EMPTY_STATS(),career:EMPTY_STATS(),titles:0,championships:0,fame:0,portrait:int(w,ELITE_PORTRAIT_COUNTS[race]+1,ELITE_PORTRAIT_COUNTS[race]+REGULAR_PORTRAIT_COUNTS[race]),portraitKey:'',seasons:0};
+ const p:Player={id:rid(w,'p'),name:`${pick(w,NOMBRES[race])} ${pick(w,APELLIDOS[race])}`,race,role,teamId:team.id,age,level:newProspect?1:int(w,1,7),xp:0,rating,rarity,potential,attrs,trait:pick(w,TRAITS),ability:pick(w,abilityPool(rarity)),injury:0,careerWear:0,stats:EMPTY_STATS(),career:EMPTY_STATS(),titles:0,championships:0,fame:0,portrait:int(w,ELITE_PORTRAIT_COUNTS[race]+1,ELITE_PORTRAIT_COUNTS[race]+REGULAR_PORTRAIT_COUNTS[race]),portraitKey:'',seasons:0};
  p.portraitKey=portraitKeyOf(race,p.portrait);return p;
 }
 /** How many of the founding athletes start with a nickname. */
@@ -326,7 +343,7 @@ function rivalryResult(w:World,m:Match){
 }
 // Rich match reports are the authoritative source for box scores. Legacy saves keep their highlight archive.
 export const emptyMatchTeamStats=():MatchTeamStats=>({possessions:0,plays:0,firstDowns:0,yards:0,runAttempts:0,rushingYards:0,passAttempts:0,passesCompleted:0,passingYards:0,breaches:0,gatesAttempted:0,gates:0,aftershocks:0,turnovers:0,interceptions:0,fumblesLost:0,tackles:0,blocks:0,knockouts:0,penalties:0,sparks:0,injuries:0,substitutions:0});
-const emptyMatchPlayerStats=(p:Player):MatchPlayerStats=>({playerId:p.id,teamId:p.teamId,plays:0,rushAttempts:0,yards:0,passesAttempted:0,passesCompleted:0,passingYards:0,catches:0,breaches:0,assists:0,gates:0,tackles:0,blocks:0,interceptions:0,knockouts:0,turnovers:0,sparks:0,impact:0});
+const emptyMatchPlayerStats=(p:Player):MatchPlayerStats=>({ultimates:0,playerId:p.id,teamId:p.teamId,plays:0,rushAttempts:0,yards:0,passesAttempted:0,passesCompleted:0,passingYards:0,catches:0,breaches:0,assists:0,gates:0,tackles:0,blocks:0,interceptions:0,knockouts:0,turnovers:0,sparks:0,impact:0});
 /** Only long runs make the match log; shorter gains still count in the statistics. */
 const BIG_PLAY_WRITTEN=25;
 export function simulateMatch(w:World,m:Match){
@@ -368,6 +385,10 @@ export function simulateMatch(w:World,m:Match){
  const possessions=int(w,12,16)+Math.round(tempo)+0,first=int(w,0,1);const spark=[2,2];let minute=0;
  const fresh=new Set<string>(); // players who used Second Wind
  const spentAbility=new Set<string>(); // one active signature activation per player per match
+ // Ultimates: one charge per athlete per match, separate from the team's two Spark charges.
+ const ultimateUsed=new Set<string>(),ultUses:{side:number;playerId:string}[]=[],fury=[0,0];
+ const ultimate=(s:number,p:Player,text:string,x:number)=>{ultimateUsed.add(p.id);ultUses.push({side:s,playerId:p.id});pStat(p,'ultimates');addStat(p,'ultimates');addXp(p,10);event(m,minute,'ultimate',sides[s].id,p,EV.ultimate(p.ability,text),score[0],score[1],x);};
+ const holder=(line:Player[],ability:string)=>line.find(q=>q.ability===ability&&!ultimateUsed.has(q.id)&&q.injury===0);
  const sideOf=(p:Player)=>p.teamId===home.id?0:1;
  const sparkEvent=(s:number,p:Player,text:string,x:number)=>{spark[s]--;spentAbility.add(p.id);teamStat(s,'sparks');pStat(p,'sparks');addXp(p,5);event(m,minute,'spark',sides[s].id,p,EV.spark(p.ability,text),score[0],score[1],x);};
  // Injuries respect Iron Will, Reckless and the Ironhide ability.
@@ -388,6 +409,12 @@ export function simulateMatch(w:World,m:Match){
   const clutch=(p:Player)=>has(p,'Clutch Performer')?(fatigue>=.75?4:0)+(knockout?2:0):0;
   const keyMoment=fatigue>=.75||knockout;
   const aura=(s:number)=>keyMoment&&lines[s].some(isStar)?1.5:0;
+  // Ultimates wait for a key moment: a close game late on, or a knockout from the second half.
+  const ultWindow=Math.abs(score[0]-score[1])<=6&&(fatigue>=.75||(knockout&&fatigue>=.5));
+  if(ultWindow){
+   for(const s of [side,1-side]){const roar=holder(lines[s],'Rift Roar');if(roar&&spark[1-s]>0){spark[1-s]=0;ultimate(s,roar,EV.riftRoar(roar.name,sides[1-s].nickname),50);}}
+   const furious=holder(off,'Ancestral Fury');if(furious&&score[side]<score[1-side]){fury[side]=.08;ultimate(side,furious,EV.ancestralFury(furious.name,attack.nickname),50);}
+  }
   const linemen=off.filter(p=>p.role==='Bastion'||p.role==='Breaker');
   // Substitutions can leave a Bastion-only line, so the last fallback is whoever passes best.
   const byPassing=(a:Player,b:Player)=>b.attrs.passing-a.attrs.passing;
@@ -409,7 +436,7 @@ export function simulateMatch(w:World,m:Match){
    const blockEdge=(mean(off.filter(p=>p.role==='Bastion'||p.role==='Breaker'),'blocking','strength')-mean(deff,'tackling','strength'))/180;
    const isPass=random(w)<clamp(plan.pass+routeEdge-blockEdge*.5+(target-x>=9?.06:0)+(chasing?0.12:0)-(cruising?0.2:0),.12,.86)*(power?.6:1);
    const blocker=pick(w,linemen.length?linemen:off);
-   const carrier=isPass?pickWeighted(w,off.filter(p=>p!==passer),p=>CATCH[p.role]*starWeight(p)):pickWeighted(w,off,p=>CARRY[p.role]*starWeight(p));
+   let carrier=isPass?pickWeighted(w,off.filter(p=>p!==passer),p=>CATCH[p.role]*starWeight(p)):pickWeighted(w,off,p=>CARRY[p.role]*starWeight(p));
    const defender=pickWeighted(w,deff,p=>(isPass?COVER[p.role]:TACKLE[p.role])*Math.sqrt(starWeight(p)));
    const c=carrier.attrs,b=blocker.attrs,d=defender.attrs;
    // Undisciplined blockers jump early.
@@ -433,9 +460,21 @@ export function simulateMatch(w:World,m:Match){
    const tacticalEdge=isPass?(plan.pass-defPlan.defense*.045)*.07:(power?(plan.aggression-defPlan.defense*.08):plan.tempo-defPlan.tempo)*.055;
    const lineupShift=off.reduce((sum,p)=>sum+p.rating,0)/off.length-startingLineRating[side];
    const diff=(attackValue-defenseValue)*.017+(strengths[side]-strengths[1-side])*0.015+tacticalEdge+lineupShift*.004;
-   const success=clamp((isPass?.64:power?.7:.72)+diff+urgency-caution,.21,.9);
+   const success=clamp((isPass?.64:power?.7:.72)+diff+urgency-caution+fury[side],.21,.9);
    // Spark abilities: offence first, then the defence's goal-line stand.
    let forced:'success'|'fail'|undefined,gain=0;
+   // Attacking ultimates: a breach out of nothing when the game is on the line.
+   if(ultWindow&&score[side]<=score[1-side]){
+    const last=drive>=possessions-2&&score[1-side]-score[side]<=6?holder(off,'Last Breath'):undefined;
+    const runner=!last&&!isPass&&score[side]<score[1-side]?holder(off,'Endless Run'):undefined;
+    const lance=!last&&!runner&&isPass&&score[side]<score[1-side]&&passer.ability==='Sky Lance'&&!ultimateUsed.has(passer.id)?passer:undefined;
+    const hero=last??runner??lance;
+    if(hero){
+     if(hero!==lance&&hero!==passer)carrier=hero;
+     gain=Math.max(1,90-x);forced='success';
+     ultimate(side,hero,hero===last?EV.lastBreath(hero.name):hero===runner?EV.endlessRun(hero.name,gain):EV.skyLance(hero.name,carrier.name,gain),90);
+    }
+   }
    if(spark[side]>0&&random(w)<.35){
     if(!isPass&&!power&&(carrier.ability==='Blinkstep'&&!spentAbility.has(carrier.id))){gain=int(w,15,25);forced='success';sparkEvent(side,carrier,EV.blinkstep(carrier.name,gain),x+gain);}
     else if(!isPass&&power&&(carrier.ability==='Thundercharge'&&!spentAbility.has(carrier.id))){gain=x>=84?90-x:Math.max(target-x,int(w,3,6));forced='success';sparkEvent(side,carrier,EV.thundercharge(carrier.name,gain),x+gain);}
@@ -463,6 +502,9 @@ export function simulateMatch(w:World,m:Match){
     }
     x+=gain;teamStat(side,'yards',gain);matchDrive.yards+=gain;pStat(carrier,'yards',gain);addStat(carrier,'distance',gain);
     if(isPass){teamStat(side,'passesCompleted');teamStat(side,'passingYards',gain);pStat(passer,'passesCompleted');pStat(passer,'passingYards',gain);pStat(carrier,'catches');addStat(passer,'passes');addStat(passer,'passingYards',gain);} else {addStat(carrier,'rushingYards',gain);teamStat(side,'rushingYards',gain);if(gain>=5){addStat(blocker,'blocks');teamStat(side,'blocks');pStat(blocker,'blocks');}}
+    // Defensive ultimate: a certain breach stopped on the goal line.
+    const wall=x>=90&&ultWindow?holder(deff,'Eternal Wall'):undefined;
+    if(wall){x=89;ultimate(1-side,wall,EV.eternalWall(wall.name,carrier.name),89);matchDrive.result='downs';break;}
     if(x>=90){
      score[side]+=5;teamStat(side,'breaches');pStat(carrier,'breaches');matchDrive.result='breach';matchDrive.scorerId=carrier.id;addStat(carrier,'breaches');addXp(carrier,12);
      if(isPass){pStat(passer,'assists');addStat(passer,'assists');addXp(passer,6);event(m,minute,'breach',attack.id,carrier,EV.breachPass(passer.name,carrier.name),score[0],score[1],95);}
@@ -500,7 +542,7 @@ export function simulateMatch(w:World,m:Match){
    if(downs<=0){
     // Final down: kick a ¡PORTAZO! (2) or give the ball up. Kicking teams try from further out; long kicks miss more.
     // Three ways to score: ¡BRECHA! 5, ¡RÉPLICA! 1 after a brecha, ¡PORTAZO! 2 (about 5.4, 3.4 and 1.2 per match).
-    if(x>=46-plan.gate*20&&random(w)<.6+plan.gate*.35){teamStat(side,'gatesAttempted');const kicker=passer;const probability=clamp(.72-(90-x)*.01+(kicker.attrs.composure-50)*.004+(has(kicker,'Ice-Cold')?.12:0)+clutch(kicker)*.02,.23,.92);if(random(w)<probability){score[side]+=2;teamStat(side,'gates');pStat(kicker,'gates');matchDrive.result='gate';matchDrive.scorerId=kicker.id;addStat(kicker,'gates');event(m,minute,'gate',attack.id,kicker,EV.gate(kicker.name),score[0],score[1],x);}else {matchDrive.result='miss';event(m,minute,'miss',attack.id,kicker,EV.gateMiss(kicker.name),score[0],score[1],x);}}
+    if(x>=46-plan.gate*20&&random(w)<.6+plan.gate*.35){teamStat(side,'gatesAttempted');const kicker=passer;const probability=clamp(.72-(90-x)*.01+(kicker.attrs.composure-50)*.004+(has(kicker,'Ice-Cold')?.12:0)+clutch(kicker)*.02,.23,.92);const made=random(w)<probability,fate=!made&&ultWindow?holder(off,'Hand of Fate'):undefined;if(fate)ultimate(side,fate,EV.handOfFate(fate.name),x);if(made||fate){score[side]+=2;teamStat(side,'gates');pStat(kicker,'gates');matchDrive.result='gate';matchDrive.scorerId=kicker.id;addStat(kicker,'gates');event(m,minute,'gate',attack.id,kicker,EV.gate(kicker.name),score[0],score[1],x);}else {matchDrive.result='miss';event(m,minute,'miss',attack.id,kicker,EV.gateMiss(kicker.name),score[0],score[1],x);}}
     break;}
   }
   matchDrive.endX=x;matchDrive.endMinute=minute;matchDrive.points=score[side]-beforeScore;
@@ -519,6 +561,9 @@ export function simulateMatch(w:World,m:Match){
  }
  const matchMvp=Object.values(report.players).sort((a,b)=>b.impact-a.impact)[0];
  if(matchMvp){ const p=getPlayer(w,matchMvp.playerId); if(p){ addStat(p,'mvp'); p.fame+=2+(m.phase==='league'?0:3); m.mvpId=p.id; } }
+ // A close game won by a side that used an ultimate was decided by it.
+ const winSide=m.winner===m.home?0:m.winner===m.away?1:-1;
+ if(winSide>=0&&Math.abs(score[0]-score[1])<=7){const use=[...ultUses].reverse().find(u=>u.side===winSide);if(use){m.decidedBy=use.playerId;const hero=getPlayer(w,use.playerId);if(hero)addStat(hero,'decisive');}}
  report.winner=m.winner;
  settlePrediction(w,m);
 }
@@ -801,6 +846,11 @@ export function normalizeWorld(w:World):World{
   const max=PORTRAIT_COUNTS[p.race]-1;
   if(!(p.portrait>=1&&p.portrait<=max))p.portrait=1+hashIndex(p.id,max);
   p.portraitKey=portraitKeyOf(p.race,p.portrait);
+ }
+ // v5 -> v6: abilities follow rarity (ultimates only on Legendary/Generational), and ultimate counters.
+ for(const p of [...w.players,...w.retired]){
+  p.stats.ultimates??=0;p.career.ultimates??=0;p.stats.decisive??=0;p.career.decisive??=0;
+  if(abilityTier(p.ability)!==tierForRarity(p.rarity)){const pool=abilityPool(p.rarity);p.ability=pool[hashIndex(`${p.id}:ability`,pool.length)];}
  }
  w.version=CURRENT_VERSION;
  currentStage(w);

@@ -178,3 +178,13 @@ export const STRIKE: readonly ((c: EventCtx) => string)[] = [
   (c) => `Los árbitros goblins de ${c.country} se plantan: exigen silbatos más grandes. La jornada ${c.week} la arbitrará personal de urgencia, con más entusiasmo que criterio.`,
   (c) => `Huelga arbitral en ${c.country} para la jornada ${c.week}. El Comisionado ha anunciado una revisión de seguridad del silbato.`,
 ];
+
+/* ------------------------------------------------------------ ultimates that decide knockouts */
+
+export type UltimateCtx = { hero: string; ability: string; winner: string; loser: string; hi: number; lo: number; stage: string };
+export const ULTIMATE_STORY: readonly ((c: UltimateCtx) => string)[] = [
+  (c) => `${c.hero} activa ${c.ability} en ${c.stage} y ${c.winner} ganan a ${c.loser} por ${c.hi}-${c.lo}. El Viejo Grimbaldo ha tenido que sentarse.`,
+  (c) => `Hay jugadas que se cuentan a los nietos. ${c.ability}, de ${c.hero}, es una de ellas: ${c.winner} ${c.hi}, ${c.loser} ${c.lo}, en ${c.stage}.`,
+  (c) => `${c.loser} lo tenían en la mano hasta que ${c.hero} desató ${c.ability}. Resultado: ${c.hi}-${c.lo} para ${c.winner}. El Comisionado ha anunciado una revisión de seguridad de lo sobrenatural.`,
+  (c) => `Lo decidió ${c.ability}, de ${c.hero}: ${c.winner} ${c.hi}, ${c.loser} ${c.lo}, en ${c.stage}. La Profesora Ébano lo resume: «Estadísticamente, injusto».`,
+];

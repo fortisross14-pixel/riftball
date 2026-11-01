@@ -1,5 +1,5 @@
 import type { SeasonStats, StatKey } from '../types';
-import { xpGoal } from '../engine';
+import { abilityTier, xpGoal } from '../engine';
 import { nfmt, useGame } from '../game/context';
 import { houseColours } from '../art/Heraldry';
 import { Portrait } from '../art/Portrait';
@@ -7,9 +7,9 @@ import { RoleGlyph } from '../art/Ornament';
 import { Blank, HouseName } from '../ui/bits';
 import { Term } from '../ui/Term';
 import { Shield } from '../art/Heraldry';
-import { ATRIBUTO_ES, ES, HABILIDAD_ES, RASGO_ES, RECORD_STAT_ES as RECORD_LABEL, awardName, raza, rareza, rol, titleCase } from '../i18n/es';
+import { ATRIBUTO_ES, ES, HABILIDAD_ES, NIVEL_ES, RASGO_ES, RECORD_STAT_ES as RECORD_LABEL, awardName, raza, rareza, rol, titleCase } from '../i18n/es';
 
-const METRIC_KEYS: (keyof SeasonStats)[] = ['games', 'breaches', 'assists', 'distance', 'passes', 'gates', 'tackles', 'blocks', 'interceptions', 'knockouts', 'injuries', 'mvp'];
+const METRIC_KEYS: (keyof SeasonStats)[] = ['games', 'breaches', 'assists', 'distance', 'passes', 'gates', 'tackles', 'blocks', 'interceptions', 'knockouts', 'injuries', 'mvp', 'ultimates', 'decisive'];
 export const METRICS: { key: keyof SeasonStats; label: string; short: string }[] = METRIC_KEYS.map((key) => ({ key, label: ES.metric[key][0], short: ES.metric[key][1] }));
 
 const T = ES.athlete;
@@ -63,9 +63,10 @@ export function AthleteFolio({ id }: { id: string }) {
             <h3>{trait?.nombre ?? p.trait}</h3>
             <p><em>{T.trait}</em> {trait?.efecto ?? T.unknownEffect}</p>
           </article>
-          <article className="gift is-spark">
+          <article className={`gift is-spark tier-${abilityTier(p.ability)}`}>
             <h3>{ability?.nombre ?? p.ability}</h3>
-            <p>{ability?.efecto ?? T.unknownEffect}</p>
+            <p><em>{T.tier(NIVEL_ES[abilityTier(p.ability)])}</em> {ability?.efecto ?? T.unknownEffect}</p>
+            {abilityTier(p.ability) === 'ultimate' && <p className="gift-stats">{T.ultimateStats(p.career.ultimates ?? 0, p.career.decisive ?? 0)}</p>}
           </article>
         </div>
 

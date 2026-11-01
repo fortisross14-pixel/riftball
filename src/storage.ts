@@ -4,8 +4,8 @@ const DB_NAME='riftball-chronicle-v1';
 const STORE='worlds';
 const KEY='main';
 /** Export file format tag. Older tags are still read when the world inside is a current one. */
-export const SAVE_FORMAT='riftball-world-v5';
-const KNOWN_FORMATS=new Set(['riftball-world-v1','riftball-world-v2','riftball-world-v3','riftball-world-v4',SAVE_FORMAT]);
+export const SAVE_FORMAT='riftball-world-v6';
+const KNOWN_FORMATS=new Set(['riftball-world-v1','riftball-world-v2','riftball-world-v3','riftball-world-v4','riftball-world-v5',SAVE_FORMAT]);
 /** The oldest world version that can still be loaded. Version 5 is the Spanish world: older saves have English names and go to the old-version screen. */
 export const OLDEST_LOADABLE_VERSION=5;
 export class SaveConflict extends Error {constructor(){super('Otra pestaña ha guardado una versión más reciente de este mundo.');}}
